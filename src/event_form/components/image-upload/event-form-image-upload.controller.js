@@ -96,6 +96,9 @@ function EventFormImageUploadController(
           error = 'Het geüpload bestand is geen geldige afbeelding. ' +
             'Enkel bestanden met de extenties .jpeg, .gif of .png zijn toegelaten.';
           break;
+        case 'The file size of the uploaded image is too big.':
+          error = 'Het geüpload bestand is te groot.';
+          break;
       }
 
       $scope.saving = false;
