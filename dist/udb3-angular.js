@@ -3572,7 +3572,7 @@ angular
   .factory('UdbPlace', UdbPlaceFactory);
 
 /* @ngInject */
-function UdbPlaceFactory(placeCategories) {
+function UdbPlaceFactory(EventTranslationState, placeCategories) {
 
   function getCategoryByType(jsonPlace, domain) {
     var category = _.find(jsonPlace.terms, function (category) {
@@ -3601,6 +3601,36 @@ function UdbPlaceFactory(placeCategories) {
     }
 
     return categories;
+  }
+
+  function updateTranslationState(place) {
+    var languages = {'en': false, 'fr': false, 'de': false},
+        properties = ['name', 'description'];
+
+    _.forEach(languages, function (language, languageKey) {
+      var translationCount = 0,
+          state;
+
+      _.forEach(properties, function (property) {
+        if (place[property] && place[property][languageKey]) {
+          ++translationCount;
+        }
+      });
+
+      if (translationCount) {
+        if (translationCount === properties.length) {
+          state = EventTranslationState.ALL;
+        } else {
+          state = EventTranslationState.SOME;
+        }
+      } else {
+        state = EventTranslationState.NONE;
+      }
+
+      languages[languageKey] = state;
+    });
+
+    place.translationState = languages;
   }
 
   /**
@@ -3648,10 +3678,10 @@ function UdbPlaceFactory(placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
-      this.name = jsonPlace.name || '';
+      this.name = jsonPlace.name || {};
       this.address = jsonPlace.address || this.address;
       this.theme = getCategoryByType(jsonPlace, 'theme') || {};
-      this.description = jsonPlace.description || '';
+      this.description = jsonPlace.description || {};
       this.calendarType = jsonPlace.calendarType || '';
       this.startDate = jsonPlace.startDate;
       this.endDate = jsonPlace.endDate;
@@ -3686,6 +3716,13 @@ function UdbPlaceFactory(placeCategories) {
         });
       }
 
+    },
+
+    /**
+     * Set the name of the event for a given langcode.
+     */
+    setName: function(name, langcode) {
+      this.name[langcode] = name;
     },
 
     /**
@@ -3789,13 +3826,54 @@ function UdbPlaceFactory(placeCategories) {
 
     getStreet: function(street) {
       return this.address.streetAddress;
+    },
+
+    /**
+     * Label the event with a label or a list of labels
+     * @param {string|string[]} label
+     */
+    label: function (label) {
+      var newLabels = [];
+      var existingLabels = this.labels;
+
+      if (_.isArray(label)) {
+        newLabels = label;
+      }
+
+      if (_.isString(label)) {
+        newLabels = [label];
+      }
+
+      newLabels = _.filter(newLabels, function (newLabel) {
+        var similarLabel = _.find(existingLabels, function (existingLabel) {
+          return existingLabel.toUpperCase() === newLabel.toUpperCase();
+        });
+
+        return !similarLabel;
+      });
+
+      this.labels = _.union(this.labels, newLabels);
+    },
+
+    /**
+     * Unlabel a label from an event
+     * @param {string} labelName
+     */
+    unlabel: function (labelName) {
+      _.remove(this.labels, function (label) {
+        return label === labelName;
+      });
+    },
+
+    updateTranslationState: function () {
+      updateTranslationState(this);
     }
 
   };
 
   return (UdbPlace);
 }
-UdbPlaceFactory.$inject = ["placeCategories"];
+UdbPlaceFactory.$inject = ["EventTranslationState", "placeCategories"];
 
 // Source: src/core/udb3-content.service.js
 /**
@@ -9952,7 +10030,14 @@ angular
     .controller('PlaceDetailController', PlaceDetail);
 
 /* @ngInject */
-function PlaceDetail($scope, placeId, udbApi, $location) {
+function PlaceDetail(
+  $scope,
+  placeId,
+  udbApi,
+  $location,
+  jsonLDLangFilter,
+  variationRepository
+) {
   var activeTabId = 'data';
 
   $scope.placeId = placeId;
@@ -9980,6 +10065,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
   });
 
   var placeLoaded = udbApi.getPlaceById($scope.placeId);
+  var language = 'nl';
 
   placeLoaded.then(
       function (place) {
@@ -9988,7 +10074,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
         placeHistoryLoaded.then(function(placeHistory) {
           $scope.placeHistory = placeHistory;
         });*/
-        $scope.place = place;
+        $scope.place = jsonLDLangFilter(place, language);
         $scope.placeIdIsInvalid = false;
 
       },
@@ -10026,7 +10112,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
     $location.path('/place/' + placeId + '/edit');
   };
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository"];
 
 // Source: src/saved-searches/components/delete-search-modal.controller.js
 /**
