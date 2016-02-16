@@ -2839,6 +2839,21 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
+  this.labelPlace = function (placeId, label) {
+    return $http.post(
+      appConfig.baseUrl + 'place/' + placeId + '/labels',
+      {'label': label},
+      defaultApiConfig
+    );
+  };
+
+  this.unlabelPlace = function (placeId, label) {
+    return $http['delete'](
+      appConfig.baseUrl + 'place/' + placeId + '/labels/' + label,
+      defaultApiConfig
+    );
+  };
+
   this.createPlace = function (event) {
     return $http.post(
       appConfig.baseApiUrl + 'place',
@@ -3693,6 +3708,9 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
         this.organizer = jsonPlace.organizer;
       }
       this.image = getImages(jsonPlace);
+      this.labels = _.map(jsonPlace.labels, function (label) {
+        return label;
+      });
       this.mediaObject = jsonPlace.mediaObject || [];
       this.facilities = getCategoriesByType(jsonPlace, 'facility') || [];
       this.additionalData = jsonPlace.additionalData || {};
@@ -5025,13 +5043,13 @@ function EventLabelJobFactory(BaseJob, JobStates) {
    * @class EventLabelJob
    * @constructor
    * @param {string} commandId
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    * @param {boolean} unlabel set to true when unlabeling
    */
-  var EventLabelJob = function (commandId, event, label, unlabel) {
+  var EventLabelJob = function (commandId, offer, label, unlabel) {
     BaseJob.call(this, commandId);
-    this.event = event;
+    this.offer = offer;
     this.label = label;
     this.unlabel = !!unlabel || false;
   };
@@ -5047,9 +5065,9 @@ function EventLabelJobFactory(BaseJob, JobStates) {
       description = 'Labelen van evenement mislukt';
     } else {
       if (job.unlabel) {
-        description = 'Verwijder label "' + job.label + '" van "' + job.event.name.nl + '"';
+        description = 'Verwijder label "' + job.label + '" van "' + job.offer.name.nl + '"';
       } else {
-        description = 'Label "' + job.event.name.nl + '" met "' + job.label + '"';
+        description = 'Label "' + job.offer.name.nl + '" met "' + job.label + '"';
       }
     }
 
@@ -5184,6 +5202,36 @@ function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, Que
     jobPromise.success(function (jobData) {
       event.unlabel(label);
       var job = new EventLabelJob(jobData.commandId, event, label, true);
+      jobLogger.addJob(job);
+    });
+  };
+
+  /**
+   * Label a place with a label
+   * @param {UdbPlace} place
+   * @param {string} label
+   */
+  this.labelPlace = function (place, label) {
+    var jobPromise = udbApi.labelPlace(place.id, label);
+
+    jobPromise.success(function (jobData) {
+      place.label(label);
+      var job = new EventLabelJob(jobData.commandId, place, label);
+      jobLogger.addJob(job);
+    });
+  };
+
+  /**
+   * Remove a label from a place
+   * @param {UdbPlace} place
+   * @param {string} label
+   */
+  this.unlabelPlace = function (place, label) {
+    var jobPromise = udbApi.unlabelPlace(place.id, label);
+
+    jobPromise.success(function (jobData) {
+      place.unlabel(label);
+      var job = new EventLabelJob(jobData.commandId, place, label, true);
       jobLogger.addJob(job);
     });
   };
@@ -12550,7 +12598,9 @@ function PlaceController(
   $scope,
   jsonLDLangFilter,
   EventTranslationState,
-  placeTranslator
+  placeTranslator,
+  eventLabeller,
+  $window
 ) {
   var controller = this;
   /* @type {UdbPlace} */
@@ -12565,6 +12615,7 @@ function PlaceController(
     {'lang': 'de'}
   ];
 
+  controller.availableLabels = eventLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -12575,12 +12626,23 @@ function PlaceController(
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;
         cachedPlace.updateTranslationState();
+        controller.availableLabels = _.union(cachedPlace.labels, eventLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
         controller.fetching = false;
+
+        watchLabels();
       });
     } else {
       controller.fetching = false;
+    }
+
+    function watchLabels() {
+      $scope.$watch(function () {
+        return cachedPlace.labels;
+      }, function (labels) {
+        $scope.event.labels = angular.copy(labels);
+      });
     }
   }
 
@@ -12662,8 +12724,27 @@ function PlaceController(
       });
     }
   }
+
+  // Labelling
+  controller.labelAdded = function (newLabel) {
+    var similarLabel = _.find(cachedPlace.labels, function (label) {
+      return newLabel.toUpperCase() === label.toUpperCase();
+    });
+    if (similarLabel) {
+      $scope.$apply(function () {
+        $scope.event.labels = angular.copy(cachedPlace.labels);
+      });
+      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      eventLabeller.labelPlace(cachedPlace, newLabel);
+    }
+  };
+
+  controller.labelRemoved = function (label) {
+    eventLabeller.unlabelPlace(cachedPlace, label);
+  };
 }
-PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "placeTranslator"];
+PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "placeTranslator", "eventLabeller", "$window"];
 
 // Source: src/search/ui/place.directive.js
 /**
@@ -16190,6 +16271,36 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      </div>\n" +
     "\n" +
     "\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <div class=\"col-sm-12\" ng-show=\"resultViewer.isShowingProperties()\">\n" +
+    "    <div class=\"udb-details row\">\n" +
+    "      <div class=\"col-sm-2\" ng-if=\"resultViewer.eventProperties.image.visible\">\n" +
+    "        <img ng-if=\"event.image\" ng-src=\"{{event.image}}\" alt=\"{{event.name}}\" class=\"img-responsive\">\n" +
+    "      </div>\n" +
+    "      <div ng-class=\"resultViewer.eventProperties.image.visible ? 'col-sm-10' : 'col-sm-12'\">\n" +
+    "        <div ng-if=\"resultViewer.eventProperties.description.visible && placeCtrl.editable\">\n" +
+    "          <div ng-bind-html=\"event.description\" class=\"udb-description\" onbeforesave=\"placeCtrl.updateDescription($data)\"\n" +
+    "               editable-textarea=\"event.description\" e-rows=\"6\" e-cols=\"66\"></div>\n" +
+    "        </div>\n" +
+    "        <div ng-if=\"resultViewer.eventProperties.description.visible && !placeCtrl.editable\"\n" +
+    "             class=\"event-description-loading-indicator\">\n" +
+    "          <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
+    "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
+    "            <ui-select multiple tagging tagging-label=\"(label toevoegen)\" ng-model=\"event.labels\"\n" +
+    "                       reset-search-input=\"true\" tagging-tokens=\"ENTER|;\"\n" +
+    "                       on-select=\"placeCtrl.labelAdded($item)\" on-remove=\"placeCtrl.labelRemoved($item)\">\n" +
+    "              <ui-select-match placeholder=\"Voeg een label toe...\">{{$item}}</ui-select-match>\n" +
+    "              <ui-select-choices repeat=\"label in availableLabels\">\n" +
+    "                <div ng-bind-html=\"label | highlight: $select.search\"></div>\n" +
+    "              </ui-select-choices>\n" +
+    "            </ui-select>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
     "</div>"

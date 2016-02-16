@@ -386,6 +386,21 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
+  this.labelPlace = function (placeId, label) {
+    return $http.post(
+      appConfig.baseUrl + 'place/' + placeId + '/labels',
+      {'label': label},
+      defaultApiConfig
+    );
+  };
+
+  this.unlabelPlace = function (placeId, label) {
+    return $http['delete'](
+      appConfig.baseUrl + 'place/' + placeId + '/labels/' + label,
+      defaultApiConfig
+    );
+  };
+
   this.createPlace = function (event) {
     return $http.post(
       appConfig.baseApiUrl + 'place',

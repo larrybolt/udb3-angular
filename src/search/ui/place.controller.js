@@ -16,7 +16,9 @@ function PlaceController(
   $scope,
   jsonLDLangFilter,
   EventTranslationState,
-  placeTranslator
+  placeTranslator,
+  eventLabeller,
+  $window
 ) {
   var controller = this;
   /* @type {UdbPlace} */
@@ -31,6 +33,7 @@ function PlaceController(
     {'lang': 'de'}
   ];
 
+  controller.availableLabels = eventLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -41,12 +44,23 @@ function PlaceController(
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;
         cachedPlace.updateTranslationState();
+        controller.availableLabels = _.union(cachedPlace.labels, eventLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
         controller.fetching = false;
+
+        watchLabels();
       });
     } else {
       controller.fetching = false;
+    }
+
+    function watchLabels() {
+      $scope.$watch(function () {
+        return cachedPlace.labels;
+      }, function (labels) {
+        $scope.event.labels = angular.copy(labels);
+      });
     }
   }
 
@@ -128,4 +142,23 @@ function PlaceController(
       });
     }
   }
+
+  // Labelling
+  controller.labelAdded = function (newLabel) {
+    var similarLabel = _.find(cachedPlace.labels, function (label) {
+      return newLabel.toUpperCase() === label.toUpperCase();
+    });
+    if (similarLabel) {
+      $scope.$apply(function () {
+        $scope.event.labels = angular.copy(cachedPlace.labels);
+      });
+      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      eventLabeller.labelPlace(cachedPlace, newLabel);
+    }
+  };
+
+  controller.labelRemoved = function (label) {
+    eventLabeller.unlabelPlace(cachedPlace, label);
+  };
 }

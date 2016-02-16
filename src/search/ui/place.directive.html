@@ -128,4 +128,34 @@
 
     </div>
   </div>
+
+  <div class="col-sm-12" ng-show="resultViewer.isShowingProperties()">
+    <div class="udb-details row">
+      <div class="col-sm-2" ng-if="resultViewer.eventProperties.image.visible">
+        <img ng-if="event.image" ng-src="{{event.image}}" alt="{{event.name}}" class="img-responsive">
+      </div>
+      <div ng-class="resultViewer.eventProperties.image.visible ? 'col-sm-10' : 'col-sm-12'">
+        <div ng-if="resultViewer.eventProperties.description.visible && placeCtrl.editable">
+          <div ng-bind-html="event.description" class="udb-description" onbeforesave="placeCtrl.updateDescription($data)"
+               editable-textarea="event.description" e-rows="6" e-cols="66"></div>
+        </div>
+        <div ng-if="resultViewer.eventProperties.description.visible && !placeCtrl.editable"
+             class="event-description-loading-indicator">
+          <i class="fa fa-circle-o-notch fa-spin"></i>
+        </div>
+
+        <div ng-if="resultViewer.eventProperties.labels.visible && event.labels" class="udb-labels">
+          <span ng-hide="event.labels.length">Dit evenement is nog niet gelabeld.</span>
+            <ui-select multiple tagging tagging-label="(label toevoegen)" ng-model="event.labels"
+                       reset-search-input="true" tagging-tokens="ENTER|;"
+                       on-select="placeCtrl.labelAdded($item)" on-remove="placeCtrl.labelRemoved($item)">
+              <ui-select-match placeholder="Voeg een label toe...">{{$item}}</ui-select-match>
+              <ui-select-choices repeat="label in availableLabels">
+                <div ng-bind-html="label | highlight: $select.search"></div>
+              </ui-select-choices>
+            </ui-select>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

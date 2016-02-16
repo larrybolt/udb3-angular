@@ -18,13 +18,13 @@ function EventLabelJobFactory(BaseJob, JobStates) {
    * @class EventLabelJob
    * @constructor
    * @param {string} commandId
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    * @param {boolean} unlabel set to true when unlabeling
    */
-  var EventLabelJob = function (commandId, event, label, unlabel) {
+  var EventLabelJob = function (commandId, offer, label, unlabel) {
     BaseJob.call(this, commandId);
-    this.event = event;
+    this.offer = offer;
     this.label = label;
     this.unlabel = !!unlabel || false;
   };
@@ -40,9 +40,9 @@ function EventLabelJobFactory(BaseJob, JobStates) {
       description = 'Labelen van evenement mislukt';
     } else {
       if (job.unlabel) {
-        description = 'Verwijder label "' + job.label + '" van "' + job.event.name.nl + '"';
+        description = 'Verwijder label "' + job.label + '" van "' + job.offer.name.nl + '"';
       } else {
-        description = 'Label "' + job.event.name.nl + '" met "' + job.label + '"';
+        description = 'Label "' + job.offer.name.nl + '" met "' + job.label + '"';
       }
     }
 

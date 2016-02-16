@@ -61,6 +61,36 @@ function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, Que
   };
 
   /**
+   * Label a place with a label
+   * @param {UdbPlace} place
+   * @param {string} label
+   */
+  this.labelPlace = function (place, label) {
+    var jobPromise = udbApi.labelPlace(place.id, label);
+
+    jobPromise.success(function (jobData) {
+      place.label(label);
+      var job = new EventLabelJob(jobData.commandId, place, label);
+      jobLogger.addJob(job);
+    });
+  };
+
+  /**
+   * Remove a label from a place
+   * @param {UdbPlace} place
+   * @param {string} label
+   */
+  this.unlabelPlace = function (place, label) {
+    var jobPromise = udbApi.unlabelPlace(place.id, label);
+
+    jobPromise.success(function (jobData) {
+      place.unlabel(label);
+      var job = new EventLabelJob(jobData.commandId, place, label, true);
+      jobLogger.addJob(job);
+    });
+  };
+
+  /**
    * @param {string[]} eventIds
    * @param {string} label
    */
