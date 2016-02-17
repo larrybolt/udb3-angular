@@ -118,6 +118,9 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      if (jsonPlace['@id']) {
+        this.apiUrl = jsonPlace['@id'];
+      }
       this.name = jsonPlace.name || {};
       this.address = jsonPlace.address || this.address;
       this.theme = getCategoryByType(jsonPlace, 'theme') || {};
