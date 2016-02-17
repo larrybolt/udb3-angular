@@ -17,7 +17,7 @@ function PlaceController(
   jsonLDLangFilter,
   EventTranslationState,
   placeTranslator,
-  eventLabeller,
+  offerLabeller,
   $window
 ) {
   var controller = this;
@@ -33,7 +33,7 @@ function PlaceController(
     {'lang': 'de'}
   ];
 
-  controller.availableLabels = eventLabeller.recentLabels;
+  controller.availableLabels = offerLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -44,7 +44,7 @@ function PlaceController(
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;
         cachedPlace.updateTranslationState();
-        controller.availableLabels = _.union(cachedPlace.labels, eventLabeller.recentLabels);
+        controller.availableLabels = _.union(cachedPlace.labels, offerLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
         controller.fetching = false;
@@ -154,11 +154,11 @@ function PlaceController(
       });
       $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      eventLabeller.labelPlace(cachedPlace, newLabel);
+      offerLabeller.labelPlace(cachedPlace, newLabel);
     }
   };
 
   controller.labelRemoved = function (label) {
-    eventLabeller.unlabelPlace(cachedPlace, label);
+    offerLabeller.unlabelPlace(cachedPlace, label);
   };
 }

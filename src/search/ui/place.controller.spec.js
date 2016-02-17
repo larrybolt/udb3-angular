@@ -8,7 +8,7 @@ describe('Controller: Place', function() {
       jsonLDLangFilter,
       EventTranslationState,
       placeTranslator,
-      eventLabeller,
+      offerLabeller,
       $window,
       $q,
       examplePlaceEventJson = {
@@ -65,7 +65,7 @@ describe('Controller: Place', function() {
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
     EventTranslationState = $injector.get('EventTranslationState');
     placeTranslator = $injector.get('placeTranslator');
-    eventLabeller = jasmine.createSpyObj('eventLabeller', ['recentLabels', 'labelPlace']);
+    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'labelPlace']);
     $window = $injector.get('$window');
     $q = _$q_;
 
@@ -82,7 +82,7 @@ describe('Controller: Place', function() {
         jsonLDLangFilter: jsonLDLangFilter,
         EventTranslationState: EventTranslationState,
         placeTranslator: placeTranslator,
-        eventLabeller: eventLabeller,
+        offerLabeller: offerLabeller,
         $window: $window
       }
     );
@@ -103,7 +103,7 @@ describe('Controller: Place', function() {
     $scope.$digest();
 
     placeController.labelAdded(label);
-    expect(eventLabeller.labelPlace).toHaveBeenCalled();
+    expect(offerLabeller.labelPlace).toHaveBeenCalled();
   });
 
   it('should prevent any duplicate labels and warn the user when trying to add one', function () {
@@ -118,6 +118,6 @@ describe('Controller: Place', function() {
     var expectedLabels = ['some label'];
     expect($scope.event.labels).toEqual(expectedLabels);
     expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
-    expect(eventLabeller.labelPlace).not.toHaveBeenCalled();
+    expect(offerLabeller.labelPlace).not.toHaveBeenCalled();
   });
 });

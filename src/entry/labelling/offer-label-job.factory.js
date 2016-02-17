@@ -2,37 +2,37 @@
 
 /**
  * @ngdoc service
- * @name udb.entry.EventLabelJob
+ * @name udb.entry.OfferLabelJob
  * @description
  * # Event Label Job
  * This Is the factory that creates an event label job
  */
 angular
   .module('udb.entry')
-  .factory('EventLabelJob', EventLabelJobFactory);
+  .factory('OfferLabelJob', OfferLabelJobFactory);
 
 /* @ngInject */
-function EventLabelJobFactory(BaseJob, JobStates) {
+function OfferLabelJobFactory(BaseJob, JobStates) {
 
   /**
-   * @class EventLabelJob
+   * @class OfferLabelJob
    * @constructor
    * @param {string} commandId
    * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    * @param {boolean} unlabel set to true when unlabeling
    */
-  var EventLabelJob = function (commandId, offer, label, unlabel) {
+  var OfferLabelJob = function (commandId, offer, label, unlabel) {
     BaseJob.call(this, commandId);
     this.offer = offer;
     this.label = label;
     this.unlabel = !!unlabel || false;
   };
 
-  EventLabelJob.prototype = Object.create(BaseJob.prototype);
-  EventLabelJob.prototype.constructor = EventLabelJob;
+  OfferLabelJob.prototype = Object.create(BaseJob.prototype);
+  OfferLabelJob.prototype.constructor = OfferLabelJob;
 
-  EventLabelJob.prototype.getDescription = function () {
+  OfferLabelJob.prototype.getDescription = function () {
     var job = this,
         description;
 
@@ -49,5 +49,5 @@ function EventLabelJobFactory(BaseJob, JobStates) {
     return description;
   };
 
-  return (EventLabelJob);
+  return (OfferLabelJob);
 }

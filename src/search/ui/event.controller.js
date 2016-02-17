@@ -15,7 +15,7 @@ function EventController(
   udbApi,
   jsonLDLangFilter,
   eventTranslator,
-  eventLabeller,
+  offerLabeller,
   eventEditor,
   EventTranslationState,
   $scope,
@@ -35,7 +35,7 @@ function EventController(
     {'lang': 'en'},
     {'lang': 'de'}
   ];
-  controller.availableLabels = eventLabeller.recentLabels;
+  controller.availableLabels = offerLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -46,7 +46,7 @@ function EventController(
       eventPromise.then(function (eventObject) {
         cachedEvent = eventObject;
         cachedEvent.updateTranslationState();
-        controller.availableLabels = _.union(cachedEvent.labels, eventLabeller.recentLabels);
+        controller.availableLabels = _.union(cachedEvent.labels, offerLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedEvent, defaultLanguage);
         controller.fetching = false;
@@ -169,12 +169,12 @@ function EventController(
       });
       $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      eventLabeller.label(cachedEvent, newLabel);
+      offerLabeller.label(cachedEvent, newLabel);
     }
   };
 
   controller.labelRemoved = function (label) {
-    eventLabeller.unlabel(cachedEvent, label);
+    offerLabeller.unlabel(cachedEvent, label);
   };
 
   // Editing
