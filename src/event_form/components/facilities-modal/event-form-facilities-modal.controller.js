@@ -24,6 +24,35 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
   $scope.cancel = cancel;
   $scope.saveFacilities = saveFacilities;
 
+  // if already selected facilities, make sure they're checked
+  if (EventFormData.facilities) {
+    var isset = false;
+    var i, j, k = 0;
+    var facilityTypes = ['motor', 'visual', 'hearing'];
+    var type = '';
+
+    for (i = 0; i < EventFormData.facilities.length; i++) {
+      isset = false;
+
+      for (j = 0; j < facilityTypes.length; j++)
+      {
+        type = facilityTypes[j];
+
+        for (k = 0; k < $scope.facilities[type].length; k++) {
+          if ($scope.facilities[type][k].id === EventFormData.facilities[i].id) {
+            isset = true;
+            $scope.facilities[type][k].selected = true;
+            break;
+          }
+        }
+
+        if (isset === true) {
+          break;
+        }
+      }
+    }
+  }
+
   /**
    * Cancel the modal.
    */
