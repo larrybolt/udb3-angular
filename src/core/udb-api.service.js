@@ -356,17 +356,17 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
   };
 
-  this.labelEvent = function (eventId, label) {
+  this.labelOffer = function (offer, label) {
     return $http.post(
-      appConfig.baseUrl + 'event/' + eventId + '/labels',
+      offer.apiUrl + '/labels',
       {'label': label},
       defaultApiConfig
     );
   };
 
-  this.unlabelEvent = function (eventId, label) {
+  this.unlabelOffer = function (offer, label) {
     return $http['delete'](
-      appConfig.baseUrl + 'event/' + eventId + '/labels/' + label,
+      offer.apiUrl + '/labels/' + label,
       defaultApiConfig
     );
   };
@@ -382,21 +382,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   this.removeEvent = function (id, event) {
     return $http['delete'](
       appConfig.baseApiUrl + 'event/' + id + '/delete',
-      defaultApiConfig
-    );
-  };
-
-  this.labelPlace = function (placeId, label) {
-    return $http.post(
-      appConfig.baseUrl + 'place/' + placeId + '/labels',
-      {'label': label},
-      defaultApiConfig
-    );
-  };
-
-  this.unlabelPlace = function (placeId, label) {
-    return $http['delete'](
-      appConfig.baseUrl + 'place/' + placeId + '/labels/' + label,
       defaultApiConfig
     );
   };

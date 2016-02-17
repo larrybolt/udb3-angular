@@ -32,60 +32,30 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, Que
 
   /**
    * Label an event with a label
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.label = function (event, label) {
-    var jobPromise = udbApi.labelEvent(event.id, label);
+  this.label = function (offer, label) {
+    var jobPromise = udbApi.labelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.label(label);
-      var job = new OfferLabelJob(jobData.commandId, event, label);
+      offer.label(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label);
       jobLogger.addJob(job);
     });
   };
 
   /**
    * Unlabel a label from an event
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.unlabel = function (event, label) {
-    var jobPromise = udbApi.unlabelEvent(event.id, label);
+  this.unlabel = function (offer, label) {
+    var jobPromise = udbApi.unlabelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.unlabel(label);
-      var job = new OfferLabelJob(jobData.commandId, event, label, true);
-      jobLogger.addJob(job);
-    });
-  };
-
-  /**
-   * Label a place with a label
-   * @param {UdbPlace} place
-   * @param {string} label
-   */
-  this.labelPlace = function (place, label) {
-    var jobPromise = udbApi.labelPlace(place.id, label);
-
-    jobPromise.success(function (jobData) {
-      place.label(label);
-      var job = new OfferLabelJob(jobData.commandId, place, label);
-      jobLogger.addJob(job);
-    });
-  };
-
-  /**
-   * Remove a label from a place
-   * @param {UdbPlace} place
-   * @param {string} label
-   */
-  this.unlabelPlace = function (place, label) {
-    var jobPromise = udbApi.unlabelPlace(place.id, label);
-
-    jobPromise.success(function (jobData) {
-      place.unlabel(label);
-      var job = new OfferLabelJob(jobData.commandId, place, label, true);
+      offer.unlabel(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label, true);
       jobLogger.addJob(job);
     });
   };

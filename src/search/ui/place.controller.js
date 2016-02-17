@@ -154,11 +154,11 @@ function PlaceController(
       });
       $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      offerLabeller.labelPlace(cachedPlace, newLabel);
+      offerLabeller.label(cachedPlace, newLabel);
     }
   };
 
   controller.labelRemoved = function (label) {
-    offerLabeller.unlabelPlace(cachedPlace, label);
+    offerLabeller.unlabel(cachedPlace, label);
   };
 }
