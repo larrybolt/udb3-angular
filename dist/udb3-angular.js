@@ -2809,17 +2809,17 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
   };
 
-  this.labelEvent = function (eventId, label) {
+  this.labelOffer = function (offer, label) {
     return $http.post(
-      appConfig.baseUrl + 'event/' + eventId + '/labels',
+      offer.apiUrl + '/labels',
       {'label': label},
       defaultApiConfig
     );
   };
 
-  this.unlabelEvent = function (eventId, label) {
+  this.unlabelOffer = function (offer, label) {
     return $http['delete'](
-      appConfig.baseUrl + 'event/' + eventId + '/labels/' + label,
+      offer.apiUrl + '/labels/' + label,
       defaultApiConfig
     );
   };
@@ -2835,21 +2835,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   this.removeEvent = function (id, event) {
     return $http['delete'](
       appConfig.baseApiUrl + 'event/' + id + '/delete',
-      defaultApiConfig
-    );
-  };
-
-  this.labelPlace = function (placeId, label) {
-    return $http.post(
-      appConfig.baseUrl + 'place/' + placeId + '/labels',
-      {'label': label},
-      defaultApiConfig
-    );
-  };
-
-  this.unlabelPlace = function (placeId, label) {
-    return $http['delete'](
-      appConfig.baseUrl + 'place/' + placeId + '/labels/' + label,
       defaultApiConfig
     );
   };
@@ -3693,6 +3678,9 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      if (jsonPlace['@id']) {
+        this.apiUrl = jsonPlace['@id'];
+      }
       this.name = jsonPlace.name || {};
       this.address = jsonPlace.address || this.address;
       this.theme = getCategoryByType(jsonPlace, 'theme') || {};
@@ -5178,60 +5166,30 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, Que
 
   /**
    * Label an event with a label
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.label = function (event, label) {
-    var jobPromise = udbApi.labelEvent(event.id, label);
+  this.label = function (offer, label) {
+    var jobPromise = udbApi.labelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.label(label);
-      var job = new OfferLabelJob(jobData.commandId, event, label);
+      offer.label(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label);
       jobLogger.addJob(job);
     });
   };
 
   /**
    * Unlabel a label from an event
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.unlabel = function (event, label) {
-    var jobPromise = udbApi.unlabelEvent(event.id, label);
+  this.unlabel = function (offer, label) {
+    var jobPromise = udbApi.unlabelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.unlabel(label);
-      var job = new OfferLabelJob(jobData.commandId, event, label, true);
-      jobLogger.addJob(job);
-    });
-  };
-
-  /**
-   * Label a place with a label
-   * @param {UdbPlace} place
-   * @param {string} label
-   */
-  this.labelPlace = function (place, label) {
-    var jobPromise = udbApi.labelPlace(place.id, label);
-
-    jobPromise.success(function (jobData) {
-      place.label(label);
-      var job = new OfferLabelJob(jobData.commandId, place, label);
-      jobLogger.addJob(job);
-    });
-  };
-
-  /**
-   * Remove a label from a place
-   * @param {UdbPlace} place
-   * @param {string} label
-   */
-  this.unlabelPlace = function (place, label) {
-    var jobPromise = udbApi.unlabelPlace(place.id, label);
-
-    jobPromise.success(function (jobData) {
-      place.unlabel(label);
-      var job = new OfferLabelJob(jobData.commandId, place, label, true);
+      offer.unlabel(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label, true);
       jobLogger.addJob(job);
     });
   };
@@ -12736,12 +12694,12 @@ function PlaceController(
       });
       $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      offerLabeller.labelPlace(cachedPlace, newLabel);
+      offerLabeller.label(cachedPlace, newLabel);
     }
   };
 
   controller.labelRemoved = function (label) {
-    offerLabeller.unlabelPlace(cachedPlace, label);
+    offerLabeller.unlabel(cachedPlace, label);
   };
 }
 PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "placeTranslator", "offerLabeller", "$window"];
