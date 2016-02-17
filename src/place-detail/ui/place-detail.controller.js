@@ -12,7 +12,14 @@ angular
     .controller('PlaceDetailController', PlaceDetail);
 
 /* @ngInject */
-function PlaceDetail($scope, placeId, udbApi, $location) {
+function PlaceDetail(
+  $scope,
+  placeId,
+  udbApi,
+  $location,
+  jsonLDLangFilter,
+  variationRepository
+) {
   var activeTabId = 'data';
 
   $scope.placeId = placeId;
@@ -40,6 +47,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
   });
 
   var placeLoaded = udbApi.getPlaceById($scope.placeId);
+  var language = 'nl';
 
   placeLoaded.then(
       function (place) {
@@ -48,7 +56,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
         placeHistoryLoaded.then(function(placeHistory) {
           $scope.placeHistory = placeHistory;
         });*/
-        $scope.place = place;
+        $scope.place = jsonLDLangFilter(place, language);
         $scope.placeIdIsInvalid = false;
 
       },
