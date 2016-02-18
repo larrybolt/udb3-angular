@@ -2946,7 +2946,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   /**
    * Add a new image.
    */
-  this.addImage = function(eventId, imageId) {
+  this.addImage = function(itemId, itemType, imageId) {
     var postData = {
       mediaObjectId: imageId
     };
@@ -2957,7 +2957,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
     return $http
       .post(
-        appConfig.baseUrl + 'event/' + eventId + '/images',
+        appConfig.baseUrl + itemType + '/' + itemId + '/images',
         postData,
         defaultApiConfig
       )
@@ -4738,6 +4738,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
    * @returns {EventCrud.addImage.jobPromise}
    */
   service.addImage = function(item, image) {
+    var imageId = image.id || image['@id'].split('/').pop();
+
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'addImage');
       jobLogger.addJob(job);
@@ -4745,7 +4747,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     }
 
     return udbApi
-      .addImage(item.id, image.id)
+      .addImage(item.id, item.getType(), imageId)
       .then(logJob);
   };
 

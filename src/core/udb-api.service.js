@@ -493,7 +493,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   /**
    * Add a new image.
    */
-  this.addImage = function(eventId, imageId) {
+  this.addImage = function(itemId, itemType, imageId) {
     var postData = {
       mediaObjectId: imageId
     };
@@ -504,7 +504,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
     return $http
       .post(
-        appConfig.baseUrl + 'event/' + eventId + '/images',
+        appConfig.baseUrl + itemType + '/' + itemId + '/images',
         postData,
         defaultApiConfig
       )
