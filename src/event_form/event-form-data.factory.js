@@ -13,15 +13,6 @@
  */
 
 /**
- * @typedef {Object} MediaObject
- * @property {string} id
- * @property {string} url
- * @property {string} thumbnailUrl
- * @property {string} description
- * @property {string} copyrightHolder
- */
-
-/**
  * @ngdoc service
  * @name udb.core.EventFormData
  * @description
@@ -30,6 +21,17 @@
 angular
   .module('udb.event-form')
   .factory('EventFormData', EventFormDataFactory);
+
+/**
+ * @typedef {Object} MediaObject
+ * @property {string} @id
+ * @property {string} @type
+ * @property {string} id
+ * @property {string} url
+ * @property {string} thumbnailUrl
+ * @property {string} description
+ * @property {string} copyrightHolder
+ */
 
 /* @ngInject */
 function EventFormDataFactory() {
@@ -340,8 +342,7 @@ function EventFormDataFactory() {
      * @param {MediaObject} mediaObject
      */
     addImage : function(mediaObject) {
-      this.mediaObjects.push(mediaObject);
-      console.log(this.mediaObjects);
+      this.mediaObjects = _.union(this.mediaObjects, [mediaObject]);
     },
 
     /**
@@ -376,12 +377,12 @@ function EventFormDataFactory() {
     },
 
     /**
-     * Delete a given media object.
+     * Remove a media object from this item.
      *
-     *@param {MediaObject} deletedMediaObject
+     *@param {MediaObject} mediaObject
      */
-    deleteMediaObject : function(deletedMediaObject) {
-      this.mediaObjects = _.reject(this.mediaObjects, {id: deletedMediaObject.id});
+    removeMediaObject : function(mediaObject) {
+      this.mediaObjects = _.reject(this.mediaObjects, {'@id': mediaObject['@id']});
     },
 
     /**

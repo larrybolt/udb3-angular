@@ -2977,6 +2977,9 @@ body {
   padding: 4px 12px;
   line-height: initial;
 }
+.image-copyright-agreements {
+  font-size: 0.85em;
+}
 .muted td {
   background-color: #EDEDED;
   color: #777777;

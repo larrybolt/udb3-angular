@@ -61,4 +61,32 @@ describe('Factory: Event form data', function () {
     EventFormData.addImage(image);
     expect(EventFormData.mediaObjects).toEqual([image]);
   }));
+
+  it('should remove update the list of media objects when removing a media object', inject(function (EventFormData) {
+    var imageToRemove = {
+      '@id': 'http://culudb-silex.dev:8080/media/d2efceac-46ec-49b1-903f-d73b4c69fe70',
+      '@type': 'schema:ImageObject',
+      'contentUrl': 'http://culudb-silex.dev:8080/media/d2efceac-46ec-49b1-903f-d73b4c69fe70.png',
+      'thumbnailUrl': 'http://culudb-silex.dev:8080/media/d2efceac-46ec-49b1-903f-d73b4c69fe70.png',
+      'description': 'desc',
+      'copyrightHolder': 'copy'
+    };
+
+    var otherMediaObject = {
+      '@id': 'http://culudb-silex.dev:8080/media/d2efceac-6666-49b1-1234-d73b4c69fe70',
+      '@type': 'schema:ImageObject',
+      'contentUrl': 'http://culudb-silex.dev:8080/media/d2efceac-6666-49b1-1234-d73b4c69fe70.png',
+      'thumbnailUrl': 'http://culudb-silex.dev:8080/media/d2efceac-6666-49b1-1234-d73b4c69fe70.png',
+      'description': 'desc',
+      'copyrightHolder': 'copy'
+    };
+
+    EventFormData.mediaObjects = [
+      imageToRemove,
+      otherMediaObject
+    ];
+
+    EventFormData.removeMediaObject(imageToRemove);
+    expect(EventFormData.mediaObjects).toEqual([otherMediaObject]);
+  }));
 });

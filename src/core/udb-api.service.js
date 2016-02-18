@@ -9,6 +9,15 @@
  */
 
 /**
+ * @readonly
+ * @enum {string}
+ */
+var OfferTypes = {
+  EVENT: 'event',
+  PLACE: 'place'
+};
+
+/**
  * @ngdoc service
  * @name udb.core.udbApi
  * @description
@@ -347,17 +356,17 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
   };
 
-  this.labelEvent = function (eventId, label) {
+  this.labelOffer = function (offer, label) {
     return $http.post(
-      appConfig.baseUrl + 'event/' + eventId + '/labels',
+      offer.apiUrl + '/labels',
       {'label': label},
       defaultApiConfig
     );
   };
 
-  this.unlabelEvent = function (eventId, label) {
+  this.unlabelOffer = function (offer, label) {
     return $http['delete'](
-      appConfig.baseUrl + 'event/' + eventId + '/labels/' + label,
+      offer.apiUrl + '/labels/' + label,
       defaultApiConfig
     );
   };
@@ -525,15 +534,23 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * Delete an image.
+   * Remove an image from an offer.
+   *
+   * @param {string} itemId
+   * @param {OfferTypes} itemType
+   * @param {string} imageId
+   *
+   * @return {Promise}
    */
-  this.deleteImage = function(id, type, indexToDelete) {
+  this.removeImage = function(itemId, itemType, imageId) {
+    function returnJobData(response) {
+      return $q.resolve(response.data);
+    }
 
     return $http['delete'](
-      appConfig.baseApiUrl + type + '/' + id + '/image/' + indexToDelete,
+      appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
       defaultApiConfig
-    );
-
+    ).then(returnJobData);
   };
 
   this.getEventVariations = function (ownerId, purpose, eventUrl) {

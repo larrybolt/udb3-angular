@@ -1,7 +1,7 @@
 'use strict';
 
 describe('Controller: Search', function() {
-  var $scope, $window, udbApi, $controller, eventLabeller = null, $location, $q, searchHelper;
+  var $scope, $window, udbApi, $controller, offerLabeller = null, $location, $q, searchHelper;
 
   beforeEach(module('udb.core', function ($translateProvider) {
     $translateProvider.translations('en', {
@@ -40,7 +40,7 @@ describe('Controller: Search', function() {
         $scope: $scope,
         $window: $window,
         udbApi: udbApi,
-        eventLabeller: eventLabeller,
+        offerLabeller: offerLabeller,
         $location: $location,
         searchHelper: searchHelper
       }

@@ -4,26 +4,26 @@
  * @ngdoc service
  * @name udb.entry.evenLabeller
  * @description
- * # eventLabeller
+ * # offerLabeller
  * Service in the udb.entry.
  */
 angular
   .module('udb.entry')
-  .service('eventLabeller', EventLabeller);
+  .service('offerLabeller', OfferLabeller);
 
 /* @ngInject */
-function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, QueryLabelJob) {
+function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, QueryLabelJob) {
 
-  var eventLabeller = this;
+  var offerLabeller = this;
 
   // keep a cache of all the recently used labels
-  eventLabeller.recentLabels = ['some', 'recent', 'label'];
+  offerLabeller.recentLabels = ['some', 'recent', 'label'];
 
   function updateRecentLabels() {
     var labelPromise = udbApi.getRecentLabels();
 
     labelPromise.then(function (labels) {
-      //eventLabeller.recentLabels = labels;
+      offerLabeller.recentLabels = labels;
     });
   }
 
@@ -32,30 +32,30 @@ function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, Que
 
   /**
    * Label an event with a label
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.label = function (event, label) {
-    var jobPromise = udbApi.labelEvent(event.id, label);
+  this.label = function (offer, label) {
+    var jobPromise = udbApi.labelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.label(label);
-      var job = new EventLabelJob(jobData.commandId, event, label);
+      offer.label(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label);
       jobLogger.addJob(job);
     });
   };
 
   /**
    * Unlabel a label from an event
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.unlabel = function (event, label) {
-    var jobPromise = udbApi.unlabelEvent(event.id, label);
+  this.unlabel = function (offer, label) {
+    var jobPromise = udbApi.unlabelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.unlabel(label);
-      var job = new EventLabelJob(jobData.commandId, event, label, true);
+      offer.unlabel(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label, true);
       jobLogger.addJob(job);
     });
   };

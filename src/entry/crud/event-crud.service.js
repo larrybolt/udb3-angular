@@ -330,23 +330,24 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
   };
 
   /**
-   * Delete an image of the item.
+   * Remove an image from an item.
    *
    * @param {EventFormData} item
-   * @param {int} indexToDelete
-   * @returns {EventCrud.deleteImage.jobPromise}
+   * @param {image} image
+   * @returns {Promise.<EventCrudJob>}
    */
-  service.deleteImage = function(item, indexToDelete) {
+  service.removeImage = function(item, image) {
+    var imageId = image['@id'].split('/').pop();
 
-    var jobPromise = udbApi.deleteImage(item.id, item.getType(), indexToDelete);
-
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'deleteImage');
+    function logJob(jobData) {
+      var job = new EventCrudJob(jobData.commandId, item, 'removeImage');
       jobLogger.addJob(job);
-    });
+      return $q.resolve(job);
+    }
 
-    return jobPromise;
-
+    return udbApi
+      .removeImage(item.id, item.getType(), imageId)
+      .then(logJob);
   };
 
   /**
