@@ -6385,6 +6385,7 @@ function EventFormImageUploadController(
   $scope.modalTitle = 'Gebruiksvoorwaarden';
   $scope.description = '';
   $scope.copyright = '';
+  $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');
 
   // Scope functions.
   $scope.acceptAgreements = acceptAgreements;
@@ -6396,7 +6397,7 @@ function EventFormImageUploadController(
 
   var invalidFileErrors = {
     'default': 'Het geselecteerde bestand voldoet niet aan onze voorwaarden.',
-    'maxSize': 'Het bestand dat je probeert te uploaden is te groot. De maximum grootte is 1MB.'
+    'maxSize': 'Het bestand dat je probeert te uploaden is te groot. De maximum grootte is ' + $scope.maxFileSize + '.'
   };
 
   /**
@@ -13860,7 +13861,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                  id=\"inputFile\"\n" +
     "                  ngf-select=\"selectFile($file, $invalidFiles)\"\n" +
     "                  accept=\"image/*\"\n" +
-    "                  ngf-max-size=\"1MB\">\n" +
+    "                  ngf-max-size=\"{{maxFileSize}}\">\n" +
     "            Kies Bestand</button>\n" +
     "        </p>\n" +
     "\n" +
@@ -13869,7 +13870,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        </p>\n" +
     "\n" +
     "        <p class=\"help-block\">\n" +
-    "          De maximale grootte van je afbeelding is 1 MB en heeft als type .jpeg, .gif of .png</p>\n" +
+    "          De maximale grootte van je afbeelding is <span ng-bind=\"maxFileSize\"></span> en heeft als type .jpeg, .gif of .png</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +

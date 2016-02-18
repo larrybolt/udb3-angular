@@ -21,7 +21,7 @@
                   id="inputFile"
                   ngf-select="selectFile($file, $invalidFiles)"
                   accept="image/*"
-                  ngf-max-size="1MB">
+                  ngf-max-size="{{maxFileSize}}">
             Kies Bestand</button>
         </p>
 
@@ -30,7 +30,7 @@
         </p>
 
         <p class="help-block">
-          De maximale grootte van je afbeelding is 1 MB en heeft als type .jpeg, .gif of .png</p>
+          De maximale grootte van je afbeelding is <span ng-bind="maxFileSize"></span> en heeft als type .jpeg, .gif of .png</p>
       </div>
 
       <div class="form-group">

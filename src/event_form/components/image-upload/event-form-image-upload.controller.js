@@ -32,6 +32,7 @@ function EventFormImageUploadController(
   $scope.modalTitle = 'Gebruiksvoorwaarden';
   $scope.description = '';
   $scope.copyright = '';
+  $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');
 
   // Scope functions.
   $scope.acceptAgreements = acceptAgreements;
@@ -43,7 +44,7 @@ function EventFormImageUploadController(
 
   var invalidFileErrors = {
     'default': 'Het geselecteerde bestand voldoet niet aan onze voorwaarden.',
-    'maxSize': 'Het bestand dat je probeert te uploaden is te groot. De maximum grootte is 1MB.'
+    'maxSize': 'Het bestand dat je probeert te uploaden is te groot. De maximum grootte is ' + $scope.maxFileSize + '.'
   };
 
   /**
