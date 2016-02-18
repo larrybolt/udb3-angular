@@ -11,7 +11,7 @@ angular
   .service('cityAutocomplete', CityAutocomplete);
 
 /* @ngInject */
-function CityAutocomplete($q, $http, appConfig, UdbPlace) {
+function CityAutocomplete($q, $http, appConfig, UdbPlace, jsonLDLangFilter) {
   /**
    *
    * Get the places for a city
@@ -31,7 +31,8 @@ function CityAutocomplete($q, $http, appConfig, UdbPlace) {
 
     var parsePagedCollection = function (response) {
       var locations = _.map(response.data.member, function (placeJson) {
-        return new UdbPlace(placeJson);
+        var place = new UdbPlace(placeJson);
+        return jsonLDLangFilter(place, 'nl');
       });
 
       deferredPlaces.resolve(locations);
