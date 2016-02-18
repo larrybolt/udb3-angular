@@ -20,7 +20,7 @@ function Search(
   $location,
   $uibModal,
   SearchResultViewer,
-  eventLabeller,
+  offerLabeller,
   searchHelper,
   $rootScope,
   eventExporter,
@@ -130,7 +130,7 @@ function Search(
       });
 
       _.each(labels, function (label) {
-        eventLabeller.labelEventsById(eventIds, label);
+        offerLabeller.labelEventsById(eventIds, label);
       });
     });
   };
@@ -157,7 +157,7 @@ function Search(
         });
 
         _.each(labels, function (label) {
-          eventLabeller.labelQuery(query.queryString, label, eventCount);
+          offerLabeller.labelQuery(query.queryString, label, eventCount);
         });
       });
     } else {

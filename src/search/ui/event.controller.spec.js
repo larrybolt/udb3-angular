@@ -5,7 +5,7 @@ describe('Controller: Event', function() {
       eventController,
       jsonLDLangFilter,
       eventTranslator,
-      eventLabeller,
+      offerLabeller,
       eventEditor,
       EventTranslationState,
       udbApi,
@@ -141,7 +141,7 @@ describe('Controller: Event', function() {
     udbApi = $injector.get('udbApi');
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
     eventTranslator = $injector.get('eventTranslator');
-    eventLabeller = jasmine.createSpyObj('eventLabeller', ['recentLabels', 'label']);
+    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
     eventEditor = $injector.get('eventEditor');
     EventTranslationState = $injector.get('EventTranslationState');
     UdbEvent = $injector.get('UdbEvent');
@@ -159,7 +159,7 @@ describe('Controller: Event', function() {
         udbApi: udbApi,
         jsonLDLangFilter: jsonLDLangFilter,
         eventTranslator: eventTranslator,
-        eventLabeller: eventLabeller,
+        offerLabeller: offerLabeller,
         eventEditor: eventEditor,
         EventTranslationState: EventTranslationState,
         $scope: $scope
@@ -173,7 +173,7 @@ describe('Controller: Event', function() {
     $scope.$digest();
 
     eventController.labelAdded(label);
-    expect(eventLabeller.label).toHaveBeenCalled();
+    expect(offerLabeller.label).toHaveBeenCalled();
   });
 
   it('should prevent any duplicate labels and warn the user when trying to add one', function () {
@@ -188,7 +188,7 @@ describe('Controller: Event', function() {
     var expectedLabels = ['some label'];
     expect($scope.event.labels).toEqual(expectedLabels);
     expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
-    expect(eventLabeller.label).not.toHaveBeenCalled();
+    expect(offerLabeller.label).not.toHaveBeenCalled();
   });
 
   describe('variations: ', function () {

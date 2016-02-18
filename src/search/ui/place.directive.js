@@ -2,9 +2,9 @@
 
 /**
  * @ngdoc directive
- * @name udb.search.directive:udbEvent
+ * @name udb.search.directive:udbPlace
  * @description
- * # udbEvent
+ * # udbPlace
  */
 angular
   .module('udb.search')

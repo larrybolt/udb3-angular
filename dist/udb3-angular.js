@@ -2809,17 +2809,17 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
   };
 
-  this.labelEvent = function (eventId, label) {
+  this.labelOffer = function (offer, label) {
     return $http.post(
-      appConfig.baseUrl + 'event/' + eventId + '/labels',
+      offer.apiUrl + '/labels',
       {'label': label},
       defaultApiConfig
     );
   };
 
-  this.unlabelEvent = function (eventId, label) {
+  this.unlabelOffer = function (offer, label) {
     return $http['delete'](
-      appConfig.baseUrl + 'event/' + eventId + '/labels/' + label,
+      offer.apiUrl + '/labels/' + label,
       defaultApiConfig
     );
   };
@@ -3572,7 +3572,7 @@ angular
   .factory('UdbPlace', UdbPlaceFactory);
 
 /* @ngInject */
-function UdbPlaceFactory(placeCategories) {
+function UdbPlaceFactory(EventTranslationState, placeCategories) {
 
   function getCategoryByType(jsonPlace, domain) {
     var category = _.find(jsonPlace.terms, function (category) {
@@ -3601,6 +3601,36 @@ function UdbPlaceFactory(placeCategories) {
     }
 
     return categories;
+  }
+
+  function updateTranslationState(place) {
+    var languages = {'en': false, 'fr': false, 'de': false},
+        properties = ['name', 'description'];
+
+    _.forEach(languages, function (language, languageKey) {
+      var translationCount = 0,
+          state;
+
+      _.forEach(properties, function (property) {
+        if (place[property] && place[property][languageKey]) {
+          ++translationCount;
+        }
+      });
+
+      if (translationCount) {
+        if (translationCount === properties.length) {
+          state = EventTranslationState.ALL;
+        } else {
+          state = EventTranslationState.SOME;
+        }
+      } else {
+        state = EventTranslationState.NONE;
+      }
+
+      languages[languageKey] = state;
+    });
+
+    place.translationState = languages;
   }
 
   /**
@@ -3648,10 +3678,13 @@ function UdbPlaceFactory(placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
-      this.name = jsonPlace.name || '';
+      if (jsonPlace['@id']) {
+        this.apiUrl = jsonPlace['@id'];
+      }
+      this.name = jsonPlace.name || {};
       this.address = jsonPlace.address || this.address;
       this.theme = getCategoryByType(jsonPlace, 'theme') || {};
-      this.description = jsonPlace.description || '';
+      this.description = angular.copy(jsonPlace.description) || {};
       this.calendarType = jsonPlace.calendarType || '';
       this.startDate = jsonPlace.startDate;
       this.endDate = jsonPlace.endDate;
@@ -3663,6 +3696,9 @@ function UdbPlaceFactory(placeCategories) {
         this.organizer = jsonPlace.organizer;
       }
       this.image = getImages(jsonPlace);
+      this.labels = _.map(jsonPlace.labels, function (label) {
+        return label;
+      });
       this.mediaObject = jsonPlace.mediaObject || [];
       this.facilities = getCategoriesByType(jsonPlace, 'facility') || [];
       this.additionalData = jsonPlace.additionalData || {};
@@ -3686,6 +3722,13 @@ function UdbPlaceFactory(placeCategories) {
         });
       }
 
+    },
+
+    /**
+     * Set the name of the event for a given langcode.
+     */
+    setName: function(name, langcode) {
+      this.name[langcode] = name;
     },
 
     /**
@@ -3789,13 +3832,54 @@ function UdbPlaceFactory(placeCategories) {
 
     getStreet: function(street) {
       return this.address.streetAddress;
+    },
+
+    /**
+     * Label the event with a label or a list of labels
+     * @param {string|string[]} label
+     */
+    label: function (label) {
+      var newLabels = [];
+      var existingLabels = this.labels;
+
+      if (_.isArray(label)) {
+        newLabels = label;
+      }
+
+      if (_.isString(label)) {
+        newLabels = [label];
+      }
+
+      newLabels = _.filter(newLabels, function (newLabel) {
+        var similarLabel = _.find(existingLabels, function (existingLabel) {
+          return existingLabel.toUpperCase() === newLabel.toUpperCase();
+        });
+
+        return !similarLabel;
+      });
+
+      this.labels = _.union(this.labels, newLabels);
+    },
+
+    /**
+     * Unlabel a label from an event
+     * @param {string} labelName
+     */
+    unlabel: function (labelName) {
+      _.remove(this.labels, function (label) {
+        return label === labelName;
+      });
+    },
+
+    updateTranslationState: function () {
+      updateTranslationState(this);
     }
 
   };
 
   return (UdbPlace);
 }
-UdbPlaceFactory.$inject = ["placeCategories"];
+UdbPlaceFactory.$inject = ["EventTranslationState", "placeCategories"];
 
 // Source: src/core/udb3-content.service.js
 /**
@@ -4930,60 +5014,6 @@ function EventLabelBatchJobFactory(BaseJob, JobStates) {
 }
 EventLabelBatchJobFactory.$inject = ["BaseJob", "JobStates"];
 
-// Source: src/entry/labelling/event-label-job.factory.js
-/**
- * @ngdoc service
- * @name udb.entry.EventLabelJob
- * @description
- * # Event Label Job
- * This Is the factory that creates an event label job
- */
-angular
-  .module('udb.entry')
-  .factory('EventLabelJob', EventLabelJobFactory);
-
-/* @ngInject */
-function EventLabelJobFactory(BaseJob, JobStates) {
-
-  /**
-   * @class EventLabelJob
-   * @constructor
-   * @param {string} commandId
-   * @param {UdbEvent} event
-   * @param {string} label
-   * @param {boolean} unlabel set to true when unlabeling
-   */
-  var EventLabelJob = function (commandId, event, label, unlabel) {
-    BaseJob.call(this, commandId);
-    this.event = event;
-    this.label = label;
-    this.unlabel = !!unlabel || false;
-  };
-
-  EventLabelJob.prototype = Object.create(BaseJob.prototype);
-  EventLabelJob.prototype.constructor = EventLabelJob;
-
-  EventLabelJob.prototype.getDescription = function () {
-    var job = this,
-        description;
-
-    if (job.state === JobStates.FAILED) {
-      description = 'Labelen van evenement mislukt';
-    } else {
-      if (job.unlabel) {
-        description = 'Verwijder label "' + job.label + '" van "' + job.event.name.nl + '"';
-      } else {
-        description = 'Label "' + job.event.name.nl + '" met "' + job.label + '"';
-      }
-    }
-
-    return description;
-  };
-
-  return (EventLabelJob);
-}
-EventLabelJobFactory.$inject = ["BaseJob", "JobStates"];
-
 // Source: src/entry/labelling/event-label-modal.controller.js
 /**
  * @ngdoc function
@@ -5051,31 +5081,85 @@ function EventLabelModalCtrl($scope, $modalInstance, udbApi) {
 }
 EventLabelModalCtrl.$inject = ["$scope", "$modalInstance", "udbApi"];
 
-// Source: src/entry/labelling/event-labeller.service.js
+// Source: src/entry/labelling/offer-label-job.factory.js
+/**
+ * @ngdoc service
+ * @name udb.entry.OfferLabelJob
+ * @description
+ * # Event Label Job
+ * This Is the factory that creates an event label job
+ */
+angular
+  .module('udb.entry')
+  .factory('OfferLabelJob', OfferLabelJobFactory);
+
+/* @ngInject */
+function OfferLabelJobFactory(BaseJob, JobStates) {
+
+  /**
+   * @class OfferLabelJob
+   * @constructor
+   * @param {string} commandId
+   * @param {UdbEvent|UdbPlace} offer
+   * @param {string} label
+   * @param {boolean} unlabel set to true when unlabeling
+   */
+  var OfferLabelJob = function (commandId, offer, label, unlabel) {
+    BaseJob.call(this, commandId);
+    this.offer = offer;
+    this.label = label;
+    this.unlabel = !!unlabel || false;
+  };
+
+  OfferLabelJob.prototype = Object.create(BaseJob.prototype);
+  OfferLabelJob.prototype.constructor = OfferLabelJob;
+
+  OfferLabelJob.prototype.getDescription = function () {
+    var job = this,
+        description;
+
+    if (job.state === JobStates.FAILED) {
+      description = 'Labelen van evenement mislukt';
+    } else {
+      if (job.unlabel) {
+        description = 'Verwijder label "' + job.label + '" van "' + job.offer.name.nl + '"';
+      } else {
+        description = 'Label "' + job.offer.name.nl + '" met "' + job.label + '"';
+      }
+    }
+
+    return description;
+  };
+
+  return (OfferLabelJob);
+}
+OfferLabelJobFactory.$inject = ["BaseJob", "JobStates"];
+
+// Source: src/entry/labelling/offer-labeller.service.js
 /**
  * @ngdoc service
  * @name udb.entry.evenLabeller
  * @description
- * # eventLabeller
+ * # offerLabeller
  * Service in the udb.entry.
  */
 angular
   .module('udb.entry')
-  .service('eventLabeller', EventLabeller);
+  .service('offerLabeller', OfferLabeller);
 
 /* @ngInject */
-function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, QueryLabelJob) {
+function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, QueryLabelJob) {
 
-  var eventLabeller = this;
+  var offerLabeller = this;
 
   // keep a cache of all the recently used labels
-  eventLabeller.recentLabels = ['some', 'recent', 'label'];
+  offerLabeller.recentLabels = ['some', 'recent', 'label'];
 
   function updateRecentLabels() {
     var labelPromise = udbApi.getRecentLabels();
 
     labelPromise.then(function (labels) {
-      eventLabeller.recentLabels = labels;
+      offerLabeller.recentLabels = labels;
     });
   }
 
@@ -5084,30 +5168,30 @@ function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, Que
 
   /**
    * Label an event with a label
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.label = function (event, label) {
-    var jobPromise = udbApi.labelEvent(event.id, label);
+  this.label = function (offer, label) {
+    var jobPromise = udbApi.labelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.label(label);
-      var job = new EventLabelJob(jobData.commandId, event, label);
+      offer.label(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label);
       jobLogger.addJob(job);
     });
   };
 
   /**
    * Unlabel a label from an event
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} label
    */
-  this.unlabel = function (event, label) {
-    var jobPromise = udbApi.unlabelEvent(event.id, label);
+  this.unlabel = function (offer, label) {
+    var jobPromise = udbApi.unlabelOffer(offer, label);
 
     jobPromise.success(function (jobData) {
-      event.unlabel(label);
-      var job = new EventLabelJob(jobData.commandId, event, label, true);
+      offer.unlabel(label);
+      var job = new OfferLabelJob(jobData.commandId, offer, label, true);
       jobLogger.addJob(job);
     });
   };
@@ -5142,7 +5226,7 @@ function EventLabeller(jobLogger, udbApi, EventLabelJob, EventLabelBatchJob, Que
 
   };
 }
-EventLabeller.$inject = ["jobLogger", "udbApi", "EventLabelJob", "EventLabelBatchJob", "QueryLabelJob"];
+OfferLabeller.$inject = ["jobLogger", "udbApi", "OfferLabelJob", "EventLabelBatchJob", "QueryLabelJob"];
 
 // Source: src/entry/labelling/query-label-job.factory.js
 /**
@@ -5755,6 +5839,112 @@ function EventTranslator(jobLogger, udbApi, EventTranslationJob) {
 }
 EventTranslator.$inject = ["jobLogger", "udbApi", "EventTranslationJob"];
 
+// Source: src/entry/translation/place-translation-job.factory.js
+/**
+ * @ngdoc service
+ * @name udb.entry.PlaceTranslationJob
+ * @description
+ * # Place Translation Job
+ * This Is the factory that creates an place translation job
+ */
+angular
+  .module('udb.entry')
+  .factory('PlaceTranslationJob', PlaceTranslationJobFactory);
+
+/* @ngInject */
+function PlaceTranslationJobFactory(BaseJob, JobStates) {
+
+  /**
+   * @class PlaceTranslationJob
+   * @constructor
+   * @param {string} commandId
+   * @param {UdbPlace} place
+   * @param {string} property
+   * @param {string} language
+   * @param {string} translation
+   */
+  var PlaceTranslationJob = function (commandId, place, property, language, translation) {
+    BaseJob.call(this, commandId);
+    this.place = place;
+    this.property = property;
+    this.language = language;
+    this.translation = translation;
+  };
+
+  PlaceTranslationJob.prototype = Object.create(BaseJob.prototype);
+  PlaceTranslationJob.prototype.constructor = PlaceTranslationJob;
+
+  PlaceTranslationJob.prototype.getDescription = function () {
+    var job = this,
+        description;
+
+    if (this.state === JobStates.FAILED) {
+      description = 'Vertalen van evenement mislukt';
+    } else {
+      var propertyName;
+
+      switch (job.property) {
+        case 'name':
+          propertyName = 'titel';
+          break;
+        case 'description':
+          propertyName = 'omschrijving';
+          break;
+        default:
+          propertyName = job.property;
+      }
+
+      description = 'Vertaal ' + propertyName + ' van "' + job.place.name.nl + '"';
+    }
+
+    return description;
+  };
+
+  return (PlaceTranslationJob);
+}
+PlaceTranslationJobFactory.$inject = ["BaseJob", "JobStates"];
+
+// Source: src/entry/translation/place-translator.service.js
+/**
+ * @ngdoc service
+ * @name udb.entry.placeTranslator
+ * @description
+ * # placeTranslator
+ * Service in the udb.entry.
+ */
+angular
+  .module('udb.entry')
+  .service('placeTranslator', PlaceTranslator);
+
+/* @ngInject */
+function PlaceTranslator(jobLogger, udbApi, PlaceTranslationJob) {
+
+  /**
+   * Translates an place property to a given language and adds the job to the logger
+   *
+   * @param {UdbPlace}  place        The place that needs translating
+   * @param {string}    property     The name of the property to translate
+   * @param {string}    language     The abbreviation of the translation language
+   * @param {string}    translation  Translation to save
+   */
+  this.translateProperty = function (place, property, language, translation) {
+    var jobPromise = udbApi.translateProperty(place.id, 'place', property, language, translation);
+
+    jobPromise.success(function (jobData) {
+      // TODO get rid of this hack;
+      if (property === 'title') {
+        property = 'name';
+      }
+      place[property][language] = translation;
+      var job = new PlaceTranslationJob(jobData.commandId, place, property, language, translation);
+      jobLogger.addJob(job);
+    });
+
+    return jobPromise;
+  };
+}
+PlaceTranslator.$inject = ["jobLogger", "udbApi", "PlaceTranslationJob"];
+
 // Source: src/event-detail/event-detail.directive.js
 /**
  * @ngdoc directive
@@ -5973,6 +6163,35 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
   // Scope functions.
   $scope.cancel = cancel;
   $scope.saveFacilities = saveFacilities;
+
+  // if already selected facilities, make sure they're checked
+  if (EventFormData.facilities) {
+    var isset = false;
+    var i, j, k = 0;
+    var facilityTypes = ['motor', 'visual', 'hearing'];
+    var type = '';
+
+    for (i = 0; i < EventFormData.facilities.length; i++) {
+      isset = false;
+
+      for (j = 0; j < facilityTypes.length; j++)
+      {
+        type = facilityTypes[j];
+
+        for (k = 0; k < $scope.facilities[type].length; k++) {
+          if ($scope.facilities[type][k].id === EventFormData.facilities[i].id) {
+            isset = true;
+            $scope.facilities[type][k].selected = true;
+            break;
+          }
+        }
+
+        if (isset === true) {
+          break;
+        }
+      }
+    }
+  }
 
   /**
    * Cancel the modal.
@@ -9954,7 +10173,14 @@ angular
     .controller('PlaceDetailController', PlaceDetail);
 
 /* @ngInject */
-function PlaceDetail($scope, placeId, udbApi, $location) {
+function PlaceDetail(
+  $scope,
+  placeId,
+  udbApi,
+  $location,
+  jsonLDLangFilter,
+  variationRepository
+) {
   var activeTabId = 'data';
 
   $scope.placeId = placeId;
@@ -9982,6 +10208,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
   });
 
   var placeLoaded = udbApi.getPlaceById($scope.placeId);
+  var language = 'nl';
 
   placeLoaded.then(
       function (place) {
@@ -9990,7 +10217,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
         placeHistoryLoaded.then(function(placeHistory) {
           $scope.placeHistory = placeHistory;
         });*/
-        $scope.place = place;
+        $scope.place = jsonLDLangFilter(place, language);
         $scope.placeIdIsInvalid = false;
 
       },
@@ -10028,7 +10255,7 @@ function PlaceDetail($scope, placeId, udbApi, $location) {
     $location.path('/place/' + placeId + '/edit');
   };
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository"];
 
 // Source: src/saved-searches/components/delete-search-modal.controller.js
 /**
@@ -12140,7 +12367,7 @@ function EventController(
   udbApi,
   jsonLDLangFilter,
   eventTranslator,
-  eventLabeller,
+  offerLabeller,
   eventEditor,
   EventTranslationState,
   $scope,
@@ -12160,7 +12387,7 @@ function EventController(
     {'lang': 'en'},
     {'lang': 'de'}
   ];
-  controller.availableLabels = eventLabeller.recentLabels;
+  controller.availableLabels = offerLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -12171,7 +12398,7 @@ function EventController(
       eventPromise.then(function (eventObject) {
         cachedEvent = eventObject;
         cachedEvent.updateTranslationState();
-        controller.availableLabels = _.union(cachedEvent.labels, eventLabeller.recentLabels);
+        controller.availableLabels = _.union(cachedEvent.labels, offerLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedEvent, defaultLanguage);
         controller.fetching = false;
@@ -12294,12 +12521,12 @@ function EventController(
       });
       $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      eventLabeller.label(cachedEvent, newLabel);
+      offerLabeller.label(cachedEvent, newLabel);
     }
   };
 
   controller.labelRemoved = function (label) {
-    eventLabeller.unlabel(cachedEvent, label);
+    offerLabeller.unlabel(cachedEvent, label);
   };
 
   // Editing
@@ -12318,7 +12545,7 @@ function EventController(
   };
 
 }
-EventController.$inject = ["udbApi", "jsonLDLangFilter", "eventTranslator", "eventLabeller", "eventEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
+EventController.$inject = ["udbApi", "jsonLDLangFilter", "eventTranslator", "offerLabeller", "eventEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
 
 // Source: src/search/ui/event.directive.js
 /**
@@ -12357,9 +12584,27 @@ angular
 /* @ngInject */
 function PlaceController(
   udbApi,
-  $scope
+  $scope,
+  jsonLDLangFilter,
+  EventTranslationState,
+  placeTranslator,
+  offerLabeller,
+  $window
 ) {
   var controller = this;
+  /* @type {UdbPlace} */
+  var cachedPlace;
+
+  var defaultLanguage = 'nl';
+  controller.placeTranslation = false;
+  controller.activeLanguage = defaultLanguage;
+  controller.languageSelector = [
+    {'lang': 'fr'},
+    {'lang': 'en'},
+    {'lang': 'de'}
+  ];
+
+  controller.availableLabels = offerLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -12368,23 +12613,134 @@ function PlaceController(
       var placePromise = udbApi.getPlaceByLDId($scope.event['@id']);
 
       placePromise.then(function (placeObject) {
-        $scope.event = placeObject;
+        cachedPlace = placeObject;
+        cachedPlace.updateTranslationState();
+        controller.availableLabels = _.union(cachedPlace.labels, offerLabeller.recentLabels);
+
+        $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
         controller.fetching = false;
+
+        watchLabels();
       });
     } else {
       controller.fetching = false;
     }
+
+    function watchLabels() {
+      $scope.$watch(function () {
+        return cachedPlace.labels;
+      }, function (labels) {
+        $scope.event.labels = angular.copy(labels);
+      });
+    }
   }
 
+  controller.hasActiveTranslation = function () {
+    return cachedPlace && cachedPlace.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
+  };
+
+  controller.getLanguageTranslationIcon = function (lang) {
+    var icon = EventTranslationState.NONE.icon;
+
+    if (cachedPlace && lang) {
+      icon = cachedPlace.translationState[lang].icon;
+    }
+
+    return icon;
+  };
+
+  controller.translate = function () {
+    controller.applyPropertyChanges('name');
+    controller.applyPropertyChanges('description');
+  };
+
+  /**
+   * Sets the provided language as active or toggles it off when already active
+   *
+   * @param {String} lang
+   */
+  controller.toggleLanguage = function (lang) {
+    if (lang === controller.activeLanguage) {
+      controller.stopTranslating();
+    } else {
+      controller.activeLanguage = lang;
+      controller.placeTranslation = jsonLDLangFilter(cachedPlace, controller.activeLanguage);
+    }
+  };
+
+  controller.hasPropertyChanged = function (propertyName) {
+    var lang = controller.activeLanguage,
+        translation = controller.placeTranslation;
+
+    return controller.placeTranslation && cachedPlace[propertyName][lang] !== translation[propertyName];
+  };
+
+  controller.undoPropertyChanges = function (propertyName) {
+    var lang = controller.activeLanguage,
+        translation = controller.placeTranslation;
+
+    if (translation) {
+      translation[propertyName] = cachedPlace[propertyName][lang];
+    }
+  };
+
+  controller.applyPropertyChanges = function (propertyName) {
+    var translation = controller.placeTranslation[propertyName],
+        apiProperty;
+
+    // TODO: this is hacky, should decide on consistent name for this property
+    if (propertyName === 'name') {
+      apiProperty = 'title';
+    }
+
+    translateEventProperty(propertyName, translation, apiProperty);
+  };
+
+  controller.stopTranslating = function () {
+    controller.placeTranslation = undefined;
+    controller.activeLanguage = defaultLanguage;
+  };
+
+  function translateEventProperty(property, translation, apiProperty) {
+    var language = controller.activeLanguage,
+        udbProperty = apiProperty || property;
+
+    if (translation && translation !== cachedPlace[property][language]) {
+      var translationPromise = placeTranslator.translateProperty(cachedPlace, udbProperty, language, translation);
+
+      translationPromise.then(function () {
+        cachedPlace.updateTranslationState();
+      });
+    }
+  }
+
+  // Labelling
+  controller.labelAdded = function (newLabel) {
+    var similarLabel = _.find(cachedPlace.labels, function (label) {
+      return newLabel.toUpperCase() === label.toUpperCase();
+    });
+    if (similarLabel) {
+      $scope.$apply(function () {
+        $scope.event.labels = angular.copy(cachedPlace.labels);
+      });
+      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      offerLabeller.label(cachedPlace, newLabel);
+    }
+  };
+
+  controller.labelRemoved = function (label) {
+    offerLabeller.unlabel(cachedPlace, label);
+  };
 }
-PlaceController.$inject = ["udbApi", "$scope"];
+PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "placeTranslator", "offerLabeller", "$window"];
 
 // Source: src/search/ui/place.directive.js
 /**
  * @ngdoc directive
- * @name udb.search.directive:udbEvent
+ * @name udb.search.directive:udbPlace
  * @description
- * # udbEvent
+ * # udbPlace
  */
 angular
   .module('udb.search')
@@ -12423,7 +12779,7 @@ function Search(
   $location,
   $uibModal,
   SearchResultViewer,
-  eventLabeller,
+  offerLabeller,
   searchHelper,
   $rootScope,
   eventExporter,
@@ -12533,7 +12889,7 @@ function Search(
       });
 
       _.each(labels, function (label) {
-        eventLabeller.labelEventsById(eventIds, label);
+        offerLabeller.labelEventsById(eventIds, label);
       });
     });
   };
@@ -12560,7 +12916,7 @@ function Search(
         });
 
         _.each(labels, function (label) {
-          eventLabeller.labelQuery(query.queryString, label, eventCount);
+          offerLabeller.labelQuery(query.queryString, label, eventCount);
         });
       });
     } else {
@@ -12688,7 +13044,7 @@ function Search(
 
   init();
 }
-Search.$inject = ["$scope", "udbApi", "LuceneQueryBuilder", "$window", "$location", "$uibModal", "SearchResultViewer", "eventLabeller", "searchHelper", "$rootScope", "eventExporter", "$translate"];
+Search.$inject = ["$scope", "udbApi", "LuceneQueryBuilder", "$window", "$location", "$uibModal", "SearchResultViewer", "offerLabeller", "searchHelper", "$rootScope", "eventExporter", "$translate"];
 
 // Source: src/search/ui/search.directive.js
 /**
@@ -15827,6 +16183,113 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "          <i class=\"fa fa-eur meta icon\"></i><span ng-if=\"event.price\" ng-bind=\"event.price | currency\"></span>\n" +
     "      </span>\n" +
     "      <span ng-switch-when=\"unknown\">niet ingevoerd</span>\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <div class=\"rv-event-info-translation btn-toolbar\"\n" +
+    "         ng-show=\"resultViewer.activeSpecific.id === 'translation'\">\n" +
+    "      <button type=\"button\" ng-repeat=\"language in ::placeCtrl.languageSelector\"\n" +
+    "              ng-class=\"{active: placeCtrl.activeLanguage === language.lang}\"\n" +
+    "              class=\"btn btn-default\" ng-click=\"placeCtrl.toggleLanguage(language.lang)\">\n" +
+    "        <span class=\"fa {{placeCtrl.getLanguageTranslationIcon(language.lang)}}\"></span>\n" +
+    "        {{language.lang}}\n" +
+    "      </button>\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <div class=\"col-sm-12\" ng-show=\"placeCtrl.placeTranslation\">\n" +
+    "    <div class=\"udb-details row\">\n" +
+    "\n" +
+    "      <button type=\"button\" class=\"close\" ng-click=\"placeCtrl.stopTranslating()\">\n" +
+    "        <span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span>\n" +
+    "      </button>\n" +
+    "\n" +
+    "      <div class=\"col-sm-12\">\n" +
+    "        <div ng-switch=\"placeCtrl.hasActiveTranslation()\">\n" +
+    "          <div ng-switch-when=\"false\" class=\"udb-translation-info\">\n" +
+    "            Voer een {{ placeCtrl.activeLanguage.toUpperCase()+'_ADJECTIVE' | translate }} vertaling in\n" +
+    "          </div>\n" +
+    "\n" +
+    "          <div ng-switch-default class=\"udb-translation-info\">\n" +
+    "            Wijzig de {{ placeCtrl.activeLanguage.toUpperCase()+'_ADJECTIVE'  | translate }} vertaling\n" +
+    "          </div>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div class=\"row udb-property-translation\">\n" +
+    "          <div class=\"col-sm-6\">\n" +
+    "            <div class=\"form-group\">\n" +
+    "              <label>Titel</label>\n" +
+    "              <input type=\"text\" class=\"form-control\" ng-model=\"placeCtrl.placeTranslation.name\"/>\n" +
+    "            </div>\n" +
+    "            <div ng-show=\"placeCtrl.hasPropertyChanged('name') && placeCtrl.hasActiveTranslation()\">\n" +
+    "              <button ng-disabled=\"!placeCtrl.placeTranslation.name\" class=\"btn btn-danger\" ng-click=\"placeCtrl.applyPropertyChanges('name')\">\n" +
+    "                Opslaan\n" +
+    "              </button>\n" +
+    "              <button class=\"btn btn-default\" ng-click=\"placeCtrl.undoPropertyChanges('name')\">Annuleren</button>\n" +
+    "            </div>\n" +
+    "          </div>\n" +
+    "          <div class=\"col-sm-6\">\n" +
+    "            <strong>Basis-titel</strong>\n" +
+    "            <div ng-bind-html=\"::event.name\"></div>\n" +
+    "          </div>\n" +
+    "        </div>\n" +
+    "\n" +
+    "\n" +
+    "        <div class=\"row udb-property-translation\">\n" +
+    "          <div class=\"col-sm-6\">\n" +
+    "            <div class=\"form-group\">\n" +
+    "              <label>Beschrijving</label>\n" +
+    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"placeCtrl.placeTranslation.description\"></textarea>\n" +
+    "            </div>\n" +
+    "            <div ng-show=\"placeCtrl.hasPropertyChanged('description') && placeCtrl.hasActiveTranslation()\">\n" +
+    "              <button ng-disabled=\"!placeCtrl.placeTranslation.description\" class=\"btn btn-danger\" ng-click=\"placeCtrl.applyPropertyChanges('description')\">\n" +
+    "                Opslaan\n" +
+    "              </button>\n" +
+    "              <button class=\"btn btn-default\" ng-click=\"placeCtrl.undoPropertyChanges('description')\">Annuleren</button>\n" +
+    "            </div>\n" +
+    "          </div>\n" +
+    "          <div class=\"col-sm-6\">\n" +
+    "            <strong>Basis-beschrijving</strong>\n" +
+    "            <div ng-bind-html=\"event.description\"></div>\n" +
+    "          </div>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div ng-hide=\"placeCtrl.hasActiveTranslation()\">\n" +
+    "          <button ng-disabled=\"!placeCtrl.placeTranslation.name\" class=\"btn btn-danger\" ng-click=\"placeCtrl.translate()\">Opslaan</button>\n" +
+    "          <button class=\"btn btn-default\" ng-click=\"placeCtrl.stopTranslating()\">Annuleren</button>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "\n" +
+    "\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <div class=\"col-sm-12\" ng-show=\"resultViewer.isShowingProperties()\">\n" +
+    "    <div class=\"udb-details row\">\n" +
+    "      <div class=\"col-sm-2\" ng-if=\"resultViewer.eventProperties.image.visible\">\n" +
+    "        <img ng-if=\"event.image\" ng-src=\"{{event.image}}\" alt=\"{{event.name}}\" class=\"img-responsive\">\n" +
+    "      </div>\n" +
+    "      <div ng-class=\"resultViewer.eventProperties.image.visible ? 'col-sm-10' : 'col-sm-12'\">\n" +
+    "        <div ng-if=\"resultViewer.eventProperties.description.visible && placeCtrl.editable\">\n" +
+    "          <div ng-bind-html=\"event.description\" class=\"udb-description\" onbeforesave=\"placeCtrl.updateDescription($data)\"\n" +
+    "               editable-textarea=\"event.description\" e-rows=\"6\" e-cols=\"66\"></div>\n" +
+    "        </div>\n" +
+    "        <div ng-if=\"resultViewer.eventProperties.description.visible && !placeCtrl.editable\"\n" +
+    "             class=\"event-description-loading-indicator\">\n" +
+    "          <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
+    "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
+    "            <ui-select multiple tagging tagging-label=\"(label toevoegen)\" ng-model=\"event.labels\"\n" +
+    "                       reset-search-input=\"true\" tagging-tokens=\"ENTER|;\"\n" +
+    "                       on-select=\"placeCtrl.labelAdded($item)\" on-remove=\"placeCtrl.labelRemoved($item)\">\n" +
+    "              <ui-select-match placeholder=\"Voeg een label toe...\">{{$item}}</ui-select-match>\n" +
+    "              <ui-select-choices repeat=\"label in availableLabels\">\n" +
+    "                <div ng-bind-html=\"label | highlight: $select.search\"></div>\n" +
+    "              </ui-select-choices>\n" +
+    "            </ui-select>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
     "</div>"
