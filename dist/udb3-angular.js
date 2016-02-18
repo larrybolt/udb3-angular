@@ -1896,7 +1896,7 @@ angular
   .service('cityAutocomplete', CityAutocomplete);
 
 /* @ngInject */
-function CityAutocomplete($q, $http, appConfig, UdbPlace) {
+function CityAutocomplete($q, $http, appConfig, UdbPlace, jsonLDLangFilter) {
   /**
    *
    * Get the places for a city
@@ -1916,7 +1916,8 @@ function CityAutocomplete($q, $http, appConfig, UdbPlace) {
 
     var parsePagedCollection = function (response) {
       var locations = _.map(response.data.member, function (placeJson) {
-        return new UdbPlace(placeJson);
+        var place = new UdbPlace(placeJson);
+        return jsonLDLangFilter(place, 'nl');
       });
 
       deferredPlaces.resolve(locations);
@@ -1932,7 +1933,7 @@ function CityAutocomplete($q, $http, appConfig, UdbPlace) {
   };
 
 }
-CityAutocomplete.$inject = ["$q", "$http", "appConfig", "UdbPlace"];
+CityAutocomplete.$inject = ["$q", "$http", "appConfig", "UdbPlace", "jsonLDLangFilter"];
 
 // Source: src/core/components/datepicker/datepicker.directive.js
 (function () {
@@ -6050,8 +6051,10 @@ function EventDetail(
   };
 
   $scope.eventLocation = function (event) {
+    var location = jsonLDLangFilter(event.location, language);
+
     var eventLocation = [
-      event.location.name
+      location.name
     ];
 
     if (event.location.type) {
@@ -7486,7 +7489,7 @@ angular
   .controller('EventFormController', EventFormController);
 
 /* @ngInject */
-function EventFormController($scope, eventId, placeId, offerType, EventFormData, udbApi, moment) {
+function EventFormController($scope, eventId, placeId, offerType, EventFormData, udbApi, moment, jsonLDLangFilter) {
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
@@ -7501,11 +7504,12 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
         copyItemDataToFormData(event);
 
         // Copy location.
-        if (event.location && event.location['@id']) {
+        if (event.location && event.location.id) {
+          var location = jsonLDLangFilter(event.location, 'nl');
           EventFormData.location = {
-            id : event.location['@id'].split('/').pop(),
-            name : event.location.name,
-            address : event.location.address
+            id : location.id.split('/').pop(),
+            name : location.name,
+            address : location.address
           };
         }
       });
@@ -7564,15 +7568,7 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
       EventFormData.mediaObjects = item.mediaObject || [];
     }
 
-    // Places don't have nl.
-    if (item.name) {
-      if (typeof item.name === 'object') {
-        EventFormData.name = item.name;
-      }
-      else {
-        EventFormData.setName(item.name, 'nl');
-      }
-    }
+    EventFormData.name = item.name;
 
     EventFormData.calendarType = item.calendarType === 'multiple' ? 'single' : item.calendarType;
 
@@ -7639,7 +7635,7 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   }
 
 }
-EventFormController.$inject = ["$scope", "eventId", "placeId", "offerType", "EventFormData", "udbApi", "moment"];
+EventFormController.$inject = ["$scope", "eventId", "placeId", "offerType", "EventFormData", "udbApi", "moment", "jsonLDLangFilter"];
 
 // Source: src/event_form/event-form.directive.js
 /**
