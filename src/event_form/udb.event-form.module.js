@@ -11,5 +11,6 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.config',
-    'udb.entry'
+    'udb.entry',
+    'ngFileUpload'
   ]);

@@ -24,7 +24,7 @@ angular
 /**
  * @ngInject
  */
-function MediaManager(jobLogger, appConfig, $upload, CreateImageJob, $q, $http) {
+function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
   var service = this;
   var baseUrl = appConfig.baseUrl;
 
@@ -63,7 +63,7 @@ function MediaManager(jobLogger, appConfig, $upload, CreateImageJob, $q, $http) 
         .then(deferredMediaObject.resolve, deferredMediaObject.reject);
     }
 
-    $upload
+    Upload
       .upload(uploadOptions)
       .then(logCreateImageJob, deferredMediaObject.reject);
 

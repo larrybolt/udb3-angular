@@ -12,7 +12,6 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'ui.select',
-    'angularFileUpload',
     'udb.config',
     'udb.search',
     'udb.entry',

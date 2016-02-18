@@ -12,7 +12,6 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'ui.select',
-    'angularFileUpload',
     'udb.config',
     'udb.search',
     'udb.entry',
@@ -74,7 +73,8 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.config',
-    'udb.entry'
+    'udb.entry',
+    'ngFileUpload'
   ]);
 
 /**
@@ -6385,15 +6385,22 @@ function EventFormImageUploadController(
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
   $scope.modalTitle = 'Gebruiksvoorwaarden';
-  $scope.imagesToUpload = [];
   $scope.description = '';
   $scope.copyright = '';
+  $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');
 
   // Scope functions.
   $scope.acceptAgreements = acceptAgreements;
   $scope.cancel = cancel;
-  $scope.uploadImages = uploadAndAddImage;
+  $scope.addImage = uploadAndAddImage;
   $scope.clearError = clearError;
+  $scope.selectFile = selectFile;
+  $scope.allFieldsValid = allFieldsValid;
+
+  var invalidFileErrors = {
+    'default': 'Het geselecteerde bestand voldoet niet aan onze voorwaarden.',
+    'maxSize': 'Het bestand dat je probeert te uploaden is te groot. De maximum grootte is ' + $scope.maxFileSize + '.'
+  };
 
   /**
    * Accept the agreements.
@@ -6415,12 +6422,28 @@ function EventFormImageUploadController(
     $scope.error = false;
   }
 
-  function uploadAndAddImage() {
-    var file = $scope.imagesToUpload[0],
-        description = $scope.description,
-        copyrightHolder = $scope.copyright;
+  function selectFile(file, invalidFiles) {
+    $scope.selectedFile = file ? file : null;
 
-    var deferredAddition = $q.defer();
+    // Check if the selected file is invalid and show an error else clear any existing error messages.
+    if (invalidFiles.length) {
+      var knownError = invalidFileErrors[invalidFiles[0].$error];
+      $scope.error = knownError ? knownError : invalidFileErrors.default;
+    } else {
+      clearError();
+    }
+  }
+
+  function uploadAndAddImage() {
+    // Abort if no valid file is selected.
+    if (!$scope.selectedFile) {
+      $scope.error = 'Er is geen bestand geselecteerd';
+      return;
+    }
+
+    var description = $scope.description,
+        copyrightHolder = $scope.copyright,
+        deferredAddition = $q.defer();
 
     function displayError(errorResponse) {
       var errorMessage = errorResponse.data.title;
@@ -6428,7 +6451,11 @@ function EventFormImageUploadController(
 
       switch (errorMessage) {
         case 'The uploaded file is not an image.':
-          error = 'Het geüpload bestand is geen afbeelding.';
+          error = 'Het geüpload bestand is geen geldige afbeelding. ' +
+            'Enkel bestanden met de extenties .jpeg, .gif of .png zijn toegelaten.';
+          break;
+        case 'The file size of the uploaded image is too big.':
+          error = 'Het geüpload bestand is te groot.';
           break;
       }
 
@@ -6452,10 +6479,14 @@ function EventFormImageUploadController(
     }
 
     MediaManager
-      .createImage(file, description, copyrightHolder)
+      .createImage($scope.selectedFile, description, copyrightHolder)
       .then(addImageToEvent, displayError);
 
     return deferredAddition.promise;
+  }
+
+  function allFieldsValid() {
+    return $scope.description && $scope.copyright && $scope.selectedFile;
   }
 }
 EventFormImageUploadController.$inject = ["$scope", "$uibModalInstance", "EventFormData", "eventCrud", "appConfig", "MediaManager", "$q", "copyrightNegotiator"];
@@ -10065,7 +10096,7 @@ angular
 /**
  * @ngInject
  */
-function MediaManager(jobLogger, appConfig, $upload, CreateImageJob, $q, $http) {
+function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
   var service = this;
   var baseUrl = appConfig.baseUrl;
 
@@ -10104,7 +10135,7 @@ function MediaManager(jobLogger, appConfig, $upload, CreateImageJob, $q, $http) 
         .then(deferredMediaObject.resolve, deferredMediaObject.reject);
     }
 
-    $upload
+    Upload
       .upload(uploadOptions)
       .then(logCreateImageJob, deferredMediaObject.reject);
 
@@ -10138,7 +10169,7 @@ function MediaManager(jobLogger, appConfig, $upload, CreateImageJob, $q, $http) 
       .then(returnMediaObject);
   };
 }
-MediaManager.$inject = ["jobLogger", "appConfig", "$upload", "CreateImageJob", "$q", "$http"];
+MediaManager.$inject = ["jobLogger", "appConfig", "Upload", "CreateImageJob", "$q", "$http"];
 
 // Source: src/place-detail/place-detail.directive.js
 /**
@@ -13809,7 +13840,6 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
 
   $templateCache.put('templates/event-form-image-upload.html',
-    "\n" +
     "<div class=\"modal-content\">\n" +
     "  <div class=\"modal-header\">\n" +
     "    <button type=\"button\" class=\"close\" ng-click=\"cancel()\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n" +
@@ -13826,30 +13856,36 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    </p>\n" +
     "    <div ng-hide=\"showAgreements\">\n" +
     "      <div class=\"form-group\">\n" +
-    "        <label for=\"inputFile\">Selecteer je foto('s)</label>\n" +
-    "        <input type=\"file\"\n" +
-    "               id=\"inputFile\"\n" +
-    "               ng-model=\"imagesToUpload\"\n" +
-    "               multiple\n" +
-    "               ng-file-select\n" +
-    "               ng-multiple=\"true\"\n" +
-    "               accept=\"'image/*'\"\n" +
-    "               ng-change=\"clearError()\">\n" +
+    "        <label for=\"inputFile\">Selecteer je foto</label>\n" +
+    "        <p>\n" +
+    "          <button type=\"file\"\n" +
+    "                  class=\"btn btn-primary\"\n" +
+    "                  id=\"inputFile\"\n" +
+    "                  ngf-select=\"selectFile($file, $invalidFiles)\"\n" +
+    "                  accept=\"image/*\"\n" +
+    "                  ngf-max-size=\"{{maxFileSize}}\">\n" +
+    "            Kies Bestand</button>\n" +
+    "        </p>\n" +
+    "\n" +
+    "        <p ng-show=\"selectedFile\">\n" +
+    "          <span ng-bind=\"selectedFile.name\"></span>\n" +
+    "        </p>\n" +
+    "\n" +
     "        <p class=\"help-block\">\n" +
-    "          De maximale grootte van je afbeelding is 5 MB en heeft als type .jpeg, .gif of .png</p>\n" +
+    "          De maximale grootte van je afbeelding is <span ng-bind=\"maxFileSize\"></span> en heeft als type .jpeg, .gif of .png</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
     "        <label>Beschrijving</label>\n" +
-    "        <input type=\"text\" class=\"form-control\" ng-model=\"description\">\n" +
+    "        <input type=\"text\" class=\"form-control\" ng-model=\"description\" required>\n" +
     "        <p class=\"help-block\">\n" +
-    "          Een goede beschrijving van je afbeelding wordt gelezen door zoekmachines en gebruikers met een visuele beperking.\n" +
+    "          Schrijf goede beschrijving van je afbeelding wordt gelezen door zoekmachines en gebruikers met een visuele beperking.\n" +
     "        </p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
     "        <label>Copyright</label>\n" +
-    "        <input type=\"text\" class=\"form-control\" ng-model=\"copyright\">\n" +
+    "        <input type=\"text\" class=\"form-control\" ng-model=\"copyright\" required>\n" +
     "        <p class=\"help-block\">\n" +
     "          Vermeld de naam van de rechtenhoudende fotograaf.</p>\n" +
     "      </div>\n" +
@@ -13869,16 +13905,13 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  </div>\n" +
     "  <div class=\"modal-footer\">\n" +
-    "\n" +
     "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"cancel()\">Annuleren</button>\n" +
-    "    <button type=\"button\" class=\"btn btn-primary\" ng-hide=\"showAgreements\" ng-click=\"uploadImages()\">\n" +
+    "    <button type=\"button\" class=\"btn btn-primary\" ng-hide=\"showAgreements\" ng-disabled=\"!allFieldsValid()\" ng-click=\"addImage()\">\n" +
     "      Opladen <i ng-show=\"saving\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
     "    </button>\n" +
     "    <button class=\"btn btn-primary\" ng-show=\"showAgreements\" ng-click=\"acceptAgreements()\">Akkoord</button>\n" +
-    "\n" +
     "  </div>\n" +
-    "</div><!-- /.modal-content -->\n" +
-    "\n"
+    "</div>\n"
   );
 
 
