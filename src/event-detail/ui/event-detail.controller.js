@@ -84,8 +84,10 @@ function EventDetail(
   };
 
   $scope.eventLocation = function (event) {
+    var location = jsonLDLangFilter(event.location, language);
+
     var eventLocation = [
-      event.location.name
+      location.name
     ];
 
     if (event.location.type) {
