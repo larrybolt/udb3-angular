@@ -141,7 +141,7 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
       /*jscs:disable requireCamelCaseOrUpperCaseIdentifiers */
       return {
         text: EventFormData.name.nl,
-        location_cdbid : location.id
+        location_label : location.name.nl
       };
     }
     else {
