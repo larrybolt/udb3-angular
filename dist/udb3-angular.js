@@ -14596,6 +14596,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        <div class=\"col-xs-12 col-sm-6 col-md-4 col-lg-3\"\n" +
     "             ng-repeat=\"event in resultViewer.events\"\n" +
     "             udb-event=\"event\"\n" +
+    "             ng-if=\"event['@type'] == 'Event'\"\n" +
     "             ng-hide=\"fetching\">\n" +
     "          <a class=\"btn btn-tile\"\n" +
     "             ng-click=\"setActiveDuplicate(event.id)\"\n" +
@@ -14622,6 +14623,25 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "            <i class=\"fa fa-eye preview-icon\"></i>\n" +
     "          </a>\n" +
     "        </div>\n" +
+    "\n" +
+    "        <div class=\"col-xs-12 col-sm-6 col-md-4 col-lg-3\"\n" +
+    "             ng-repeat=\"event in resultViewer.events\"\n" +
+    "             udb-place=\"event\"\n" +
+    "             ng-if=\"event['@type'] == 'Place'\"\n" +
+    "             ng-hide=\"fetching\">\n" +
+    "          <a class=\"btn btn-tile\"\n" +
+    "             ng-click=\"setActiveDuplicate(event.id)\"\n" +
+    "             data-toggle=\"modal\"\n" +
+    "             data-target=\"#dubbeldetectie-voorbeeld\">\n" +
+    "            <small class=\"label label-default\" ng-bind=\"::event.type.label\"></small><br>\n" +
+    "            <strong class=\"title\" ng-bind=\"::event.name\"></strong><br>\n" +
+    "            permanent\n" +
+    "            <br>\n" +
+    "            <small class=\"preview-corner\"></small>\n" +
+    "            <i class=\"fa fa-eye preview-icon\"></i>\n" +
+    "          </a>\n" +
+    "        </div>\n" +
+    "\n" +
     "      </div>\n" +
     "    </div>\n" +
     "\n" +
