@@ -49,6 +49,10 @@ function EventController(
         controller.availableLabels = _.union(cachedEvent.labels, offerLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedEvent, defaultLanguage);
+
+        if ($scope.event.location) {
+          $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
+        }
         controller.fetching = false;
         watchLabels();
 
