@@ -15,6 +15,7 @@ describe('Controller: Place Detail', function() {
         '@id': "http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702",
         '@context': "/api/1.0/place.jsonld",
         name: "Villa 99, een art deco pareltje",
+        description: { 'nl': 'Toto is geen zeekoe' },
         creator: "christophe.vanthuyne@ronse.be",
         created: "2015-06-14T15:22:33+02:00",
         modified: "2015-12-15T14:08:06+01:00",
@@ -110,6 +111,15 @@ describe('Controller: Place Detail', function() {
     expect($scope.placeIsEditable).toEqual(true);
   });
 
+  it('should loads the place description from the variation', function () {
+    var variation = new UdbPlace(examplePlaceEventJson);
+    variation.description['nl'] = 'haak is een zeekoe';
+    deferredVariation.resolve(variation);
+    $scope.$digest();
+
+    expect($scope.place.description).toEqual('haak is een zeekoe');
+  });
+
   it('should update the description', function () {
     deferredVariation.reject('there is no personal variation for offer');
 
@@ -122,5 +132,24 @@ describe('Controller: Place Detail', function() {
       new UdbPlace(examplePlaceEventJson),
       'updated description'
     );
+  });
+
+  it('should replace the description with the cached one when the variation is deleted', function () {
+    var variation = new UdbPlace(examplePlaceEventJson);
+    variation.description['nl'] = 'haak is een zeekoe';
+    deferredVariation.resolve(variation);
+    $scope.$digest();
+
+    expect($scope.place.description).toEqual('haak is een zeekoe');
+
+    $scope.updateDescription('');
+    deferredUpdate.resolve(false);
+    $scope.$digest();
+
+    expect(offerEditor.editDescription).toHaveBeenCalledWith(
+      new UdbPlace(examplePlaceEventJson),
+      ''
+    );
+    expect($scope.place.description).toEqual('Toto is geen zeekoe');
   });
 });
