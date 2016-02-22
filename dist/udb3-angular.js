@@ -2855,12 +2855,12 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.createVariation = function (eventId, description, purpose) {
+  this.createVariation = function (offer, description, purpose) {
     var activeUser = uitidAuth.getUser(),
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': appConfig.baseUrl + 'event/' + eventId,
+          'same_as': offer.apiUrl,
           'description': description
         };
 
@@ -3007,11 +3007,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     ).then(returnJobData);
   };
 
-  this.getEventVariations = function (ownerId, purpose, eventUrl) {
+  this.getOfferVariations = function (ownerId, purpose, offerUrl) {
     var parameters = {
       'owner': ownerId,
       'purpose': purpose,
-      'same_as': eventUrl
+      'same_as': offerUrl
     };
 
     var config = {
@@ -4811,34 +4811,34 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 }
 EventCrud.$inject = ["jobLogger", "udbApi", "EventCrudJob", "$rootScope", "$q"];
 
-// Source: src/entry/editing/event-editor.service.js
+// Source: src/entry/editing/offer-editor.service.js
 /**
  * @ngdoc service
- * @name udb.entry.eventEditor
+ * @name udb.entry.offerEditor
  * @description
- * # eventEditor
+ * # offerEditor
  * Service in the udb.entry.
  */
 angular
   .module('udb.entry')
-  .service('eventEditor', EventEditor);
+  .service('offerEditor', OfferEditor);
 
 /* @ngInject */
-function EventEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, variationRepository) {
+function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, variationRepository) {
   var editor = this;
   /**
-   * Edit the description of an event. We never edit the original event but use a variation instead.
+   * Edit the description of an offer. We never edit the original offer but use a variation instead.
    *
-   * @param {UdbEvent} event                 The original event
+   * @param {UdbEvent} offer                 The original offer
    * @param {string}   description           The new description text
    * @param {string}   [purpose=personal]    The purpose of the variation that will be edited
    */
-  this.editDescription = function (event, description, purpose) {
+  this.editDescription = function (offer, description, purpose) {
     var deferredUpdate = $q.defer();
-    var variationPromise = variationRepository.getPersonalVariation(event);
+    var variationPromise = variationRepository.getPersonalVariation(offer);
 
     var removeDescription = function (variation) {
-      var deletePromise = editor.deleteVariation(event, variation.id);
+      var deletePromise = editor.deleteVariation(offer, variation.id);
       deletePromise.then(function () {
         deferredUpdate.resolve(false);
       }, rejectUpdate);
@@ -4850,20 +4850,20 @@ function EventEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
     var createVariation = function () {
       purpose = purpose || 'personal';
-      var creationRequest = udbApi.createVariation(event.id, description, purpose);
+      var creationRequest = udbApi.createVariation(offer, description, purpose);
       creationRequest.success(handleCreationJob);
       creationRequest.error(rejectUpdate);
     };
 
     var handleCreationJob = function (jobData) {
-      var variation = angular.copy(event);
+      var variation = angular.copy(offer);
       variation.description.nl = description;
-      var variationCreationJob = new VariationCreationJob(jobData.commandId, event.id);
+      var variationCreationJob = new VariationCreationJob(jobData.commandId, offer.id);
       jobLogger.addJob(variationCreationJob);
 
       variationCreationJob.task.promise.then(function (jobInfo) {
-        variation.id = jobInfo['event_variation_id']; // jshint ignore:line
-        variationRepository.save(event.id, variation);
+        variation.id = jobInfo['offer_variation_id']; // jshint ignore:line
+        variationRepository.save(offer.id, variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
     };
@@ -4893,18 +4893,18 @@ function EventEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
     return deferredUpdate.promise;
   };
 
-  this.deleteVariation = function (event, variationId) {
+  this.deleteVariation = function (offer, variationId) {
     var deletePromise = udbApi.deleteVariation(variationId);
 
     deletePromise.success(function (jobData) {
       jobLogger.addJob(new BaseJob(jobData.commandId));
-      variationRepository.remove(event.id);
+      variationRepository.remove(offer.id);
     });
 
     return deletePromise;
   };
 }
-EventEditor.$inject = ["jobLogger", "udbApi", "VariationCreationJob", "BaseJob", "$q", "variationRepository"];
+OfferEditor.$inject = ["jobLogger", "udbApi", "VariationCreationJob", "BaseJob", "$q", "variationRepository"];
 
 // Source: src/entry/editing/variation-creation-job.factory.js
 /**
@@ -4925,12 +4925,12 @@ function VariationCreationJobFactory(BaseJob, JobStates, $q) {
    * @class VariationCreationJob
    * @constructor
    * @param {string} commandId
-   * @param {string} eventId
+   * @param {string} offerId
    */
-  var VariationCreationJob = function (commandId, eventId) {
+  var VariationCreationJob = function (commandId, offerId) {
     BaseJob.call(this, commandId);
     this.task = $q.defer();
-    this.eventId = eventId;
+    this.offerId = offerId;
   };
 
   VariationCreationJob.prototype = Object.create(BaseJob.prototype);
@@ -4952,7 +4952,7 @@ function VariationCreationJobFactory(BaseJob, JobStates, $q) {
     this.finished = new Date();
     this.state = JobStates.FAILED;
     this.progress = 100;
-    this.task.reject('Failed to create a variation for event with id: ' + this.eventId);
+    this.task.reject('Failed to create a variation for offer with id: ' + this.offerId);
   };
 
   return (VariationCreationJob);
@@ -5985,7 +5985,7 @@ function EventDetail(
   udbApi,
   jsonLDLangFilter,
   variationRepository,
-  eventEditor,
+  offerEditor,
   $location
 ) {
   var activeTabId = 'data';
@@ -6082,7 +6082,7 @@ function EventDetail(
 
   $scope.updateDescription = function(description) {
     if ($scope.event.description !== description) {
-      var updatePromise = eventEditor.editDescription(cachedEvent, description);
+      var updatePromise = offerEditor.editDescription(cachedEvent, description);
 
       updatePromise.finally(function () {
         if (!description) {
@@ -6102,7 +6102,7 @@ function EventDetail(
     $location.path('/event/' + eventId + '/edit');
   };
 }
-EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "eventEditor", "$location"];
+EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location"];
 
 // Source: src/event_form/components/calendartypes/event-form-period.directive.js
 /**
@@ -10206,7 +10206,8 @@ function PlaceDetail(
   udbApi,
   $location,
   jsonLDLangFilter,
-  variationRepository
+  variationRepository,
+  offerEditor
 ) {
   var activeTabId = 'data';
 
@@ -10236,17 +10237,30 @@ function PlaceDetail(
 
   var placeLoaded = udbApi.getPlaceById($scope.placeId);
   var language = 'nl';
+  var cachedPlace;
 
   placeLoaded.then(
       function (place) {
+        cachedPlace = place;
+
         /*var placeHistoryLoaded = udbApi.getEventHistoryById($scope.placeId);
 
         placeHistoryLoaded.then(function(placeHistory) {
           $scope.placeHistory = placeHistory;
         });*/
+
+        var personalVariationLoaded = variationRepository.getPersonalVariation(place);
+
         $scope.place = jsonLDLangFilter(place, language);
         $scope.placeIdIsInvalid = false;
 
+        personalVariationLoaded
+          .then(function (variation) {
+            $scope.place.description = variation.description[language];
+          })
+          .finally(function () {
+            $scope.placeIsEditable = true;
+          });
       },
       function (reason) {
         $scope.placeIdIsInvalid = true;
@@ -10281,8 +10295,22 @@ function PlaceDetail(
   $scope.openEditPage = function() {
     $location.path('/place/' + placeId + '/edit');
   };
+
+  $scope.updateDescription = function(description) {
+    if ($scope.place.description !== description) {
+      var updatePromise = offerEditor.editDescription(cachedPlace, description);
+
+      updatePromise.finally(function () {
+        if (!description) {
+          $scope.place.description = cachedPlace.description[language];
+        }
+      });
+
+      return updatePromise;
+    }
+  };
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor"];
 
 // Source: src/saved-searches/components/delete-search-modal.controller.js
 /**
@@ -12274,19 +12302,19 @@ angular
   .service('variationRepository', VariationRepository);
 
 /* @ngInject */
-function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
+function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, UdbPlace) {
 
   var requestChain = $q.when();
   var interruptRequestChain = false;
   var personalVariationCache = $cacheFactory('personalVariationCache');
 
-  this.getPersonalVariation = function (event) {
+  this.getPersonalVariation = function (offer) {
     var deferredVariation =  $q.defer(),
-        personalVariation = personalVariationCache.get(event.id);
+        personalVariation = personalVariationCache.get(offer.id);
 
     if (personalVariation) {
       if (personalVariation === 'no-personal-variation') {
-        deferredVariation.reject('there is no personal variation for event with id: ' + event.id);
+        deferredVariation.reject('there is no personal variation for offer with id: ' + offer.id);
       } else {
         deferredVariation.resolve(personalVariation);
       }
@@ -12296,7 +12324,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
       userPromise
         .then(function(user) {
           requestChain = requestChain.then(
-            requestVariation(user.id, 'personal', event.apiUrl, deferredVariation)
+            requestVariation(user.id, 'personal', offer.apiUrl, deferredVariation)
           );
         });
     }
@@ -12304,43 +12332,48 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
     return deferredVariation.promise;
   };
 
-  function requestVariation(userId, purpose, eventUrl, deferredVariation) {
+  function requestVariation(userId, purpose, offerUrl, deferredVariation) {
     return function () {
-      var eventId = eventUrl.split('/').pop();
+      var offerId = offerUrl.split('/').pop();
 
       if (interruptRequestChain) {
-        deferredVariation.reject('navigating away, interrupting request for variation for event with id: ' + eventId);
+        deferredVariation.reject('navigating away, interrupting request for variation for offer with id: ' + offerId);
         return deferredVariation;
       }
 
-      var personalVariationRequest = udbApi.getEventVariations(userId, purpose, eventUrl, deferredVariation);
+      var personalVariationRequest = udbApi.getOfferVariations(userId, purpose, offerUrl, deferredVariation);
 
       personalVariationRequest.success(function (variations) {
         var jsonPersonalVariation = _.first(variations.member);
         if (jsonPersonalVariation) {
-          var variation = new UdbEvent(jsonPersonalVariation);
-          personalVariationCache.put(eventId, variation);
+          var variation;
+          if (jsonPersonalVariation['@context'] === '/api/1.0/event.jsonld') {
+            variation = new UdbEvent(jsonPersonalVariation);
+          } else if (jsonPersonalVariation['@context'] === '/api/1.0/place.jsonld') {
+            variation = new UdbPlace(jsonPersonalVariation);
+          }
+          personalVariationCache.put(offerId, variation);
           deferredVariation.resolve(variation);
         } else {
-          personalVariationCache.put(eventId, 'no-personal-variation');
-          deferredVariation.reject('there is no personal variation for event with id: ' + eventId);
+          personalVariationCache.put(offerId, 'no-personal-variation');
+          deferredVariation.reject('there is no personal variation for event with id: ' + offerId);
         }
       });
 
       personalVariationRequest.error(function () {
-        deferredVariation.reject('no variations found for event with id: ' + eventId);
+        deferredVariation.reject('no variations found for event with id: ' + offerId);
       });
 
       return personalVariationRequest.then();
     };
   }
 
-  this.save = function (eventId, variation) {
-    personalVariationCache.put(eventId, variation);
+  this.save = function (offerId, variation) {
+    personalVariationCache.put(offerId, variation);
   };
 
-  this.remove = function (eventId) {
-    personalVariationCache.remove(eventId);
+  this.remove = function (offerId) {
+    personalVariationCache.remove(offerId);
   };
 
   $rootScope.$on('$locationChangeStart', function() {
@@ -12350,7 +12383,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
     });
   });
 }
-VariationRepository.$inject = ["udbApi", "$cacheFactory", "$q", "UdbEvent", "$rootScope"];
+VariationRepository.$inject = ["udbApi", "$cacheFactory", "$q", "UdbEvent", "$rootScope", "UdbPlace"];
 
 // Source: src/search/ui/event-translation-state.constant.js
 /* jshint sub: true */
@@ -12395,7 +12428,7 @@ function EventController(
   jsonLDLangFilter,
   eventTranslator,
   offerLabeller,
-  eventEditor,
+  offerEditor,
   EventTranslationState,
   $scope,
   variationRepository,
@@ -12563,7 +12596,7 @@ function EventController(
   // Editing
   controller.updateDescription = function (description) {
     if ($scope.event.description !== description) {
-      var updatePromise = eventEditor.editDescription(cachedEvent, description);
+      var updatePromise = offerEditor.editDescription(cachedEvent, description);
 
       updatePromise.finally(function () {
         if (!description) {
@@ -12576,7 +12609,7 @@ function EventController(
   };
 
 }
-EventController.$inject = ["udbApi", "jsonLDLangFilter", "eventTranslator", "offerLabeller", "eventEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
+EventController.$inject = ["udbApi", "jsonLDLangFilter", "eventTranslator", "offerLabeller", "offerEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
 
 // Source: src/search/ui/event.directive.js
 /**
@@ -15545,7 +15578,13 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "              </tr>\n" +
     "              <tr>\n" +
     "                <td><strong>Beschrijving</strong></td>\n" +
-    "                <td ng-bind-html=\"place.description\"></td>\n" +
+    "                <td>\n" +
+    "                  <div ng-if=\"placeIsEditable\">\n" +
+    "                    <div ng-bind-html=\"place.description\" onbeforesave=\"updateDescription($data)\" class=\"event-detail-description\"\n" +
+    "                         editable-textarea=\"place.description\" e-rows=\"6\" e-cols=\"33\"></div>\n" +
+    "                  </div>\n" +
+    "                  <i ng-if=\"!placeIsEditable\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "                </td>\n" +
     "              </tr>\n" +
     "              <tr>\n" +
     "                <td><strong>Waar</strong></td>\n" +
