@@ -10231,7 +10231,7 @@ function PlaceDetail(
   ];
 
   // Check if user has permissions.
-  udbApi.hasPlacePermission(placeId).then(function(result) {
+  udbApi.hasPlacePermission($scope.placeId).then(function(result) {
     $scope.hasEditPermissions = result.data.hasPermission;
   });
 
@@ -10293,7 +10293,7 @@ function PlaceDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/place/' + placeId + '/edit');
+    $location.path('/place/' + $scope.placeId + '/edit');
   };
 
   $scope.updateDescription = function(description) {
@@ -12310,11 +12310,11 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   this.getPersonalVariation = function (offer) {
     var deferredVariation =  $q.defer(),
-        personalVariation = personalVariationCache.get(offer.id);
+        personalVariation = personalVariationCache.get(offer.url);
 
     if (personalVariation) {
       if (personalVariation === 'no-personal-variation') {
-        deferredVariation.reject('there is no personal variation for offer with id: ' + offer.id);
+        deferredVariation.reject('there is no personal variation for offer with url: ' + offer.url);
       } else {
         deferredVariation.resolve(personalVariation);
       }
