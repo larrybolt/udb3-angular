@@ -19,7 +19,7 @@ function PlaceDetail(
   $location,
   jsonLDLangFilter,
   variationRepository,
-  eventEditor
+  offerEditor
 ) {
   var activeTabId = 'data';
 
@@ -110,7 +110,7 @@ function PlaceDetail(
 
   $scope.updateDescription = function(description) {
     if ($scope.place.description !== description) {
-      var updatePromise = eventEditor.editDescription(cachedPlace, description);
+      var updatePromise = offerEditor.editDescription(cachedPlace, description);
 
       updatePromise.finally(function () {
         if (!description) {

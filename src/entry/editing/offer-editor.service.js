@@ -2,31 +2,31 @@
 
 /**
  * @ngdoc service
- * @name udb.entry.eventEditor
+ * @name udb.entry.offerEditor
  * @description
- * # eventEditor
+ * # offerEditor
  * Service in the udb.entry.
  */
 angular
   .module('udb.entry')
-  .service('eventEditor', EventEditor);
+  .service('offerEditor', OfferEditor);
 
 /* @ngInject */
-function EventEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, variationRepository) {
+function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, variationRepository) {
   var editor = this;
   /**
-   * Edit the description of an event. We never edit the original event but use a variation instead.
+   * Edit the description of an offer. We never edit the original offer but use a variation instead.
    *
-   * @param {UdbEvent} event                 The original event
+   * @param {UdbEvent} offer                 The original offer
    * @param {string}   description           The new description text
    * @param {string}   [purpose=personal]    The purpose of the variation that will be edited
    */
-  this.editDescription = function (event, description, purpose) {
+  this.editDescription = function (offer, description, purpose) {
     var deferredUpdate = $q.defer();
-    var variationPromise = variationRepository.getPersonalVariation(event);
+    var variationPromise = variationRepository.getPersonalVariation(offer);
 
     var removeDescription = function (variation) {
-      var deletePromise = editor.deleteVariation(event, variation.id);
+      var deletePromise = editor.deleteVariation(offer, variation.id);
       deletePromise.then(function () {
         deferredUpdate.resolve(false);
       }, rejectUpdate);
@@ -38,20 +38,20 @@ function EventEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
     var createVariation = function () {
       purpose = purpose || 'personal';
-      var creationRequest = udbApi.createVariation(event.id, description, purpose);
+      var creationRequest = udbApi.createVariation(offer, description, purpose);
       creationRequest.success(handleCreationJob);
       creationRequest.error(rejectUpdate);
     };
 
     var handleCreationJob = function (jobData) {
-      var variation = angular.copy(event);
+      var variation = angular.copy(offer);
       variation.description.nl = description;
-      var variationCreationJob = new VariationCreationJob(jobData.commandId, event.id);
+      var variationCreationJob = new VariationCreationJob(jobData.commandId, offer.id);
       jobLogger.addJob(variationCreationJob);
 
       variationCreationJob.task.promise.then(function (jobInfo) {
-        variation.id = jobInfo['event_variation_id']; // jshint ignore:line
-        variationRepository.save(event.id, variation);
+        variation.id = jobInfo['offer_variation_id']; // jshint ignore:line
+        variationRepository.save(offer.id, variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
     };
@@ -81,12 +81,12 @@ function EventEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
     return deferredUpdate.promise;
   };
 
-  this.deleteVariation = function (event, variationId) {
+  this.deleteVariation = function (offer, variationId) {
     var deletePromise = udbApi.deleteVariation(variationId);
 
     deletePromise.success(function (jobData) {
       jobLogger.addJob(new BaseJob(jobData.commandId));
-      variationRepository.remove(event.id);
+      variationRepository.remove(offer.id);
     });
 
     return deletePromise;

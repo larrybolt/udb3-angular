@@ -18,12 +18,12 @@ function VariationCreationJobFactory(BaseJob, JobStates, $q) {
    * @class VariationCreationJob
    * @constructor
    * @param {string} commandId
-   * @param {string} eventId
+   * @param {string} offerId
    */
-  var VariationCreationJob = function (commandId, eventId) {
+  var VariationCreationJob = function (commandId, offerId) {
     BaseJob.call(this, commandId);
     this.task = $q.defer();
-    this.eventId = eventId;
+    this.offerId = offerId;
   };
 
   VariationCreationJob.prototype = Object.create(BaseJob.prototype);
@@ -45,7 +45,7 @@ function VariationCreationJobFactory(BaseJob, JobStates, $q) {
     this.finished = new Date();
     this.state = JobStates.FAILED;
     this.progress = 100;
-    this.task.reject('Failed to create a variation for event with id: ' + this.eventId);
+    this.task.reject('Failed to create a variation for offer with id: ' + this.offerId);
   };
 
   return (VariationCreationJob);

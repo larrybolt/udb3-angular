@@ -401,12 +401,12 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.createVariation = function (eventId, description, purpose) {
+  this.createVariation = function (offer, description, purpose) {
     var activeUser = uitidAuth.getUser(),
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': appConfig.baseUrl + 'event/' + eventId,
+          'same_as': offer.apiUrl,
           'description': description
         };
 

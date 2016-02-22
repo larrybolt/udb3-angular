@@ -16,7 +16,7 @@ function EventController(
   jsonLDLangFilter,
   eventTranslator,
   offerLabeller,
-  eventEditor,
+  offerEditor,
   EventTranslationState,
   $scope,
   variationRepository,
@@ -184,7 +184,7 @@ function EventController(
   // Editing
   controller.updateDescription = function (description) {
     if ($scope.event.description !== description) {
-      var updatePromise = eventEditor.editDescription(cachedEvent, description);
+      var updatePromise = offerEditor.editDescription(cachedEvent, description);
 
       updatePromise.finally(function () {
         if (!description) {
