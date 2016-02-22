@@ -43,7 +43,7 @@ function PlaceDetail(
   ];
 
   // Check if user has permissions.
-  udbApi.hasPlacePermission(placeId).then(function(result) {
+  udbApi.hasPlacePermission($scope.placeId).then(function(result) {
     $scope.hasEditPermissions = result.data.hasPermission;
   });
 
@@ -105,7 +105,7 @@ function PlaceDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/place/' + placeId + '/edit');
+    $location.path('/place/' + $scope.placeId + '/edit');
   };
 
   $scope.updateDescription = function(description) {
