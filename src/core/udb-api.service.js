@@ -553,11 +553,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     ).then(returnJobData);
   };
 
-  this.getEventVariations = function (ownerId, purpose, eventUrl) {
+  this.getOfferVariations = function (ownerId, purpose, offerUrl) {
     var parameters = {
       'owner': ownerId,
       'purpose': purpose,
-      'same_as': eventUrl
+      'same_as': offerUrl
     };
 
     var config = {

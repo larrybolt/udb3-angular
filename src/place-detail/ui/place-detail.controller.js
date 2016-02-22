@@ -18,7 +18,8 @@ function PlaceDetail(
   udbApi,
   $location,
   jsonLDLangFilter,
-  variationRepository
+  variationRepository,
+  eventEditor
 ) {
   var activeTabId = 'data';
 
@@ -48,17 +49,30 @@ function PlaceDetail(
 
   var placeLoaded = udbApi.getPlaceById($scope.placeId);
   var language = 'nl';
+  var cachedPlace;
 
   placeLoaded.then(
       function (place) {
+        cachedPlace = place;
+
         /*var placeHistoryLoaded = udbApi.getEventHistoryById($scope.placeId);
 
         placeHistoryLoaded.then(function(placeHistory) {
           $scope.placeHistory = placeHistory;
         });*/
+
+        var personalVariationLoaded = variationRepository.getPersonalVariation(place);
+
         $scope.place = jsonLDLangFilter(place, language);
         $scope.placeIdIsInvalid = false;
 
+        personalVariationLoaded
+          .then(function (variation) {
+            $scope.place.description = variation.description[language];
+          })
+          .finally(function () {
+            $scope.placeIsEditable = true;
+          });
       },
       function (reason) {
         $scope.placeIdIsInvalid = true;
@@ -92,5 +106,19 @@ function PlaceDetail(
 
   $scope.openEditPage = function() {
     $location.path('/place/' + placeId + '/edit');
+  };
+
+  $scope.updateDescription = function(description) {
+    if ($scope.place.description !== description) {
+      var updatePromise = eventEditor.editDescription(cachedPlace, description);
+
+      updatePromise.finally(function () {
+        if (!description) {
+          $scope.place.description = cachedPlace.description[language];
+        }
+      });
+
+      return updatePromise;
+    }
   };
 }
