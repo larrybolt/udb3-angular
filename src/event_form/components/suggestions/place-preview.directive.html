@@ -1,0 +1,62 @@
+<div class="panel panel-default preview">
+
+  <div class="panel-heading" ng-style="{'background-image': 'url(' + event.image + ')'}">
+    <ul class="list-inline">
+      <li><small class="label label-default" ng-bind="::event.type.label"></small></li>
+    </ul>
+    <p class="title" ng-bind="::event.name"></p>
+  </div>
+
+  <div class="panel-body">
+
+    <span ng-bind-html="::event.description"></span>
+
+    <table class="table table-condended">
+      <tbody>
+      <tr>
+        <td>
+          <strong class="hidden-xs hidden-sm">Waar</strong>
+          <i class="fa fa-map-marker hidden-md hidden-lg"></i>
+        </td>
+        <td>
+          <span ng-bind="::event.address.streetAddress"></span>
+          <br>
+          <span ng-bind="::event.address.postalCode"></span>
+          <span ng-bind="::event.address.addressLocality"></span>
+        </td>
+      </tr>
+      <tr ng-if="::event.calendarType">
+        <td>
+          <strong class="hidden-xs hidden-sm">Wanneer</strong>
+          <i class="fa fa-calendar hidden-md hidden-lg"></i>
+        </td>
+        <td class="cf-when scroll scroll-150">
+          <ng-switch on="::event.calendarType">
+            <span ng-switch-when="single" ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+                <span ng-switch-when="multiple">
+                  Van <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+                  <span> tot </span>
+                  <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
+                </span>
+                <span ng-switch-when="periodic">
+                  Van <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+                  <span> tot </span>
+                  <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
+                </span>
+                <span ng-switch-when="permanent">
+                   Permanent
+                </span>
+          </ng-switch>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div>
+  <em>
+    Ingevoerd door <span ng-bind="::event.creator"></span>
+    <span ng-if="event.created"> op <span ng-bind="::event.created | date : 'dd/MM/yyyy • HH:mm'"></span></span>
+  </em>
+</div>

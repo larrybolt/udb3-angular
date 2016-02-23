@@ -42,56 +42,17 @@
     <div class="alert alert-info" ng-show="resultViewer.totalItems > 0">
       <p class="h2" style="margin-top: 0;">Vermijd dubbel werk</p>
       <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>
-      <div class="row clearfix">
-        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
-             ng-repeat="event in resultViewer.events"
-             udb-event="event"
-             ng-if="event['@type'] == 'Event'"
-             ng-hide="fetching">
-          <a class="btn btn-tile"
-             ng-click="setActiveDuplicate(event.id)"
-             data-toggle="modal"
-             data-target="#dubbeldetectie-voorbeeld">
-            <small class="label label-default" ng-bind="::event.type.label"></small><br>
-            <strong class="title" ng-bind="::event.name"></strong><br>
-             <span ng-bind="::event.location.name"></span> -
-             <ng-switch on="event.calendarType">
-               <span ng-switch-when="single" ng-bind="::event.startDate | date: 'dd/MM'">
-               </span>
-               <span ng-switch-when="multiple">
-                  Van <span ng-bind="::event.startDate | date: 'dd/MM'"></span> tot <span ng-bind="::event.endDate | date: 'dd/MM'"></span>
-               </span>
-               <span ng-switch-when="periodic">
-                  Van <span ng-bind="::event.startDate | date: 'dd/MM'"></span> tot <span ng-bind="::event.endDate | date: 'dd/MM'"></span>
-               </span>
-               <span ng-switch-when="permanent">
-                  Permanent
-               </span>
-             </ng-switch>
-             <br>
-            <small class="preview-corner"></small>
-            <i class="fa fa-eye preview-icon"></i>
-          </a>
-        </div>
 
-        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
-             ng-repeat="event in resultViewer.events"
-             udb-place="event"
-             ng-if="event['@type'] == 'Place'"
-             ng-hide="fetching">
-          <a class="btn btn-tile"
-             ng-click="setActiveDuplicate(event.id)"
-             data-toggle="modal"
-             data-target="#dubbeldetectie-voorbeeld">
-            <small class="label label-default" ng-bind="::event.type.label"></small><br>
-            <strong class="title" ng-bind="::event.name"></strong><br>
-            permanent
-            <br>
-            <small class="preview-corner"></small>
-            <i class="fa fa-eye preview-icon"></i>
-          </a>
+      <div class="row clearfix" ng-if="eventFormData.getType() === 'event'">
+        <div ng-repeat="event in resultViewer.events | filter:{'@type': 'Event'}">
+          <udb-event-suggestion></udb-event-suggestion>
         </div>
+      </div>
 
+      <div class="row clearfix" ng-if="eventFormData.getType() === 'place'">
+        <div ng-repeat="event in resultViewer.events | filter:{'@type': 'Place'}">
+          <udb-place-suggestion></udb-place-suggestion>
+        </div>
       </div>
     </div>
 
@@ -116,133 +77,6 @@
     <div class="alert alert-danger" ng-show="error">
       Er ging iets fout tijdens het opslaan van je activiteit. Gelieve later opnieuw te proberen.
     </div>
-
-    <div class="modal fade" id="dubbeldetectie-voorbeeld" aria-hidden="true" ng-hide="currentDuplicateId === ''">
-
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content "
-           ng-repeat="event in resultViewer.events"
-           udb-event="event"
-           ng-show="event.id === currentDuplicateId">
-          <div class="modal-header">
-            <div class="pull-right">
-              <button type="button"
-                      class="btn btn-default"
-                      ng-if="currentDuplicateDelta === 1"
-                      data-dismiss="modal">Vorige</button>
-              <button type="button"
-                      class="btn btn-default"
-                      ng-if="currentDuplicateDelta > 1"
-                      ng-click="previousDuplicate()">Vorige</button>
-
-              <button type="button"
-                      class="btn btn-default"
-                      ng-if="currentDuplicateDelta === resultViewer.totalItems"
-                      data-dismiss="modal">Volgende</button>
-              <button type="button"
-                      class="btn btn-default"
-                      ng-if="currentDuplicateDelta < resultViewer.totalItems"
-                      ng-click="nextDuplicate()">Volgende</button>
-
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <h4 class="modal-title">
-              Gelijkaardige items
-              <span> </span>
-              <small>
-                Evenement <span ng-bind="currentDuplicateDelta"></span> van <span ng-bind="resultViewer.totalItems"></span>
-              </small>
-            </h4>
-          </div>
-          <div class="modal-body">
-            <div class="panel panel-default preview">
-
-                <div class="panel-heading" ng-style="{'background-image': 'url(' + event.image + ')'}">
-                  <ul class="list-inline">
-                    <li><small class="label label-default" ng-bind="::event.type.label"></small></li>
-                  </ul>
-                  <p class="title" ng-bind="::event.getName('nl')"></p>
-                </div>
-
-                <div class="panel-body">
-
-                  <span ng-bind="::event.getDescription('nl')"></span>
-
-                  <table class="table table-condended">
-                    <tbody>
-                      <tr>
-                        <td class="">
-                          <strong class="hidden-xs hidden-sm">Waar</strong>
-                          <i class="fa fa-map-marker hidden-md hidden-lg"></i>
-                        </td>
-                        <td ng-bind="::event.location.name"></td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <strong class="hidden-xs hidden-sm">Wanneer</strong>
-                          <i class="fa fa-calendar hidden-md hidden-lg"></i>
-                        </td>
-                        <td class="cf-when scroll scroll-150">
-                          <ng-switch on="::event.calendarType">
-                            <span ng-switch-when="single" ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
-                            <span ng-switch-when="multiple">
-                              Van <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
-                              <span> tot </span>
-                              <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
-                            </span>
-                            <span ng-switch-when="periodic">
-                              Van <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
-                              <span> tot </span>
-                              <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
-                            </span>
-                            <span ng-switch-when="permanent">
-                               Permanent
-                            </span>
-                          </ng-switch>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <strong class="hidden-xs hidden-sm">Organisatie</strong>
-                          <i class="fa fa-building-o hidden-md hidden-lg"></i>
-                        </td>
-                        <td ng-bind="::event.organizer.name"></td>
-                      </tr>
-                      <tr>
-                        <td><strong class="hidden-xs hidden-sm">Prijs</strong><i class="fa fa-eur hidden-md hidden-lg"></i></td>
-                        <td>
-                          <div ng-switch="::event.pricing">
-                          <span ng-switch-when="free">gratis</span>
-                          <span ng-switch-when="payed">
-                            <i class="fa fa-eur meta icon"></i>
-                            <span ng-if="::event.price" ng-bind="::event.price | currency">
-                          </span>
-                          </span>
-                          <span ng-switch-when="unknown">niet ingevoerd</span>
-                      </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-            </div>
-
-            <div>
-              <em>
-                Ingevoerd door <span ng-bind="::event.organizer.name"></span>
-                <span> op </span>
-                <span ng-bind="::event.created | date : 'dd/MM/yyyy • HH:mm'"></span>
-              </em>
-            </div>
-
-          </div>
-        </div><!-- /.modal-content -->
-
-      </div><!-- /.modal-dialog -->
-    </div>
-
   </section>
 
 </div>
