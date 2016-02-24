@@ -214,10 +214,12 @@ function EventFormStep4Controller(
 
   /**
    * Open the organizer modal.
+   *
+   * @param {object} item
+   *  An item to preview from the suggestions in the current result viewer.
    */
   function previewSuggestedItem(item) {
-
-    var previewModal = $uibModal.open({
+    $uibModal.open({
       templateUrl: 'templates/suggestion-preview-modal.html',
       controller: 'SuggestionPreviewModalController',
       resolve: {
@@ -232,13 +234,5 @@ function EventFormStep4Controller(
         }
       }
     });
-
-    function itemAlreadyExists(suggestedItem) {
-      // TODO: not sure what to do...
-      console.log(suggestedItem);
-    }
-
-    previewModal.result.then(itemAlreadyExists);
   }
-
 }

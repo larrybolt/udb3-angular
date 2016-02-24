@@ -23,6 +23,7 @@ describe('Controller: Suggestion Preview Modal', function() {
       }
     );
   }
+
   function getResultViewer() {
     var resultViewer = new SearchResultViewer();
     resultViewer.setResults({
