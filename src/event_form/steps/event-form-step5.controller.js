@@ -143,6 +143,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   $scope.openUploadImageModal = openUploadImageModal;
   $scope.removeImage = removeImage;
   $scope.editImage = editImage;
+  $scope.selectMainImage = selectMainImage;
 
   $scope.ageRanges = _.map(AgeRangeEnum, function (range) {
     return range;
@@ -747,6 +748,16 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
       }
     });
 
+  }
+
+  function selectMainImage(image) {
+    function updateImageOrder() {
+      EventFormData.selectMainImage(image);
+    }
+
+    eventCrud
+      .selectMainImage(EventFormData, image)
+      .then(updateImageOrder);
   }
 
   /**

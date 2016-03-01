@@ -89,4 +89,32 @@ describe('Factory: Event form data', function () {
     EventFormData.removeMediaObject(imageToRemove);
     expect(EventFormData.mediaObjects).toEqual([otherMediaObject]);
   }));
+
+  it('should reindex the media objects with the main image on top when selecting a new one', inject(function (EventFormData) {
+    var oldMainImage = {
+      '@id': 'http://culudb-silex.dev:8080/media/d2efceac-46ec-49b1-903f-d73b4c69fe70',
+      '@type': 'schema:ImageObject',
+      'contentUrl': 'http://culudb-silex.dev:8080/media/d2efceac-46ec-49b1-903f-d73b4c69fe70.png',
+      'thumbnailUrl': 'http://culudb-silex.dev:8080/media/d2efceac-46ec-49b1-903f-d73b4c69fe70.png',
+      'description': 'old main image',
+      'copyrightHolder': 'Dirk Dirkington'
+    };
+
+    var newImageImage = {
+      '@id': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4',
+      '@type': 'schema:ImageObject',
+      'contentUrl': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4.png',
+      'thumbnailUrl': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4.png',
+      'description': 'new main image',
+      'copyrightHolder': 'Danny DeVito'
+    };
+
+    EventFormData.mediaObjects = [
+      oldMainImage,
+      newImageImage
+    ];
+
+    EventFormData.selectMainImage(newImageImage);
+    expect(EventFormData.mediaObjects).toEqual([newImageImage, oldMainImage]);
+  }));
 });

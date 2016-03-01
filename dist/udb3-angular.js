@@ -2952,10 +2952,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       mediaObjectId: imageId
     };
 
-    function returnJobData(response) {
-      return $q.resolve(response.data);
-    }
-
     return $http
       .post(
         appConfig.baseUrl + itemType + '/' + itemId + '/images',
@@ -2973,10 +2969,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       description: description,
       copyrightHolder: copyrightHolder
     };
-
-    function returnJobData(response) {
-      return $q.resolve(response.data);
-    }
 
     return $http
       .post(
@@ -2997,15 +2989,45 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
    * @return {Promise}
    */
   this.removeImage = function(itemId, itemType, imageId) {
-    function returnJobData(response) {
-      return $q.resolve(response.data);
-    }
-
     return $http['delete'](
       appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
       defaultApiConfig
     ).then(returnJobData);
   };
+
+  /**
+   * Select the main image for an offer.
+   *
+   * @param {string} itemId
+   * @param {OfferTypes} itemType
+   * @param {string} imageId
+   *
+   * @return {Promise.<Object>}
+   */
+  this.selectMainImage = function(itemId, itemType, imageId) {
+    var postData = {
+      mediaObjectId: imageId
+    };
+
+    return $http
+      .post(
+        appConfig.baseUrl + itemType + '/' + itemId + '/images/main',
+        postData,
+        defaultApiConfig
+      )
+      .then(returnJobData);
+  };
+
+  /**
+   * @param {object} response
+   *  The response that is returned when creating a job.
+   *
+   * @return {Promise.<Object>}
+   *  The object containing the job data
+   */
+  function returnJobData(response) {
+    return $q.resolve(response.data);
+  }
 
   this.getEventVariations = function (ownerId, purpose, eventUrl) {
     var parameters = {
@@ -4793,6 +4815,20 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     return udbApi
       .removeImage(item.id, item.getType(), imageId)
+      .then(logJob);
+  };
+
+  service.selectMainImage = function (item, image) {
+    var imageId = image['@id'].split('/').pop();
+
+    function logJob(jobData) {
+      var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
+      jobLogger.addJob(job);
+      return $q.resolve(job);
+    }
+
+    return udbApi
+      .selectMainImage(item.id, item.getType(), imageId)
       .then(logJob);
   };
 
@@ -7456,8 +7492,20 @@ function EventFormDataFactory() {
      *
      *@param {MediaObject} mediaObject
      */
-    removeMediaObject : function(mediaObject) {
+    removeMediaObject: function(mediaObject) {
       this.mediaObjects = _.reject(this.mediaObjects, {'@id': mediaObject['@id']});
+    },
+
+    /**
+     * Select the main image for this item.
+     *
+     * @param {mediaObject} image
+     */
+    selectMainImage: function (image) {
+      var reindexedMedia = _.without(this.mediaObjects, image);
+      reindexedMedia.unshift(image);
+
+      this.mediaObjects = reindexedMedia;
     },
 
     /**
@@ -7566,6 +7614,11 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
 
     if (item.mediaObject) {
       EventFormData.mediaObjects = item.mediaObject || [];
+
+      if (item.image) {
+        var mainImage = _.find(EventFormData.mediaObjects, {'contentUrl': item.image});
+        EventFormData.selectMainImage(mainImage);
+      }
     }
 
     EventFormData.name = item.name;
@@ -8938,6 +8991,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   $scope.openUploadImageModal = openUploadImageModal;
   $scope.removeImage = removeImage;
   $scope.editImage = editImage;
+  $scope.selectMainImage = selectMainImage;
 
   $scope.ageRanges = _.map(AgeRangeEnum, function (range) {
     return range;
@@ -9542,6 +9596,16 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
       }
     });
 
+  }
+
+  function selectMainImage(image) {
+    function updateImageOrder() {
+      EventFormData.selectMainImage(image);
+    }
+
+    eventCrud
+      .selectMainImage(EventFormData, image)
+      .then(updateImageOrder);
   }
 
   /**
@@ -15285,7 +15349,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "            <h4>Afbeeldingen</h4>\n" +
     "            <div ng-repeat=\"image in eventFormData.mediaObjects | filter:{'@type': 'schema:ImageObject'} track by image.contentUrl\">\n" +
     "              <div class=\"uploaded-image\">\n" +
-    "                <div class=\"media\">\n" +
+    "                <div class=\"media\" ng-class=\"{'main-image': ($index === 0)}\">\n" +
     "                  <a class=\"media-left\" href=\"#\">\n" +
     "                    <img ng-src=\"{{ image.thumbnailUrl }}\" style=\"max-width: 50px; max-height: 50px;\">\n" +
     "                  </a>\n" +
@@ -15299,6 +15363,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                    <span>\n" +
     "                      <a class=\"btn btn-link\" ng-click=\"editImage(image)\">Wijzigen</a>\n" +
     "                      <a class=\"btn btn-link\" ng-click=\"removeImage(image)\">Verwijderen</a>\n" +
+    "                      <a class=\"btn btn-link select-main-image\" ng-click=\"selectMainImage(image)\">Hoofdafbeelding</a>\n" +
     "                    </span>\n" +
     "                  </div>\n" +
     "                </div>\n" +

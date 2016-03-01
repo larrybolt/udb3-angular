@@ -2977,6 +2977,13 @@ body {
   padding: 4px 12px;
   line-height: initial;
 }
+.offer-form .media.main-image {
+  background-color: aliceblue;
+  border-color: black;
+}
+.offer-form .main-image .select-main-image {
+  display: none;
+}
 .image-copyright-agreements {
   font-size: 0.85em;
 }

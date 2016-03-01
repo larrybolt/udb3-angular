@@ -503,7 +503,7 @@
             <h4>Afbeeldingen</h4>
             <div ng-repeat="image in eventFormData.mediaObjects | filter:{'@type': 'schema:ImageObject'} track by image.contentUrl">
               <div class="uploaded-image">
-                <div class="media">
+                <div class="media" ng-class="{'main-image': ($index === 0)}">
                   <a class="media-left" href="#">
                     <img ng-src="{{ image.thumbnailUrl }}" style="max-width: 50px; max-height: 50px;">
                   </a>
@@ -517,6 +517,7 @@
                     <span>
                       <a class="btn btn-link" ng-click="editImage(image)">Wijzigen</a>
                       <a class="btn btn-link" ng-click="removeImage(image)">Verwijderen</a>
+                      <a class="btn btn-link select-main-image" ng-click="selectMainImage(image)">Hoofdafbeelding</a>
                     </span>
                   </div>
                 </div>
