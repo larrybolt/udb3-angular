@@ -100,7 +100,7 @@ describe('Factory: Event form data', function () {
       'copyrightHolder': 'Dirk Dirkington'
     };
 
-    var newImageImage = {
+    var newMainImage = {
       '@id': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4',
       '@type': 'schema:ImageObject',
       'contentUrl': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4.png',
@@ -111,10 +111,10 @@ describe('Factory: Event form data', function () {
 
     EventFormData.mediaObjects = [
       oldMainImage,
-      newImageImage
+      newMainImage
     ];
 
-    EventFormData.selectMainImage(newImageImage);
-    expect(EventFormData.mediaObjects).toEqual([newImageImage, oldMainImage]);
+    EventFormData.selectMainImage(newMainImage);
+    expect(EventFormData.mediaObjects).toEqual([newMainImage, oldMainImage]);
   }));
 });

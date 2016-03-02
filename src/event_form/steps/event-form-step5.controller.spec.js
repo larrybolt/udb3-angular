@@ -23,7 +23,8 @@ describe('Controller: event form step 5', function () {
       'updateOrganizer',
       'updateTypicalAgeRange',
       'deleteTypicalAgeRange',
-      'deleteOfferOrganizer'
+      'deleteOfferOrganizer',
+      'selectMainImage'
     ]);
     stepController = getController();
   }));
@@ -226,5 +227,25 @@ describe('Controller: event form step 5', function () {
     ];
 
     expect(scope.contactInfo).toEqual(expectedContactInfo);
+  });
+
+  it('should update the image order when selecting a new main image', function () {
+    var newMainImage = {
+      '@id': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4',
+      '@type': 'schema:ImageObject',
+      'contentUrl': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4.png',
+      'thumbnailUrl': 'http://culudb-silex.dev:8080/media/48f4bad5-827e-4da7-bc93-d5ff782948b4.png',
+      'description': 'new main image',
+      'copyrightHolder': 'Danny DeVito'
+    };
+    eventCrud.selectMainImage.and.returnValue($q.resolve());
+    spyOn(EventFormData, 'selectMainImage');
+    stepController = getController();
+
+    scope.selectMainImage(newMainImage);
+    scope.$apply();
+
+    expect(eventCrud.selectMainImage).toHaveBeenCalledWith(EventFormData, newMainImage);
+    expect(EventFormData.selectMainImage).toHaveBeenCalledWith(newMainImage);
   });
 });
