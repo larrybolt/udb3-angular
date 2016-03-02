@@ -111,10 +111,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   $scope.facilitiesInapplicable = false;
   $scope.selectedFacilities = [];
 
-  // Image upload vars.
-  $scope.imageCssClass = EventFormData.mediaObjects.length > 0 ? 'state-complete' : 'state-incomplete';
-
-  // Scope functions.
   // Description functions.
   $scope.saveDescription = saveDescription;
 
@@ -684,24 +680,10 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
    * Open the upload modal.
    */
   function openUploadImageModal() {
-
     var modalInstance = $uibModal.open({
       templateUrl: 'templates/event-form-image-upload.html',
       controller: 'EventFormImageUploadController'
     });
-
-    modalInstance.result.then(function (mediaObject) {
-      $scope.imageCssClass = 'state-complete';
-    }, function () {
-      // modal dismissed.
-      if (EventFormData.mediaObjects.length > 0) {
-        $scope.imageCssClass = 'state-complete';
-      }
-      else {
-        $scope.imageCssClass = 'state-incomplete';
-      }
-    });
-
   }
 
   function editImage(mediaObject) {
@@ -720,7 +702,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
    * Open the modal to remove an image.
    */
   function removeImage(image) {
-
     var modalInstance = $uibModal.open({
       templateUrl: 'templates/event-form-image-remove.html',
       controller: 'EventFormImageRemoveController',
@@ -730,24 +711,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
         }
       }
     });
-
-    modalInstance.result.then(function () {
-      if (EventFormData.mediaObjects.length > 0) {
-        $scope.imageCssClass = 'state-complete';
-      }
-      else {
-        $scope.imageCssClass = 'state-incomplete';
-      }
-    }, function () {
-      // modal dismissed.
-      if (EventFormData.mediaObjects.length > 0) {
-        $scope.imageCssClass = 'state-complete';
-      }
-      else {
-        $scope.imageCssClass = 'state-incomplete';
-      }
-    });
-
   }
 
   function selectMainImage(image) {
