@@ -9534,13 +9534,19 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     });
   }
 
-  function editImage(mediaObject) {
+  /**
+   * Open the modal to edit an image of the item.
+   *
+   * @param {MediaObject} image
+   *    The media object of the image to edit.
+   */
+  function editImage(image) {
     $uibModal.open({
       templateUrl: 'templates/event-form-image-edit.html',
       controller: 'EventFormImageEditController',
       resolve: {
         mediaObject: function () {
-          return mediaObject;
+          return image;
         }
       }
     });
@@ -9548,6 +9554,9 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
 
   /**
    * Open the modal to remove an image.
+   *
+   * @param {MediaObject} image
+   *    The media object of the image to remove from the item.
    */
   function removeImage(image) {
     var modalInstance = $uibModal.open({
@@ -9561,6 +9570,12 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     });
   }
 
+  /**
+   * Select the main image for an item.
+   *
+   * @param {MediaObject} image
+   *    The media object of the image to select as the main image.
+   */
   function selectMainImage(image) {
     function updateImageOrder() {
       EventFormData.selectMainImage(image);
