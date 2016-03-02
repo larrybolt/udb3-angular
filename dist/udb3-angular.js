@@ -15333,17 +15333,16 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                  </a>\n" +
     "\n" +
     "                  <div class=\"media-body\">\n" +
-    "                    <span>\n" +
-    "                      <span ng-bind=\"image.description\"></span>\n" +
-    "                      <br/>\n" +
-    "                      <small ng-bind=\"image.copyrightHolder\">Copyright</small>\n" +
-    "                    </span>\n" +
-    "                    <span>\n" +
-    "                      <a class=\"btn btn-link\" ng-click=\"editImage(image)\">Wijzigen</a>\n" +
-    "                      <a class=\"btn btn-link\" ng-click=\"removeImage(image)\">Verwijderen</a>\n" +
-    "                      <a class=\"btn btn-link select-main-image\" ng-click=\"selectMainImage(image)\">Hoofdafbeelding</a>\n" +
-    "                    </span>\n" +
+    "                    <div ng-bind=\"image.description\"></div>\n" +
+    "                    <div class=\"text-muted\">&copy; <span ng-bind=\"image.copyrightHolder\">Copyright</span></div>\n" +
     "                  </div>\n" +
+    "\n" +
+    "                  <div class=\"media-actions\">\n" +
+    "                      <a class=\"btn btn-xs btn-primary\" ng-click=\"editImage(image)\">Wijzigen</a>\n" +
+    "                      <a class=\"btn btn-xs btn-danger\" ng-click=\"removeImage(image)\">Verwijderen</a>\n" +
+    "                      <a class=\"btn btn-xs btn-default select-main-image\" ng-click=\"selectMainImage(image)\">Hoofdafbeelding</a>\n" +
+    "                  </div>\n" +
+    "\n" +
     "                </div>\n" +
     "              </div>\n" +
     "            </div>\n" +

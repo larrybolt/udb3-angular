@@ -1703,6 +1703,7 @@ input + .alert {
 .save-time-tracker {
   border-top: 1px solid #cccccc;
   color: #777777;
+  margin-top: 3em;
   padding-bottom: 1em;
   padding-top: 1em;
 }
@@ -2775,6 +2776,7 @@ body {
 }
 .offer-form .image-upload-list .media {
   border-bottom: 1px solid #dddddd;
+  padding: 10px;
 }
 .offer-form #publiceren {
   margin-top: 2em;

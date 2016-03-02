@@ -509,17 +509,16 @@
                   </a>
 
                   <div class="media-body">
-                    <span>
-                      <span ng-bind="image.description"></span>
-                      <br/>
-                      <small ng-bind="image.copyrightHolder">Copyright</small>
-                    </span>
-                    <span>
-                      <a class="btn btn-link" ng-click="editImage(image)">Wijzigen</a>
-                      <a class="btn btn-link" ng-click="removeImage(image)">Verwijderen</a>
-                      <a class="btn btn-link select-main-image" ng-click="selectMainImage(image)">Hoofdafbeelding</a>
-                    </span>
+                    <div ng-bind="image.description"></div>
+                    <div class="text-muted">&copy; <span ng-bind="image.copyrightHolder">Copyright</span></div>
                   </div>
+
+                  <div class="media-actions">
+                      <a class="btn btn-xs btn-primary" ng-click="editImage(image)">Wijzigen</a>
+                      <a class="btn btn-xs btn-danger" ng-click="removeImage(image)">Verwijderen</a>
+                      <a class="btn btn-xs btn-default select-main-image" ng-click="selectMainImage(image)">Hoofdafbeelding</a>
+                  </div>
+
                 </div>
               </div>
             </div>
