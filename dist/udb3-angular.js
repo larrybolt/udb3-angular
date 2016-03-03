@@ -3207,7 +3207,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
       this.typicalAgeRange = jsonEvent.typicalAgeRange || '';
       this.bookingInfo = jsonEvent.bookingInfo || {};
       this.contactPoint = jsonEvent.contactPoint || {};
-      this.url = '/event/' + this.id;
+      this.url = 'event/' + this.id;
       this.sameAs = jsonEvent.sameAs;
       this.additionalData = jsonEvent.additionalData || {};
       if (jsonEvent.typicalAgeRange) {
@@ -3704,7 +3704,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.facilities = getCategoriesByType(jsonPlace, 'facility') || [];
       this.additionalData = jsonPlace.additionalData || {};
       if (jsonPlace['@id']) {
-        this.url = '/place/' + this.id;
+        this.url = 'place/' + this.id;
       }
       this.creator = jsonPlace.creator;
       this.modified = jsonPlace.modified;
