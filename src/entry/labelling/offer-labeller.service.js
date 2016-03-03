@@ -61,14 +61,14 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, Que
   };
 
   /**
-   * @param {string[]} eventIds
+   * @param {string[]} offers
    * @param {string} label
    */
-  this.labelEventsById = function (eventIds, label) {
-    var jobPromise = udbApi.labelEvents(eventIds, label);
+  this.labelOffersById = function (offers, label) {
+    var jobPromise = udbApi.labelOffers(offers, label);
 
     jobPromise.success(function (jobData) {
-      var job = new EventLabelBatchJob(jobData.commandId, eventIds, label);
+      var job = new EventLabelBatchJob(jobData.commandId, offers, label);
       console.log(job);
       jobLogger.addJob(job);
     });

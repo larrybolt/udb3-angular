@@ -281,11 +281,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.labelEvents = function (eventIds, label) {
-    return $http.post(appConfig.baseUrl + 'events/label',
+  this.labelOffers = function (offers, label) {
+    return $http.post(appConfig.baseUrl + 'offers/labels',
       {
         'label': label,
-        'events': eventIds
+        'offers': offers
       },
       defaultApiConfig
     );

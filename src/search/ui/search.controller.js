@@ -103,9 +103,9 @@ function Search(
 
   var labelSelection = function () {
 
-    var selectedIds = $scope.resultViewer.selectedIds;
+    var selectedOffers = $scope.resultViewer.selectedOffers;
 
-    if (!selectedIds.length) {
+    if (!selectedOffers.length) {
       $window.alert('First select the events you want to label.');
       return;
     }
@@ -117,20 +117,22 @@ function Search(
 
     modal.result.then(function (labels) {
 
-      _.each(selectedIds, function (eventId) {
-        var eventPromise = udbApi.getEventById(eventId);
+      _.each(selectedOffers, function (offer) {
+        var eventPromise;
+
+        if (offer['@type'] === 'Event') {
+          eventPromise = udbApi.getEventByLDId(offer['@id']);
+        } else if (offer['@type'] === 'Place') {
+          eventPromise = udbApi.getPlaceByLDId(offer['@id']);
+        }
 
         eventPromise.then(function (event) {
           event.label(labels);
         });
       });
 
-      var eventIds = _.map(selectedIds, function (id) {
-        return id.split('/').pop();
-      });
-
       _.each(labels, function (label) {
-        offerLabeller.labelEventsById(eventIds, label);
+        offerLabeller.labelOffersById(selectedOffers, label);
       });
     });
   };

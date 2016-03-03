@@ -53,7 +53,7 @@ angular.module('udb.search')
         {id: 'translation', name: 'Vertaalstatus'}
       ];
       this.activeSpecific = this.eventSpecifics[0];
-      this.selectedIds = [];
+      this.selectedOffers = [];
       this.selectionState = SelectionState.NONE;
       this.querySelected = false;
     };
@@ -77,9 +77,9 @@ angular.module('udb.search')
         this.selectPageItems();
       },
       updateSelectionState: function () {
-        var selectedIds = this.selectedIds,
+        var selectedOffers = this.selectedOffers,
             selectedPageItems = _.filter(this.events, function (event) {
-              return _.contains(selectedIds, identifyItem(event));
+              return _.contains(selectedOffers, event);
             });
 
         if (selectedPageItems.length === this.pageSize) {
@@ -90,36 +90,41 @@ angular.module('udb.search')
           this.selectionState = SelectionState.NONE;
         }
       },
-      toggleSelectId: function (id) {
+      toggleSelect: function (offer) {
 
         // Prevent toggling individual items when the whole query is selected
         if (this.querySelected) {
           return;
         }
 
-        var selectedIds = this.selectedIds,
-            isSelected = _.contains(selectedIds, id);
+        // select the offer from the result viewer events
+        // it's this "event" that will get stored
+        var theOffer = _.filter(this.events, function (event) {
+              return offer.apiUrl === event['@id'];
+            }).pop();
+
+        var selectedOffers = this.selectedOffers,
+            isSelected = _.contains(selectedOffers, theOffer);
 
         if (isSelected) {
-          _.remove(selectedIds, function (iid) {
-            return id === iid;
+          _.remove(selectedOffers, function (selectedOffer) {
+            return selectedOffer['@id'] === theOffer['@id'];
           });
         } else {
-          selectedIds.push(id);
+          selectedOffers.push(theOffer);
         }
 
         this.updateSelectionState();
       },
       deselectAll: function () {
-        this.selectedIds = [];
+        this.selectedOffers = [];
         this.selectionState = SelectionState.NONE;
       },
       deselectPageItems: function () {
-        var selectedIds = this.selectedIds;
+        var selectedOffers = this.selectedOffers;
         _.forEach(this.events, function (event) {
-          var eventId = identifyItem(event);
-          _.remove(selectedIds, function (id) {
-            return id === eventId;
+          _.remove(selectedOffers, function (offer) {
+            return offer['@id'] === event['@id'];
           });
         });
 
@@ -127,17 +132,22 @@ angular.module('udb.search')
       },
       selectPageItems: function () {
         var events = this.events,
-            selectedIds = this.selectedIds;
+            selectedOffers = this.selectedOffers;
 
         _.each(events, function (event) {
-          selectedIds.push(identifyItem(event));
+          selectedOffers.push(event);
         });
 
-        this.selectedIds = _.uniq(selectedIds);
+        this.selectedOffers = _.uniq(selectedOffers);
         this.selectionState = SelectionState.ALL;
       },
-      isIdSelected: function (id) {
-        return _.contains(this.selectedIds, id);
+      isOfferSelected: function (offer) {
+        // get the right offer object from the events list
+        var theOffer = _.filter(this.events, function (event) {
+              return offer.apiUrl === event['@id'];
+            }).pop();
+
+        return _.contains(this.selectedOffers, theOffer);
       },
       setResults: function (pagedResults) {
         var viewer = this;
@@ -154,7 +164,7 @@ angular.module('udb.search')
       },
       queryChanged: function (query) {
         this.loading = true;
-        this.selectedIds = [];
+        this.selectedOffers = [];
         this.querySelected = false;
 
         // prevent the initial search from resetting the active page
