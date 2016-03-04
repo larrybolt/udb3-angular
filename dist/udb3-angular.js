@@ -5669,7 +5669,6 @@ function jobDirective() {
   var job = {
     template: '<div ng-include="jobTemplateUrl"></div>',
     restrict: 'E',
-    controller: Search, // jshint ignore:line
     link: function(scope, element, attrs) {
       scope.jobTemplateUrl = 'templates/' + scope.job.getTemplateName() + '.template.html';
 
