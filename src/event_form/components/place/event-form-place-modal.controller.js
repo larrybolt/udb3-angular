@@ -13,7 +13,7 @@
     .controller('EventFormPlaceModalController', EventFormPlaceModalController);
 
   /* @ngInject */
-  function EventFormPlaceModalController($scope, $modalInstance, eventCrud, UdbPlace, location, categories) {
+  function EventFormPlaceModalController($scope, $uibModalInstance, eventCrud, UdbPlace, location, categories) {
 
     $scope.categories = categories;
     $scope.location = location;
@@ -57,7 +57,7 @@
       $scope.newPlace = getDefaultPlace();
 
       // Close the modal.
-      $modalInstance.dismiss();
+      $uibModalInstance.dismiss();
 
     }
     /**
@@ -127,7 +127,7 @@
      *   Name of the place
      */
     function selectPlace(place) {
-      $modalInstance.close(place);
+      $uibModalInstance.close(place);
     }
 
   }

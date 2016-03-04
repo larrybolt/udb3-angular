@@ -12,7 +12,7 @@ angular
   .controller('OfferLabelModalCtrl', OfferLabelModalCtrl);
 
 /* @ngInject */
-function OfferLabelModalCtrl($scope, $modalInstance, udbApi) {
+function OfferLabelModalCtrl($scope, $uibModalInstance, udbApi) {
   var labelPromise = udbApi.getRecentLabels();
 
   var ok = function () {
@@ -29,11 +29,11 @@ function OfferLabelModalCtrl($scope, $modalInstance, udbApi) {
     // join arrays and remove doubles
     var labels = _.union(checkedLabels, inputLabels);
 
-    $modalInstance.close(labels);
+    $uibModalInstance.close(labels);
   };
 
   var close = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   function parseLabelInput(stringWithLabels) {

@@ -13,7 +13,7 @@ angular
   .controller('EventDeleteConfirmModalCtrl', EventDeleteConfirmModalController);
 
 /* @ngInject */
-function EventDeleteConfirmModalController($scope, $modalInstance, eventCrud, item) {
+function EventDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item) {
 
   $scope.item = item;
   $scope.saving = false;
@@ -33,7 +33,7 @@ function EventDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
     var promise = eventCrud.removeEvent(item);
     promise.then(function(jsonResponse) {
       $scope.saving = false;
-      $modalInstance.close(item);
+      $uibModalInstance.close(item);
     }, function() {
       $scope.saving = false;
       $scope.error = true;
@@ -45,7 +45,7 @@ function EventDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
    * Cancel, modal dismiss.
    */
   function cancelRemoval() {
-    $modalInstance.dismiss();
+    $uibModalInstance.dismiss();
   }
 
 }

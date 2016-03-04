@@ -12,14 +12,14 @@ angular
   .controller('DeleteSearchModalController', DeleteSearchModalController);
 
 /* @ngInject */
-function DeleteSearchModalController($scope, $modalInstance) {
+function DeleteSearchModalController($scope, $uibModalInstance) {
 
   var confirm = function () {
-    $modalInstance.close();
+    $uibModalInstance.close();
   };
 
   var cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   $scope.cancel = cancel;

@@ -13,7 +13,7 @@ angular
   .controller('PlaceDeleteConfirmModalCtrl', PlaceDeleteConfirmModalController);
 
 /* @ngInject */
-function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, item, events, appConfig) {
+function PlaceDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item, events, appConfig) {
 
   $scope.item = item;
   $scope.saving = false;
@@ -30,7 +30,7 @@ function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
 
     // Extra check in case delete place is tried with events.
     if (events) {
-      $modalInstance.dismiss();
+      $uibModalInstance.dismiss();
     }
 
     $scope.saving = true;
@@ -38,7 +38,7 @@ function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
     var promise = eventCrud.removePlace(item);
     promise.then(function(jsonResponse) {
       $scope.saving = false;
-      $modalInstance.close(item);
+      $uibModalInstance.close(item);
     }, function() {
       $scope.saving = false;
       $scope.error = true;
@@ -50,7 +50,7 @@ function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
    * Cancel, modal dismiss.
    */
   function cancelRemoval() {
-    $modalInstance.dismiss();
+    $uibModalInstance.dismiss();
   }
 
 }
