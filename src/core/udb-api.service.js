@@ -292,7 +292,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   this.labelQuery = function (query, label) {
-    return $http.post(appConfig.baseUrl + 'query/label',
+    return $http.post(appConfig.baseUrl + 'query/labels',
       {
         'label': label,
         'query': query
