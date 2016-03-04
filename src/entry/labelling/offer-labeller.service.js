@@ -12,7 +12,7 @@ angular
   .service('offerLabeller', OfferLabeller);
 
 /* @ngInject */
-function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, QueryLabelJob) {
+function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob) {
 
   var offerLabeller = this;
 
@@ -68,7 +68,7 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, Que
     var jobPromise = udbApi.labelOffers(offers, label);
 
     jobPromise.success(function (jobData) {
-      var job = new EventLabelBatchJob(jobData.commandId, offers, label);
+      var job = new OfferLabelBatchJob(jobData.commandId, offers, label);
       console.log(job);
       jobLogger.addJob(job);
     });

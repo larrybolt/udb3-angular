@@ -111,8 +111,8 @@ function Search(
     }
 
     var modal = $uibModal.open({
-      templateUrl: 'templates/event-label-modal.html',
-      controller: 'EventLabelModalCtrl'
+      templateUrl: 'templates/offer-label-modal.html',
+      controller: 'OfferLabelModalCtrl'
     });
 
     modal.result.then(function (labels) {
@@ -143,8 +143,8 @@ function Search(
 
     if (queryBuilder.isValid(query)) {
       var modal = $uibModal.open({
-        templateUrl: 'templates/event-label-modal.html',
-        controller: 'EventLabelModalCtrl'
+        templateUrl: 'templates/offer-label-modal.html',
+        controller: 'OfferLabelModalCtrl'
       });
 
       modal.result.then(function (labels) {
