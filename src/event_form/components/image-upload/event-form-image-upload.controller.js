@@ -24,8 +24,8 @@ function EventFormImageUploadController(
 ) {
 
   // Scope vars.
-  $scope.uploadTermsConditionsUrl = appConfig.uploadTermsConditionsUrl;
-  $scope.uploadCopyRightInfoUrl = appConfig.uploadCopyRightInfoUrl;
+  $scope.userAgreementUrl = appConfig.media.userAgreementUrl;
+  $scope.copyrightUrl = appConfig.media.copyrightUrl;
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();

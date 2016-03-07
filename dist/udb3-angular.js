@@ -6384,8 +6384,8 @@ function EventFormImageUploadController(
 ) {
 
   // Scope vars.
-  $scope.uploadTermsConditionsUrl = appConfig.uploadTermsConditionsUrl;
-  $scope.uploadCopyRightInfoUrl = appConfig.uploadCopyRightInfoUrl;
+  $scope.userAgreementUrl = appConfig.media.userAgreementUrl;
+  $scope.copyrightUrl = appConfig.media.copyrightUrl;
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
@@ -14023,8 +14023,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      Je staat op het punt (een) afbeelding(en) toe te voegen en openbaar te verspreiden.\n" +
     "       Je dient daartoe alle geldende auteurs- en portretrechten te respecteren, alsook alle andere toepasselijke\n" +
     "       wetgeving. Je kan daarvoor aansprakelijk worden gehouden, zoals vastgelegd in de\n" +
-    "       <a ng-href=\"{{::uploadTermsConditionsUrl}}\" target=\"_blank\">algemene voorwaarden</a>.\n" +
-    "       <a ng-href=\"{{::uploadCopyRightInfoUrl}}\" target=\"_blank\">Meer informatie over copyright</a>\n" +
+    "       <a ng-href=\"{{::userAgreementUrl}}\" target=\"_blank\">algemene voorwaarden</a>.\n" +
+    "       <a ng-href=\"{{::copyrightUrl}}\" target=\"_blank\">Meer informatie over copyright</a>\n" +
     "    </p>\n" +
     "    <div ng-hide=\"showAgreements\">\n" +
     "      <div class=\"form-group\">\n" +
@@ -14066,8 +14066,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        Je staat op het punt (een) afbeelding(en) toe te voegen en openbaar te verspreiden.\n" +
     "        Je dient daartoe alle geldende auteurs- en portretrechten te respecteren, alsook alle andere toepasselijke\n" +
     "        wetgeving. Je kan daarvoor aansprakelijk worden gehouden, zoals vastgelegd in de\n" +
-    "        <a ng-href=\"{{::uploadTermsConditionsUrl}}\" target=\"_blank\">algemene voorwaarden</a>.\n" +
-    "        <a ng-href=\"{{::uploadCopyRightInfoUrl}}\" target=\"_blank\">Meer informatie over copyright</a>\n" +
+    "        <a ng-href=\"{{::userAgreementUrl}}\" target=\"_blank\">algemene voorwaarden</a>.\n" +
+    "        <a ng-href=\"{{::copyrightUrl}}\" target=\"_blank\">Meer informatie over copyright</a>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
