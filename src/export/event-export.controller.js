@@ -12,7 +12,7 @@ angular
   .controller('EventExportController', EventExportController);
 
 /* @ngInject */
-function EventExportController($modalInstance, udbApi, eventExporter, ExportFormats) {
+function EventExportController($uibModalInstance, udbApi, eventExporter, ExportFormats) {
 
   var exporter = this;
 
@@ -195,7 +195,7 @@ function EventExportController($modalInstance, udbApi, eventExporter, ExportForm
   });
 
   exporter.close = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   exporter.eventCount = eventExporter.activeExport.eventCount;

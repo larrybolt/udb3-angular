@@ -2442,16 +2442,16 @@ angular
   .controller('UnexpectedErrorModalController', UnexpectedErrorModalController);
 
 /* @ngInject */
-function UnexpectedErrorModalController($scope, $modalInstance, errorMessage) {
+function UnexpectedErrorModalController($scope, $uibModalInstance, errorMessage) {
 
   var dismiss = function () {
-    $modalInstance.dismiss('closed');
+    $uibModalInstance.dismiss('closed');
   };
 
   $scope.dismiss = dismiss;
   $scope.errorMessage = errorMessage;
 }
-UnexpectedErrorModalController.$inject = ["$scope", "$modalInstance", "errorMessage"];
+UnexpectedErrorModalController.$inject = ["$scope", "$uibModalInstance", "errorMessage"];
 
 // Source: src/core/udb-api.service.js
 /**
@@ -2735,18 +2735,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.labelEvents = function (eventIds, label) {
-    return $http.post(appConfig.baseUrl + 'events/label',
+  this.labelOffers = function (offers, label) {
+    return $http.post(appConfig.baseUrl + 'offers/labels',
       {
         'label': label,
-        'events': eventIds
+        'offers': offers
       },
       defaultApiConfig
     );
   };
 
   this.labelQuery = function (query, label) {
-    return $http.post(appConfig.baseUrl + 'query/label',
+    return $http.post(appConfig.baseUrl + 'query/labels',
       {
         'label': label,
         'query': query
@@ -3976,7 +3976,7 @@ angular
   .controller('EventDeleteConfirmModalCtrl', EventDeleteConfirmModalController);
 
 /* @ngInject */
-function EventDeleteConfirmModalController($scope, $modalInstance, eventCrud, item) {
+function EventDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item) {
 
   $scope.item = item;
   $scope.saving = false;
@@ -3996,7 +3996,7 @@ function EventDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
     var promise = eventCrud.removeEvent(item);
     promise.then(function(jsonResponse) {
       $scope.saving = false;
-      $modalInstance.close(item);
+      $uibModalInstance.close(item);
     }, function() {
       $scope.saving = false;
       $scope.error = true;
@@ -4008,11 +4008,11 @@ function EventDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
    * Cancel, modal dismiss.
    */
   function cancelRemoval() {
-    $modalInstance.dismiss();
+    $uibModalInstance.dismiss();
   }
 
 }
-EventDeleteConfirmModalController.$inject = ["$scope", "$modalInstance", "eventCrud", "item"];
+EventDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eventCrud", "item"];
 
 // Source: src/dashboard/components/place-delete-confirm-modal.controller.js
 
@@ -4028,7 +4028,7 @@ angular
   .controller('PlaceDeleteConfirmModalCtrl', PlaceDeleteConfirmModalController);
 
 /* @ngInject */
-function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, item, events, appConfig) {
+function PlaceDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item, events, appConfig) {
 
   $scope.item = item;
   $scope.saving = false;
@@ -4045,7 +4045,7 @@ function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
 
     // Extra check in case delete place is tried with events.
     if (events) {
-      $modalInstance.dismiss();
+      $uibModalInstance.dismiss();
     }
 
     $scope.saving = true;
@@ -4053,7 +4053,7 @@ function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
     var promise = eventCrud.removePlace(item);
     promise.then(function(jsonResponse) {
       $scope.saving = false;
-      $modalInstance.close(item);
+      $uibModalInstance.close(item);
     }, function() {
       $scope.saving = false;
       $scope.error = true;
@@ -4065,11 +4065,11 @@ function PlaceDeleteConfirmModalController($scope, $modalInstance, eventCrud, it
    * Cancel, modal dismiss.
    */
   function cancelRemoval() {
-    $modalInstance.dismiss();
+    $uibModalInstance.dismiss();
   }
 
 }
-PlaceDeleteConfirmModalController.$inject = ["$scope", "$modalInstance", "eventCrud", "item", "events", "appConfig"];
+PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eventCrud", "item", "events", "appConfig"];
 
 // Source: src/dashboard/dashboard.controller.js
 (function () {
@@ -4959,46 +4959,46 @@ function VariationCreationJobFactory(BaseJob, JobStates, $q) {
 }
 VariationCreationJobFactory.$inject = ["BaseJob", "JobStates", "$q"];
 
-// Source: src/entry/labelling/event-label-batch-job.factory.js
+// Source: src/entry/labelling/offer-label-batch-job.factory.js
 /**
  * @ngdoc service
- * @name udb.entry.EventLabelBatchJob
+ * @name udb.entry.OfferLabelBatchJob
  * @description
  * # BaseJob
  * This Is the factory that creates an event export job
  */
 angular
   .module('udb.entry')
-  .factory('EventLabelBatchJob', EventLabelBatchJobFactory);
+  .factory('OfferLabelBatchJob', OfferLabelBatchJobFactory);
 
 /* @ngInject */
-function EventLabelBatchJobFactory(BaseJob, JobStates) {
+function OfferLabelBatchJobFactory(BaseJob, JobStates) {
 
   /**
-   * @class EventLabelBatchJob
+   * @class OfferLabelBatchJob
    * @constructor
    * @param {string} commandId
-   * @param {string[]} eventIds
+   * @param {string[]} offers
    * @param {string} label
    */
-  var EventLabelBatchJob = function (commandId, eventIds, label) {
+  var OfferLabelBatchJob = function (commandId, offers, label) {
     BaseJob.call(this, commandId);
-    this.events = eventIds;
-    this.addEventsAsTask(eventIds);
+    this.events = offers;
+    this.addEventsAsTask(offers);
     this.label = label;
   };
 
-  EventLabelBatchJob.prototype = Object.create(BaseJob.prototype);
-  EventLabelBatchJob.prototype.constructor = EventLabelBatchJob;
+  OfferLabelBatchJob.prototype = Object.create(BaseJob.prototype);
+  OfferLabelBatchJob.prototype.constructor = OfferLabelBatchJob;
 
-  EventLabelBatchJob.prototype.addEventsAsTask = function (eventIds) {
+  OfferLabelBatchJob.prototype.addEventsAsTask = function (offers) {
     var job = this;
-    _.forEach(eventIds, function (eventId) {
-      job.addTask({id: eventId});
+    _.forEach(offers, function (offer) {
+      job.addTask({id: offer});
     });
   };
 
-  EventLabelBatchJob.prototype.getDescription = function () {
+  OfferLabelBatchJob.prototype.getDescription = function () {
     var job = this,
         description;
 
@@ -5011,76 +5011,9 @@ function EventLabelBatchJobFactory(BaseJob, JobStates) {
     return description;
   };
 
-  return (EventLabelBatchJob);
+  return (OfferLabelBatchJob);
 }
-EventLabelBatchJobFactory.$inject = ["BaseJob", "JobStates"];
-
-// Source: src/entry/labelling/event-label-modal.controller.js
-/**
- * @ngdoc function
- * @name udb.entry.controller:EventLabelModalCtrl
- * @description
- * # EventLabelModalCtrl
- * Controller of the udb.entry
- */
-angular
-  .module('udb.entry')
-  .controller('EventLabelModalCtrl', EventLabelModalCtrl);
-
-/* @ngInject */
-function EventLabelModalCtrl($scope, $modalInstance, udbApi) {
-  var labelPromise = udbApi.getRecentLabels();
-
-  var ok = function () {
-    // Get the labels selected by checkbox
-    var checkedLabels = $scope.labelSelection.filter(function (label) {
-      return label.selected;
-    }).map(function (label) {
-      return label.name;
-    });
-
-    //add the labels
-    var inputLabels = parseLabelInput($scope.labelNames);
-
-    // join arrays and remove doubles
-    var labels = _.union(checkedLabels, inputLabels);
-
-    $modalInstance.close(labels);
-  };
-
-  var close = function () {
-    $modalInstance.dismiss('cancel');
-  };
-
-  function parseLabelInput(stringWithLabels) {
-    //split sting into array of labels
-    var labels = stringWithLabels.split(';');
-
-    // trim whitespaces
-    labels = _.each(labels, function (label, index) {
-      labels[index] = label.trim();
-    });
-
-    // remove empty strings
-    labels = _.without(labels, '');
-
-    return labels;
-  }
-
-  labelPromise.then(function (labels) {
-    $scope.availableLabels = labels;
-    $scope.labelSelection = _.map(labels, function (label) {
-      return {'name': label, 'selected': false};
-    });
-  });
-  // ui-select can't get to this scope variable unless you reference it from the $parent scope.
-  // seems to be 1.3 specific issue, see: https://github.com/angular-ui/ui-select/issues/243
-  $scope.labels = [];
-  $scope.close = close;
-  $scope.ok = ok;
-  $scope.labelNames = '';
-}
-EventLabelModalCtrl.$inject = ["$scope", "$modalInstance", "udbApi"];
+OfferLabelBatchJobFactory.$inject = ["BaseJob", "JobStates"];
 
 // Source: src/entry/labelling/offer-label-job.factory.js
 /**
@@ -5136,6 +5069,73 @@ function OfferLabelJobFactory(BaseJob, JobStates) {
 }
 OfferLabelJobFactory.$inject = ["BaseJob", "JobStates"];
 
+// Source: src/entry/labelling/offer-label-modal.controller.js
+/**
+ * @ngdoc function
+ * @name udb.entry.controller:OfferLabelModalCtrl
+ * @description
+ * # OfferLabelModalCtrl
+ * Controller of the udb.entry
+ */
+angular
+  .module('udb.entry')
+  .controller('OfferLabelModalCtrl', OfferLabelModalCtrl);
+
+/* @ngInject */
+function OfferLabelModalCtrl($scope, $uibModalInstance, udbApi) {
+  var labelPromise = udbApi.getRecentLabels();
+
+  var ok = function () {
+    // Get the labels selected by checkbox
+    var checkedLabels = $scope.labelSelection.filter(function (label) {
+      return label.selected;
+    }).map(function (label) {
+      return label.name;
+    });
+
+    //add the labels
+    var inputLabels = parseLabelInput($scope.labelNames);
+
+    // join arrays and remove doubles
+    var labels = _.union(checkedLabels, inputLabels);
+
+    $uibModalInstance.close(labels);
+  };
+
+  var close = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+
+  function parseLabelInput(stringWithLabels) {
+    //split sting into array of labels
+    var labels = stringWithLabels.split(';');
+
+    // trim whitespaces
+    labels = _.each(labels, function (label, index) {
+      labels[index] = label.trim();
+    });
+
+    // remove empty strings
+    labels = _.without(labels, '');
+
+    return labels;
+  }
+
+  labelPromise.then(function (labels) {
+    $scope.availableLabels = labels;
+    $scope.labelSelection = _.map(labels, function (label) {
+      return {'name': label, 'selected': false};
+    });
+  });
+  // ui-select can't get to this scope variable unless you reference it from the $parent scope.
+  // seems to be 1.3 specific issue, see: https://github.com/angular-ui/ui-select/issues/243
+  $scope.labels = [];
+  $scope.close = close;
+  $scope.ok = ok;
+  $scope.labelNames = '';
+}
+OfferLabelModalCtrl.$inject = ["$scope", "$uibModalInstance", "udbApi"];
+
 // Source: src/entry/labelling/offer-labeller.service.js
 /**
  * @ngdoc service
@@ -5149,7 +5149,7 @@ angular
   .service('offerLabeller', OfferLabeller);
 
 /* @ngInject */
-function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, QueryLabelJob) {
+function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob) {
 
   var offerLabeller = this;
 
@@ -5198,14 +5198,14 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, Que
   };
 
   /**
-   * @param {string[]} eventIds
+   * @param {string[]} offers
    * @param {string} label
    */
-  this.labelEventsById = function (eventIds, label) {
-    var jobPromise = udbApi.labelEvents(eventIds, label);
+  this.labelOffersById = function (offers, label) {
+    var jobPromise = udbApi.labelOffers(offers, label);
 
     jobPromise.success(function (jobData) {
-      var job = new EventLabelBatchJob(jobData.commandId, eventIds, label);
+      var job = new OfferLabelBatchJob(jobData.commandId, offers, label);
       console.log(job);
       jobLogger.addJob(job);
     });
@@ -5227,7 +5227,7 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, EventLabelBatchJob, Que
 
   };
 }
-OfferLabeller.$inject = ["jobLogger", "udbApi", "OfferLabelJob", "EventLabelBatchJob", "QueryLabelJob"];
+OfferLabeller.$inject = ["jobLogger", "udbApi", "OfferLabelJob", "OfferLabelBatchJob", "QueryLabelJob"];
 
 // Source: src/entry/labelling/query-label-job.factory.js
 /**
@@ -6154,7 +6154,7 @@ angular
   .controller('EventFormFacilitiesModalController', EventFormFacilitiesModalController);
 
 /* @ngInject */
-function EventFormFacilitiesModalController($scope, $modalInstance, EventFormData, eventCrud, facilities) {
+function EventFormFacilitiesModalController($scope, $uibModalInstance, EventFormData, eventCrud, facilities) {
 
   // Scope vars.
   $scope.saving = false;
@@ -6199,7 +6199,7 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
    * Cancel the modal.
    */
   function cancel() {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   }
 
   /**
@@ -6221,7 +6221,7 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
     promise.then(function() {
 
       $scope.saving = false;
-      $modalInstance.close();
+      $uibModalInstance.close();
 
     }, function() {
       $scope.error = true;
@@ -6230,7 +6230,7 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
   }
 
 }
-EventFormFacilitiesModalController.$inject = ["$scope", "$modalInstance", "EventFormData", "eventCrud", "facilities"];
+EventFormFacilitiesModalController.$inject = ["$scope", "$uibModalInstance", "EventFormData", "eventCrud", "facilities"];
 
 // Source: src/event_form/components/image-edit/event-form-image-edit.controller.js
 /**
@@ -6713,7 +6713,7 @@ EventFormOrganizerModalController.$inject = ["$scope", "$uibModalInstance", "udb
     .controller('EventFormPlaceModalController', EventFormPlaceModalController);
 
   /* @ngInject */
-  function EventFormPlaceModalController($scope, $modalInstance, eventCrud, UdbPlace, location, categories) {
+  function EventFormPlaceModalController($scope, $uibModalInstance, eventCrud, UdbPlace, location, categories) {
 
     $scope.categories = categories;
     $scope.location = location;
@@ -6757,7 +6757,7 @@ EventFormOrganizerModalController.$inject = ["$scope", "$uibModalInstance", "udb
       $scope.newPlace = getDefaultPlace();
 
       // Close the modal.
-      $modalInstance.dismiss();
+      $uibModalInstance.dismiss();
 
     }
     /**
@@ -6827,11 +6827,11 @@ EventFormOrganizerModalController.$inject = ["$scope", "$uibModalInstance", "udb
      *   Name of the place
      */
     function selectPlace(place) {
-      $modalInstance.close(place);
+      $uibModalInstance.close(place);
     }
 
   }
-  EventFormPlaceModalController.$inject = ["$scope", "$modalInstance", "eventCrud", "UdbPlace", "location", "categories"];
+  EventFormPlaceModalController.$inject = ["$scope", "$uibModalInstance", "eventCrud", "UdbPlace", "location", "categories"];
 
 })();
 
@@ -6848,7 +6848,7 @@ angular
   .controller('EventFormReservationModalController', EventFormReservationModalController);
 
 /* @ngInject */
-function EventFormReservationModalController($scope, $modalInstance, EventFormData, eventCrud) {
+function EventFormReservationModalController($scope, $uibModalInstance, EventFormData, eventCrud) {
 
   // Scope vars.
   $scope.eventFormData = EventFormData;
@@ -6870,7 +6870,7 @@ function EventFormReservationModalController($scope, $modalInstance, EventFormDa
   function cancel() {
     EventFormData.bookingInfo.availabilityStarts = initialStartDate;
     EventFormData.bookingInfo.availabilityEnds = initialEndDate;
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   }
 
   /**
@@ -6914,7 +6914,7 @@ function EventFormReservationModalController($scope, $modalInstance, EventFormDa
     var promise = eventCrud.updateBookingInfo(EventFormData);
     promise.then(function() {
       $scope.saving = false;
-      $modalInstance.close();
+      $uibModalInstance.close();
     }, function() {
       $scope.saving = false;
       $scope.errorMessage = 'Er ging iets fout bij het bewaren van de info.';
@@ -6923,7 +6923,7 @@ function EventFormReservationModalController($scope, $modalInstance, EventFormDa
   }
 
 }
-EventFormReservationModalController.$inject = ["$scope", "$modalInstance", "EventFormData", "eventCrud"];
+EventFormReservationModalController.$inject = ["$scope", "$uibModalInstance", "EventFormData", "eventCrud"];
 
 // Source: src/event_form/components/save-time-tracker/save-time-tracker.directive.js
 /**
@@ -9714,7 +9714,7 @@ angular
   .controller('EventExportController', EventExportController);
 
 /* @ngInject */
-function EventExportController($modalInstance, udbApi, eventExporter, ExportFormats) {
+function EventExportController($uibModalInstance, udbApi, eventExporter, ExportFormats) {
 
   var exporter = this;
 
@@ -9897,12 +9897,12 @@ function EventExportController($modalInstance, udbApi, eventExporter, ExportForm
   });
 
   exporter.close = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   exporter.eventCount = eventExporter.activeExport.eventCount;
 }
-EventExportController.$inject = ["$modalInstance", "udbApi", "eventExporter", "ExportFormats"];
+EventExportController.$inject = ["$uibModalInstance", "udbApi", "eventExporter", "ExportFormats"];
 
 // Source: src/export/event-exporter.service.js
 /**
@@ -10296,20 +10296,20 @@ angular
   .controller('DeleteSearchModalController', DeleteSearchModalController);
 
 /* @ngInject */
-function DeleteSearchModalController($scope, $modalInstance) {
+function DeleteSearchModalController($scope, $uibModalInstance) {
 
   var confirm = function () {
-    $modalInstance.close();
+    $uibModalInstance.close();
   };
 
   var cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   $scope.cancel = cancel;
   $scope.confirm = confirm;
 }
-DeleteSearchModalController.$inject = ["$scope", "$modalInstance"];
+DeleteSearchModalController.$inject = ["$scope", "$uibModalInstance"];
 
 // Source: src/saved-searches/components/save-search-modal.controller.js
 /**
@@ -10324,19 +10324,19 @@ angular
   .controller('SaveSearchModalController', SaveSearchModalController);
 
 /* @ngInject */
-function SaveSearchModalController($scope, $modalInstance) {
+function SaveSearchModalController($scope, $uibModalInstance) {
 
   var ok = function () {
     var name = $scope.queryName;
     $scope.wasSubmitted = true;
 
     if (name) {
-      $modalInstance.close(name);
+      $uibModalInstance.close(name);
     }
   };
 
   var cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   $scope.cancel = cancel;
@@ -10344,7 +10344,7 @@ function SaveSearchModalController($scope, $modalInstance) {
   $scope.queryName = '';
   $scope.wasSubmitted = false;
 }
-SaveSearchModalController.$inject = ["$scope", "$modalInstance"];
+SaveSearchModalController.$inject = ["$scope", "$uibModalInstance"];
 
 // Source: src/saved-searches/components/save-search.directive.js
 /**
@@ -12130,7 +12130,7 @@ angular.module('udb.search')
         {id: 'translation', name: 'Vertaalstatus'}
       ];
       this.activeSpecific = this.eventSpecifics[0];
-      this.selectedIds = [];
+      this.selectedOffers = [];
       this.selectionState = SelectionState.NONE;
       this.querySelected = false;
     };
@@ -12154,9 +12154,9 @@ angular.module('udb.search')
         this.selectPageItems();
       },
       updateSelectionState: function () {
-        var selectedIds = this.selectedIds,
+        var selectedOffers = this.selectedOffers,
             selectedPageItems = _.filter(this.events, function (event) {
-              return _.contains(selectedIds, identifyItem(event));
+              return _.contains(selectedOffers, event);
             });
 
         if (selectedPageItems.length === this.pageSize) {
@@ -12167,36 +12167,41 @@ angular.module('udb.search')
           this.selectionState = SelectionState.NONE;
         }
       },
-      toggleSelectId: function (id) {
+      toggleSelect: function (offer) {
 
         // Prevent toggling individual items when the whole query is selected
         if (this.querySelected) {
           return;
         }
 
-        var selectedIds = this.selectedIds,
-            isSelected = _.contains(selectedIds, id);
+        // select the offer from the result viewer events
+        // it's this "event" that will get stored
+        var theOffer = _.filter(this.events, function (event) {
+              return offer.apiUrl === event['@id'];
+            }).pop();
+
+        var selectedOffers = this.selectedOffers,
+            isSelected = _.contains(selectedOffers, theOffer);
 
         if (isSelected) {
-          _.remove(selectedIds, function (iid) {
-            return id === iid;
+          _.remove(selectedOffers, function (selectedOffer) {
+            return selectedOffer['@id'] === theOffer['@id'];
           });
         } else {
-          selectedIds.push(id);
+          selectedOffers.push(theOffer);
         }
 
         this.updateSelectionState();
       },
       deselectAll: function () {
-        this.selectedIds = [];
+        this.selectedOffers = [];
         this.selectionState = SelectionState.NONE;
       },
       deselectPageItems: function () {
-        var selectedIds = this.selectedIds;
+        var selectedOffers = this.selectedOffers;
         _.forEach(this.events, function (event) {
-          var eventId = identifyItem(event);
-          _.remove(selectedIds, function (id) {
-            return id === eventId;
+          _.remove(selectedOffers, function (offer) {
+            return offer['@id'] === event['@id'];
           });
         });
 
@@ -12204,17 +12209,22 @@ angular.module('udb.search')
       },
       selectPageItems: function () {
         var events = this.events,
-            selectedIds = this.selectedIds;
+            selectedOffers = this.selectedOffers;
 
         _.each(events, function (event) {
-          selectedIds.push(identifyItem(event));
+          selectedOffers.push(event);
         });
 
-        this.selectedIds = _.uniq(selectedIds);
+        this.selectedOffers = _.uniq(selectedOffers);
         this.selectionState = SelectionState.ALL;
       },
-      isIdSelected: function (id) {
-        return _.contains(this.selectedIds, id);
+      isOfferSelected: function (offer) {
+        // get the right offer object from the events list
+        var theOffer = _.filter(this.events, function (event) {
+              return offer.apiUrl === event['@id'];
+            }).pop();
+
+        return _.contains(this.selectedOffers, theOffer);
       },
       setResults: function (pagedResults) {
         var viewer = this;
@@ -12231,7 +12241,7 @@ angular.module('udb.search')
       },
       queryChanged: function (query) {
         this.loading = true;
-        this.selectedIds = [];
+        this.selectedOffers = [];
         this.querySelected = false;
 
         // prevent the initial search from resetting the active page
@@ -12892,34 +12902,36 @@ function Search(
 
   var labelSelection = function () {
 
-    var selectedIds = $scope.resultViewer.selectedIds;
+    var selectedOffers = $scope.resultViewer.selectedOffers;
 
-    if (!selectedIds.length) {
+    if (!selectedOffers.length) {
       $window.alert('First select the events you want to label.');
       return;
     }
 
     var modal = $uibModal.open({
-      templateUrl: 'templates/event-label-modal.html',
-      controller: 'EventLabelModalCtrl'
+      templateUrl: 'templates/offer-label-modal.html',
+      controller: 'OfferLabelModalCtrl'
     });
 
     modal.result.then(function (labels) {
 
-      _.each(selectedIds, function (eventId) {
-        var eventPromise = udbApi.getEventById(eventId);
+      _.each(selectedOffers, function (offer) {
+        var eventPromise;
+
+        if (offer['@type'] === 'Event') {
+          eventPromise = udbApi.getEventByLDId(offer['@id']);
+        } else if (offer['@type'] === 'Place') {
+          eventPromise = udbApi.getPlaceByLDId(offer['@id']);
+        }
 
         eventPromise.then(function (event) {
           event.label(labels);
         });
       });
 
-      var eventIds = _.map(selectedIds, function (id) {
-        return id.split('/').pop();
-      });
-
       _.each(labels, function (label) {
-        offerLabeller.labelEventsById(eventIds, label);
+        offerLabeller.labelOffersById(selectedOffers, label);
       });
     });
   };
@@ -12930,8 +12942,8 @@ function Search(
 
     if (queryBuilder.isValid(query)) {
       var modal = $uibModal.open({
-        templateUrl: 'templates/event-label-modal.html',
-        controller: 'EventLabelModalCtrl'
+        templateUrl: 'templates/offer-label-modal.html',
+        controller: 'OfferLabelModalCtrl'
       });
 
       modal.result.then(function (labels) {
@@ -13327,7 +13339,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
   );
 
 
-  $templateCache.put('templates/event-label-modal.html',
+  $templateCache.put('templates/offer-label-modal.html',
     "<div class=\"modal-body\">\n" +
     "\n" +
     "  <label>Labels</label>\n" +
@@ -15989,8 +16001,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "  <div class=\"col-sm-5 rv-first-column\">\n" +
     "    <div class=\"rv-item-sidebar\">\n" +
     "      <div class=\"rv-selection-state\" ng-class=\"{'disabled': resultViewer.querySelected}\"\n" +
-    "           ng-click=\"resultViewer.toggleSelectId(event.id)\">\n" +
-    "        <span class=\"fa\" ng-class=\"resultViewer.isIdSelected(event.id) ? 'fa-check-square' : 'fa-square-o'\"></span>\n" +
+    "           ng-click=\"resultViewer.toggleSelect(event)\">\n" +
+    "        <span class=\"fa\" ng-class=\"resultViewer.isOfferSelected(event) ? 'fa-check-square' : 'fa-square-o'\"></span>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "\n" +
@@ -16168,8 +16180,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "  <div class=\"col-sm-5 rv-first-column\">\n" +
     "    <div class=\"rv-item-sidebar\">\n" +
     "      <div class=\"rv-selection-state\" ng-class=\"{'disabled': resultViewer.querySelected}\"\n" +
-    "           ng-click=\"resultViewer.toggleSelectId(event.id)\">\n" +
-    "        <span class=\"fa\" ng-class=\"resultViewer.isIdSelected(event.id) ? 'fa-check-square' : 'fa-square-o'\"></span>\n" +
+    "           ng-click=\"resultViewer.toggleSelect(event)\">\n" +
+    "        <span class=\"fa\" ng-class=\"resultViewer.isOfferSelected(event) ? 'fa-check-square' : 'fa-square-o'\"></span>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "\n" +
@@ -16368,7 +16380,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div ng-show=\"resultViewer.totalItems\">\n" +
     "        <div class=\"rv-item-info\">\n" +
     "\n" +
-    "            <div class=\"row\" ng-hide=\"resultViewer.selectedIds.length\">\n" +
+    "            <div class=\"row\" ng-hide=\"resultViewer.selectedOffers.length\">\n" +
     "                <div class=\"col-sm-5 rv-first-column\">\n" +
     "                    Wat\n" +
     "                </div>\n" +
@@ -16389,9 +16401,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                </div>\n" +
     "            </div>\n" +
     "\n" +
-    "            <div class=\"row\" ng-show=\"resultViewer.selectedIds.length\">\n" +
+    "            <div class=\"row\" ng-show=\"resultViewer.selectedOffers.length\">\n" +
     "                <div class=\"col-sm-12 rv-first-column\">\n" +
-    "                    <ng-pluralize count=\"resultViewer.querySelected ? resultViewer.totalItems : resultViewer.selectedIds.length\"\n" +
+    "                    <ng-pluralize count=\"resultViewer.querySelected ? resultViewer.totalItems : resultViewer.selectedOffers.length\"\n" +
     "                                  when=\"{'1': '1 item geselecteerd',\n" +
     "                                         'other': '{} items geselecteerd'}\">\n" +
     "                    </ng-pluralize>\n" +
@@ -16408,7 +16420,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "            <div class=\"rv-item-sidebar\">\n" +
     "                <div class=\"rv-selection-state\">\n" +
-    "                    <span class=\"dropdown\" uib-dropdown ng-hide=\"resultViewer.selectedIds.length\">\n" +
+    "                    <span class=\"dropdown\" uib-dropdown ng-hide=\"resultViewer.selectedOffers.length\">\n" +
     "                      <span class=\"dropdown-toggle fa {{resultViewer.selectionState.icon}}\" uib-dropdown-toggle>\n" +
     "                      </span>\n" +
     "                      <ul class=\"dropdown-menu\">\n" +
@@ -16422,7 +16434,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                      </ul>\n" +
     "                    </span>\n" +
     "\n" +
-    "                    <span ng-show=\"resultViewer.selectedIds.length\" ng-click=\"resultViewer.toggleSelection()\"\n" +
+    "                    <span ng-show=\"resultViewer.selectedOffers.length\" ng-click=\"resultViewer.toggleSelection()\"\n" +
     "                          class=\" fa {{resultViewer.selectionState.icon}}\"></span>\n" +
     "                </div>\n" +
     "            </div>\n" +
@@ -16430,11 +16442,11 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "        <div ng-repeat=\"event in resultViewer.events\">\n" +
     "            <udb-event class=\"row rv-item\" ng-hide=\"eventCtrl.fetching\" ng-if=\"event['@type'] == 'Event'\"\n" +
-    "                       ng-class=\"{selected: resultViewer.isIdSelected(event.id)}\">\n" +
+    "                       ng-class=\"{selected: resultViewer.isOfferSelected(event)}\">\n" +
     "            </udb-event>\n" +
     "\n" +
     "            <udb-place class=\"row rv-item\" ng-hide=\"placeCtrl.fetching\" ng-if=\"event['@type'] == 'Place'\"\n" +
-    "                       ng-class=\"{selected: resultViewer.isIdSelected(event.id)}\">\n" +
+    "                       ng-class=\"{selected: resultViewer.isOfferSelected(event)}\">\n" +
     "            </udb-place>\n" +
     "        </div>\n" +
     "\n" +

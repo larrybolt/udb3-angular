@@ -12,7 +12,7 @@ angular
   .controller('EventFormReservationModalController', EventFormReservationModalController);
 
 /* @ngInject */
-function EventFormReservationModalController($scope, $modalInstance, EventFormData, eventCrud) {
+function EventFormReservationModalController($scope, $uibModalInstance, EventFormData, eventCrud) {
 
   // Scope vars.
   $scope.eventFormData = EventFormData;
@@ -34,7 +34,7 @@ function EventFormReservationModalController($scope, $modalInstance, EventFormDa
   function cancel() {
     EventFormData.bookingInfo.availabilityStarts = initialStartDate;
     EventFormData.bookingInfo.availabilityEnds = initialEndDate;
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   }
 
   /**
@@ -78,7 +78,7 @@ function EventFormReservationModalController($scope, $modalInstance, EventFormDa
     var promise = eventCrud.updateBookingInfo(EventFormData);
     promise.then(function() {
       $scope.saving = false;
-      $modalInstance.close();
+      $uibModalInstance.close();
     }, function() {
       $scope.saving = false;
       $scope.errorMessage = 'Er ging iets fout bij het bewaren van de info.';

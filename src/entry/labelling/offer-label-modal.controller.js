@@ -2,17 +2,17 @@
 
 /**
  * @ngdoc function
- * @name udb.entry.controller:EventLabelModalCtrl
+ * @name udb.entry.controller:OfferLabelModalCtrl
  * @description
- * # EventLabelModalCtrl
+ * # OfferLabelModalCtrl
  * Controller of the udb.entry
  */
 angular
   .module('udb.entry')
-  .controller('EventLabelModalCtrl', EventLabelModalCtrl);
+  .controller('OfferLabelModalCtrl', OfferLabelModalCtrl);
 
 /* @ngInject */
-function EventLabelModalCtrl($scope, $modalInstance, udbApi) {
+function OfferLabelModalCtrl($scope, $uibModalInstance, udbApi) {
   var labelPromise = udbApi.getRecentLabels();
 
   var ok = function () {
@@ -29,11 +29,11 @@ function EventLabelModalCtrl($scope, $modalInstance, udbApi) {
     // join arrays and remove doubles
     var labels = _.union(checkedLabels, inputLabels);
 
-    $modalInstance.close(labels);
+    $uibModalInstance.close(labels);
   };
 
   var close = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   function parseLabelInput(stringWithLabels) {
