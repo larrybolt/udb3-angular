@@ -89,6 +89,11 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
 
     if (item.mediaObject) {
       EventFormData.mediaObjects = item.mediaObject || [];
+
+      if (item.image) {
+        var mainImage = _.find(EventFormData.mediaObjects, {'contentUrl': item.image});
+        EventFormData.selectMainImage(mainImage);
+      }
     }
 
     EventFormData.name = item.name;

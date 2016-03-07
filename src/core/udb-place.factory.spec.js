@@ -48,7 +48,12 @@ describe('Factory: UdbPlace', function () {
           id: "reg.1417"
         }
       ],
-      "labels": ["remove me"]
+      "labels": ["remove me"],
+      "image": "http://culudb-silex.dev:8080/media/cb78ad42-90d6-4b70-a1d9-9bc016bdba73.png",
+      "MediaObject":[
+        {"@id":"http:\/\/culudb-silex.dev:8080\/media\/4125fbc0-88b9-4008-855e-1cae6bd1f775","@type":"schema:ImageObject","contentUrl":"http:\/\/culudb-silex.dev:8080\/media\/4125fbc0-88b9-4008-855e-1cae6bd1f775.jpeg","thumbnailUrl":"http:\/\/culudb-silex.dev:8080\/media\/4125fbc0-88b9-4008-855e-1cae6bd1f775.jpeg","description":"test1","copyrightHolder":"test"},
+        {"@id":"http:\/\/culudb-silex.dev:8080\/media\/cb78ad42-90d6-4b70-a1d9-9bc016bdba73","@type":"schema:ImageObject","contentUrl":"http:\/\/culudb-silex.dev:8080\/media\/cb78ad42-90d6-4b70-a1d9-9bc016bdba73.png","thumbnailUrl":"http:\/\/culudb-silex.dev:8080\/media\/cb78ad42-90d6-4b70-a1d9-9bc016bdba73.png","description":"test256","copyrightHolder":"test"}
+      ]
     });
   }));
 
@@ -76,5 +81,11 @@ describe('Factory: UdbPlace', function () {
     var expectedType = { label: 'Monument', domain: 'placetype', id: '0.14.0.0.0'};
 
     expect(place.type).toEqual(expectedType);
+  });
+
+  it('Parses the place main image', function () {
+    var expectedImage = "http://culudb-silex.dev:8080/media/cb78ad42-90d6-4b70-a1d9-9bc016bdba73.png";
+
+    expect(place.image).toEqual(expectedImage);
   });
 });

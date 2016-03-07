@@ -111,10 +111,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   $scope.facilitiesInapplicable = false;
   $scope.selectedFacilities = [];
 
-  // Image upload vars.
-  $scope.imageCssClass = EventFormData.mediaObjects.length > 0 ? 'state-complete' : 'state-incomplete';
-
-  // Scope functions.
   // Description functions.
   $scope.saveDescription = saveDescription;
 
@@ -143,6 +139,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   $scope.openUploadImageModal = openUploadImageModal;
   $scope.removeImage = removeImage;
   $scope.editImage = editImage;
+  $scope.selectMainImage = selectMainImage;
 
   $scope.ageRanges = _.map(AgeRangeEnum, function (range) {
     return range;
@@ -683,33 +680,25 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
    * Open the upload modal.
    */
   function openUploadImageModal() {
-
     var modalInstance = $uibModal.open({
       templateUrl: 'templates/event-form-image-upload.html',
       controller: 'EventFormImageUploadController'
     });
-
-    modalInstance.result.then(function (mediaObject) {
-      $scope.imageCssClass = 'state-complete';
-    }, function () {
-      // modal dismissed.
-      if (EventFormData.mediaObjects.length > 0) {
-        $scope.imageCssClass = 'state-complete';
-      }
-      else {
-        $scope.imageCssClass = 'state-incomplete';
-      }
-    });
-
   }
 
-  function editImage(mediaObject) {
+  /**
+   * Open the modal to edit an image of the item.
+   *
+   * @param {MediaObject} image
+   *    The media object of the image to edit.
+   */
+  function editImage(image) {
     $uibModal.open({
       templateUrl: 'templates/event-form-image-edit.html',
       controller: 'EventFormImageEditController',
       resolve: {
         mediaObject: function () {
-          return mediaObject;
+          return image;
         }
       }
     });
@@ -717,9 +706,11 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
 
   /**
    * Open the modal to remove an image.
+   *
+   * @param {MediaObject} image
+   *    The media object of the image to remove from the item.
    */
   function removeImage(image) {
-
     var modalInstance = $uibModal.open({
       templateUrl: 'templates/event-form-image-remove.html',
       controller: 'EventFormImageRemoveController',
@@ -729,24 +720,22 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
         }
       }
     });
+  }
 
-    modalInstance.result.then(function () {
-      if (EventFormData.mediaObjects.length > 0) {
-        $scope.imageCssClass = 'state-complete';
-      }
-      else {
-        $scope.imageCssClass = 'state-incomplete';
-      }
-    }, function () {
-      // modal dismissed.
-      if (EventFormData.mediaObjects.length > 0) {
-        $scope.imageCssClass = 'state-complete';
-      }
-      else {
-        $scope.imageCssClass = 'state-incomplete';
-      }
-    });
+  /**
+   * Select the main image for an item.
+   *
+   * @param {MediaObject} image
+   *    The media object of the image to select as the main image.
+   */
+  function selectMainImage(image) {
+    function updateImageOrder() {
+      EventFormData.selectMainImage(image);
+    }
 
+    eventCrud
+      .selectMainImage(EventFormData, image)
+      .then(updateImageOrder);
   }
 
   /**
