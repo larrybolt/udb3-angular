@@ -143,7 +143,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.facilities = getCategoriesByType(jsonPlace, 'facility') || [];
       this.additionalData = jsonPlace.additionalData || {};
       if (jsonPlace['@id']) {
-        this.url = '/place/' + this.id;
+        this.url = 'place/' + this.id;
       }
       this.creator = jsonPlace.creator;
       if (jsonPlace.created) {

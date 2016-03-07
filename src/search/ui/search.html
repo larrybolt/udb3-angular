@@ -37,7 +37,7 @@
     <div ng-show="resultViewer.totalItems">
         <div class="rv-item-info">
 
-            <div class="row" ng-hide="resultViewer.selectedIds.length">
+            <div class="row" ng-hide="resultViewer.selectedOffers.length">
                 <div class="col-sm-5 rv-first-column">
                     Wat
                 </div>
@@ -58,9 +58,9 @@
                 </div>
             </div>
 
-            <div class="row" ng-show="resultViewer.selectedIds.length">
+            <div class="row" ng-show="resultViewer.selectedOffers.length">
                 <div class="col-sm-12 rv-first-column">
-                    <ng-pluralize count="resultViewer.querySelected ? resultViewer.totalItems : resultViewer.selectedIds.length"
+                    <ng-pluralize count="resultViewer.querySelected ? resultViewer.totalItems : resultViewer.selectedOffers.length"
                                   when="{'1': '1 item geselecteerd',
                                          'other': '{} items geselecteerd'}">
                     </ng-pluralize>
@@ -77,7 +77,7 @@
 
             <div class="rv-item-sidebar">
                 <div class="rv-selection-state">
-                    <span class="dropdown" uib-dropdown ng-hide="resultViewer.selectedIds.length">
+                    <span class="dropdown" uib-dropdown ng-hide="resultViewer.selectedOffers.length">
                       <span class="dropdown-toggle fa {{resultViewer.selectionState.icon}}" uib-dropdown-toggle>
                       </span>
                       <ul class="dropdown-menu">
@@ -91,7 +91,7 @@
                       </ul>
                     </span>
 
-                    <span ng-show="resultViewer.selectedIds.length" ng-click="resultViewer.toggleSelection()"
+                    <span ng-show="resultViewer.selectedOffers.length" ng-click="resultViewer.toggleSelection()"
                           class=" fa {{resultViewer.selectionState.icon}}"></span>
                 </div>
             </div>
@@ -99,11 +99,11 @@
 
         <div ng-repeat="event in resultViewer.events">
             <udb-event class="row rv-item" ng-hide="eventCtrl.fetching" ng-if="event['@type'] == 'Event'"
-                       ng-class="{selected: resultViewer.isIdSelected(event.id)}">
+                       ng-class="{selected: resultViewer.isOfferSelected(event)}">
             </udb-event>
 
             <udb-place class="row rv-item" ng-hide="placeCtrl.fetching" ng-if="event['@type'] == 'Place'"
-                       ng-class="{selected: resultViewer.isIdSelected(event.id)}">
+                       ng-class="{selected: resultViewer.isOfferSelected(event)}">
             </udb-place>
         </div>
 

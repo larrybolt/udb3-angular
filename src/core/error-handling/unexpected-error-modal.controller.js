@@ -12,10 +12,10 @@ angular
   .controller('UnexpectedErrorModalController', UnexpectedErrorModalController);
 
 /* @ngInject */
-function UnexpectedErrorModalController($scope, $modalInstance, errorMessage) {
+function UnexpectedErrorModalController($scope, $uibModalInstance, errorMessage) {
 
   var dismiss = function () {
-    $modalInstance.dismiss('closed');
+    $uibModalInstance.dismiss('closed');
   };
 
   $scope.dismiss = dismiss;
