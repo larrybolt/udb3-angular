@@ -56,7 +56,6 @@ angular
     'peg',
     'udb.core',
     'udb.config',
-    'udb.search',
     'btford.socket-io',
     'pascalprecht.translate',
     'xeditable'
@@ -74,6 +73,7 @@ angular
     'ui.bootstrap',
     'udb.config',
     'udb.entry',
+    'udb.search',
     'ngFileUpload'
   ]);
 
@@ -3667,7 +3667,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       'addressCountry' : '',
       'addressLocality' : '',
       'postalCode' : '',
-      'streetAddress' : '',
+      'streetAddress' : ''
     };
 
     if (placeJson) {
@@ -3707,6 +3707,9 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
         this.url = 'place/' + this.id;
       }
       this.creator = jsonPlace.creator;
+      if (jsonPlace.created) {
+        this.created = new Date(jsonPlace.created);
+      }
       this.modified = jsonPlace.modified;
 
       if (jsonPlace.terms) {
@@ -6963,6 +6966,177 @@ function TimeTrackerDirective($rootScope) {
 }
 TimeTrackerDirective.$inject = ["$rootScope"];
 
+// Source: src/event_form/components/suggestions/event-preview.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbEventPreview
+ * @description
+ *  Previews an event provided by a result viewer.
+ */
+angular
+  .module('udb.event-form')
+  .directive('udbEventPreview', udbEventPreview);
+
+/* @ngInject */
+function udbEventPreview() {
+  var eventPreviewDirective = {
+    restrict: 'AE',
+    controller: 'EventController',
+    controllerAs: 'eventCtrl',
+    templateUrl: 'templates/event-preview.directive.html'
+  };
+
+  return eventPreviewDirective;
+}
+
+// Source: src/event_form/components/suggestions/event-suggestion.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbEventSuggestion
+ * @description
+ *  Displays the event suggestions provided by a result viewer.
+ */
+angular
+  .module('udb.event-form')
+  .directive('udbEventSuggestion', udbEventSuggestion);
+
+/* @ngInject */
+function udbEventSuggestion() {
+  var eventSuggestionDirective = {
+    restrict: 'AE',
+    controller: 'EventController',
+    controllerAs: 'eventCtrl',
+    templateUrl: 'templates/event-suggestion.directive.html'
+  };
+
+  return eventSuggestionDirective;
+}
+
+// Source: src/event_form/components/suggestions/place-preview.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbPlacePreview
+ * @description
+ *  Previews a place provided by a result viewer.
+ */
+angular
+  .module('udb.event-form')
+  .directive('udbPlacePreview', udbPlacePreview);
+
+/* @ngInject */
+function udbPlacePreview() {
+  var placePreviewDirective = {
+    restrict: 'AE',
+    controller: 'PlaceController',
+    controllerAs: 'placeCtrl',
+    templateUrl: 'templates/place-preview.directive.html'
+  };
+
+  return placePreviewDirective;
+}
+
+// Source: src/event_form/components/suggestions/place-suggestion.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbPlaceSuggestion
+ * @description
+ * # udbPlaceSuggestion
+ */
+angular
+  .module('udb.event-form')
+  .directive('udbPlaceSuggestion', udbPlaceSuggestion);
+
+/* @ngInject */
+function udbPlaceSuggestion() {
+  var placeSuggestionDirective = {
+    restrict: 'AE',
+    controller: 'PlaceController',
+    controllerAs: 'placeCtrl',
+    templateUrl: 'templates/place-suggestion.directive.html'
+  };
+
+  return placeSuggestionDirective;
+}
+
+// Source: src/event_form/components/suggestions/suggestion-preview-modal.controller.js
+(function () {
+/**
+   * @ngdoc function
+   * @name udbApp.controller:SuggestionPreviewModalController
+   * @description
+   * Provides a controller to preview suggestions
+   */
+  angular
+    .module('udb.event-form')
+    .controller('SuggestionPreviewModalController', SuggestionPreviewModalController);
+
+  /* @ngInject */
+  function SuggestionPreviewModalController(
+    $scope,
+    $uibModalInstance,
+    selectedSuggestionId,
+    resultViewer,
+    suggestionType
+  ) {
+
+    /**
+     * A factory that helps look for the items in a result viewer by id.
+     *
+     * @param {string} itemId
+     *  The UUID of an UDB item.
+     *
+     * @return {Function}
+     *  A function that can be used as a callback that looks through result viewer items
+     */
+    function itemIdentifier(itemId) {
+      return function(item) {
+        return item['@id'].indexOf(itemId) !== -1;
+      };
+    }
+
+    $scope.previousSuggestion = previousSuggestion;
+    $scope.nextSuggestion = nextSuggestion;
+    $scope.currentSuggestionId = selectedSuggestionId;
+    $scope.currentSuggestionIndex = _.findIndex(resultViewer.events, itemIdentifier(selectedSuggestionId));
+    $scope.closePreview = closePreview;
+    $scope.suggestionCount = resultViewer.totalItems;
+    $scope.currentSuggestion = _.find(resultViewer.events, itemIdentifier(selectedSuggestionId));
+    $scope.suggestions = resultViewer.events;
+    $scope.suggestionType = suggestionType;
+
+    function previousSuggestion() {
+      var previousIndex = $scope.currentSuggestionIndex - 1;
+      var suggestion = resultViewer.events[previousIndex.toString()];
+
+      if (suggestion) {
+        $scope.currentSuggestion = suggestion;
+        $scope.currentSuggestionIndex = previousIndex;
+      } else {
+        closePreview();
+      }
+    }
+
+    function nextSuggestion() {
+      var nextIndex = $scope.currentSuggestionIndex + 1;
+      var suggestion = resultViewer.events[nextIndex.toString()];
+
+      if (suggestion) {
+        $scope.currentSuggestion = suggestion;
+        $scope.currentSuggestionIndex = nextIndex;
+      } else {
+        closePreview();
+      }
+    }
+
+    function closePreview() {
+      $uibModalInstance.close();
+    }
+
+  }
+  SuggestionPreviewModalController.$inject = ["$scope", "$uibModalInstance", "selectedSuggestionId", "resultViewer", "suggestionType"];
+
+})();
+
 // Source: src/event_form/components/validators/contact-info-validation.directive.js
 /**
 * @ngdoc directive
@@ -8551,7 +8725,16 @@ angular
   .controller('EventFormStep4Controller', EventFormStep4Controller);
 
 /* @ngInject */
-function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, SearchResultViewer, eventCrud, $rootScope) {
+function EventFormStep4Controller(
+  $scope,
+  EventFormData,
+  udbApi,
+  appConfig,
+  SearchResultViewer,
+  eventCrud,
+  $rootScope,
+  $uibModal
+) {
 
   var controller = this;
 
@@ -8568,16 +8751,12 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
   $scope.saving = false;
   $scope.error = false;
   $scope.udb3DashboardUrl = appConfig.udb3BaseUrl;
-  $scope.currentDuplicateId = '';
-  $scope.currentDuplicateDelta = 0;
 
   $scope.validateEvent = validateEvent;
   $scope.saveEvent = saveEvent;
-  $scope.setActiveDuplicate = setActiveDuplicate;
-  $scope.previousDuplicate = previousDuplicate;
-  $scope.nextDuplicate = nextDuplicate;
   $scope.resultViewer = new SearchResultViewer();
   $scope.eventTitleChanged = eventTitleChanged;
+  $scope.previewSuggestedItem = previewSuggestedItem;
 
   // Check if we need to show the leave warning
   window.onbeforeunload = function (event) {
@@ -8680,7 +8859,7 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
       /*jscs:disable requireCamelCaseOrUpperCaseIdentifiers */
       return {
         text: EventFormData.name.nl,
-        location_cdbid : location.id
+        location_label : location.name
       };
     }
     else {
@@ -8738,50 +8917,6 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
   };
 
   /**
-   * Set a focus to a duplicate
-   * @param {type} id
-   */
-  function setActiveDuplicate(id) {
-
-    for (var duplicateId in $scope.resultViewer.events) {
-      var eventId = $scope.resultViewer.events[duplicateId]['@id'].split('/').pop();
-      if (eventId === id) {
-        $scope.currentDuplicateId = id;
-        $scope.currentDuplicateDelta = parseInt(duplicateId) + 1;
-      }
-    }
-
-  }
-
-  /**
-   * Set the previous duplicate active or close modal.
-   */
-  function previousDuplicate() {
-
-    var previousDelta = parseInt($scope.currentDuplicateDelta) - 2;
-    if ($scope.resultViewer.events[previousDelta] !== undefined) {
-      var eventId = $scope.resultViewer.events[previousDelta]['@id'].split('/').pop();
-      $scope.currentDuplicateId = eventId;
-      $scope.currentDuplicateDelta = parseInt(previousDelta) + 1;
-    }
-
-  }
-
-  /**
-   * Set the next duplicate active or close modal.
-   */
-  function nextDuplicate() {
-
-    var nextDelta = parseInt($scope.currentDuplicateDelta);
-    if ($scope.resultViewer.events[nextDelta] !== undefined) {
-      var eventId = $scope.resultViewer.events[nextDelta]['@id'].split('/').pop();
-      $scope.currentDuplicateId = eventId;
-      $scope.currentDuplicateDelta = parseInt(nextDelta) + 1;
-    }
-
-  }
-
-  /**
    * Notify that the title of an event has changed.
    */
   function eventTitleChanged() {
@@ -8790,8 +8925,31 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
     }
   }
 
+  /**
+   * Open the organizer modal.
+   *
+   * @param {object} item
+   *  An item to preview from the suggestions in the current result viewer.
+   */
+  function previewSuggestedItem(item) {
+    $uibModal.open({
+      templateUrl: 'templates/suggestion-preview-modal.html',
+      controller: 'SuggestionPreviewModalController',
+      resolve: {
+        selectedSuggestionId: function () {
+          return item.id;
+        },
+        resultViewer: function () {
+          return $scope.resultViewer;
+        },
+        suggestionType: function () {
+          return EventFormData.getType();
+        }
+      }
+    });
+  }
 }
-EventFormStep4Controller.$inject = ["$scope", "EventFormData", "udbApi", "appConfig", "SearchResultViewer", "eventCrud", "$rootScope"];
+EventFormStep4Controller.$inject = ["$scope", "EventFormData", "udbApi", "appConfig", "SearchResultViewer", "eventCrud", "$rootScope", "$uibModal"];
 
 // Source: src/event_form/steps/event-form-step5.controller.js
 /**
@@ -12084,191 +12242,194 @@ SearchHelper.$inject = ["LuceneQueryBuilder", "$rootScope"];
  * # SearchResultViewer
  * Search result viewer factory
  */
-angular.module('udb.search')
-  .factory('SearchResultViewer', function () {
+angular
+  .module('udb.search')
+  .factory('SearchResultViewer', SearchResultViewerFactory);
 
-    var SelectionState = {
-      ALL: {'name': 'all', 'icon': 'fa-check-square'},
-      NONE: {'name': 'none', 'icon': 'fa-square-o'},
-      SOME: {'name': 'some', 'icon': 'fa-minus-square'}
+function SearchResultViewerFactory() {
+
+  var SelectionState = {
+    ALL: {'name': 'all', 'icon': 'fa-check-square'},
+    NONE: {'name': 'none', 'icon': 'fa-square-o'},
+    SOME: {'name': 'some', 'icon': 'fa-minus-square'}
+  };
+
+  var identifyItem = function (event) {
+    return event['@id'].split('/').pop();
+  };
+
+  /**
+   * @class SearchResultViewer
+   * @constructor
+   * @param    {number}     pageSize        The number of items shown per page
+   *
+   * @property {object[]}   events          A list of json-LD event objects
+   * @property {number}     pageSize        The current page size
+   * @property {number}     totalItems      The total items found
+   * @property {number}     currentPage     The index of the current page without zeroing
+   * @property {boolean}    loading         A flag to indicate the period between changing of the query and
+   *                                        receiving of the results.
+   * @property {object}     eventProperties A list of event properties that can be shown complementary
+   * @property {array}      eventSpecifics  A list of specific event info that can be shown exclusively
+   * @property {SelectionState} selectionState Enum that keeps the state of selected results
+   */
+  var SearchResultViewer = function (pageSize, activePage) {
+    this.pageSize = pageSize || 30;
+    this.events = [];
+    this.totalItems = 0;
+    this.currentPage = activePage || 1;
+    this.loading = true;
+    this.lastQuery = null;
+    this.eventProperties = {
+      description: {name: 'Beschrijving', visible: false},
+      labels: {name: 'Labels', visible: false},
+      image: {name: 'Afbeelding', visible: false}
     };
+    this.eventSpecifics = [
+      {id: 'input', name: 'Invoer-informatie'},
+      {id: 'price', name: 'Prijs-informatie'},
+      {id: 'translation', name: 'Vertaalstatus'}
+    ];
+    this.activeSpecific = this.eventSpecifics[0];
+    this.selectedOffers = [];
+    this.selectionState = SelectionState.NONE;
+    this.querySelected = false;
+  };
 
-    var identifyItem = function (event) {
-      return event['@id'].split('/').pop();
-    };
+  SearchResultViewer.prototype = {
+    toggleSelection: function () {
+      var state = this.selectionState;
 
-    /**
-     * @class SearchResultViewer
-     * @constructor
-     * @param    {number}     pageSize        The number of items shown per page
-     *
-     * @property {object[]}   events          A list of json-LD event objects
-     * @property {number}     pageSize        The current page size
-     * @property {number}     totalItems      The total items found
-     * @property {number}     currentPage     The index of the current page without zeroing
-     * @property {boolean}    loading         A flag to indicate the period between changing of the query and
-     *                                        receiving of the results.
-     * @property {object}     eventProperties A list of event properties that can be shown complementary
-     * @property {array}      eventSpecifics  A list of specific event info that can be shown exclusively
-     * @property {SelectionState} selectionState Enum that keeps the state of selected results
-     */
-    var SearchResultViewer = function (pageSize, activePage) {
-      this.pageSize = pageSize || 30;
-      this.events = [];
-      this.totalItems = 0;
-      this.currentPage = activePage || 1;
-      this.loading = true;
-      this.lastQuery = null;
-      this.eventProperties = {
-        description: {name: 'Beschrijving', visible: false},
-        labels: {name: 'Labels', visible: false},
-        image: {name: 'Afbeelding', visible: false}
-      };
-      this.eventSpecifics = [
-        {id: 'input', name: 'Invoer-informatie'},
-        {id: 'price', name: 'Prijs-informatie'},
-        {id: 'translation', name: 'Vertaalstatus'}
-      ];
-      this.activeSpecific = this.eventSpecifics[0];
+      if (state === SelectionState.SOME || state === SelectionState.ALL) {
+        this.deselectPageItems();
+        if (this.querySelected) {
+          this.deselectAll();
+          this.querySelected = false;
+        }
+      } else {
+        this.selectPageItems();
+      }
+    },
+    selectQuery: function () {
+      this.querySelected = true;
+      this.selectPageItems();
+    },
+    updateSelectionState: function () {
+      var selectedOffers = this.selectedOffers,
+          selectedPageItems = _.filter(this.events, function (event) {
+            return _.contains(selectedOffers, event);
+          });
+
+      if (selectedPageItems.length === this.pageSize) {
+        this.selectionState = SelectionState.ALL;
+      } else if (selectedPageItems.length > 0) {
+        this.selectionState = SelectionState.SOME;
+      } else {
+        this.selectionState = SelectionState.NONE;
+      }
+    },
+    toggleSelect: function (offer) {
+
+      // Prevent toggling individual items when the whole query is selected
+      if (this.querySelected) {
+        return;
+      }
+
+      // select the offer from the result viewer events
+      // it's this "event" that will get stored
+      var theOffer = _.filter(this.events, function (event) {
+            return offer.apiUrl === event['@id'];
+          }).pop();
+
+      var selectedOffers = this.selectedOffers,
+          isSelected = _.contains(selectedOffers, theOffer);
+
+      if (isSelected) {
+        _.remove(selectedOffers, function (selectedOffer) {
+          return selectedOffer['@id'] === theOffer['@id'];
+        });
+      } else {
+        selectedOffers.push(theOffer);
+      }
+
+      this.updateSelectionState();
+    },
+    deselectAll: function () {
       this.selectedOffers = [];
       this.selectionState = SelectionState.NONE;
-      this.querySelected = false;
-    };
+    },
+    deselectPageItems: function () {
+      var selectedOffers = this.selectedOffers;
+      _.forEach(this.events, function (event) {
+        _.remove(selectedOffers, function (offer) {
+          return offer['@id'] === event['@id'];
+        });
+      });
 
-    SearchResultViewer.prototype = {
-      toggleSelection: function () {
-        var state = this.selectionState;
+      this.selectionState = SelectionState.NONE;
+    },
+    selectPageItems: function () {
+      var events = this.events,
+          selectedOffers = this.selectedOffers;
 
-        if (state === SelectionState.SOME || state === SelectionState.ALL) {
-          this.deselectPageItems();
-          if (this.querySelected) {
-            this.deselectAll();
-            this.querySelected = false;
-          }
-        } else {
-          this.selectPageItems();
-        }
-      },
-      selectQuery: function () {
-        this.querySelected = true;
+      _.each(events, function (event) {
+        selectedOffers.push(event);
+      });
+
+      this.selectedOffers = _.uniq(selectedOffers);
+      this.selectionState = SelectionState.ALL;
+    },
+    isOfferSelected: function (offer) {
+      // get the right offer object from the events list
+      var theOffer = _.filter(this.events, function (event) {
+            return offer.apiUrl === event['@id'];
+          }).pop();
+
+      return _.contains(this.selectedOffers, theOffer);
+    },
+    setResults: function (pagedResults) {
+      var viewer = this;
+
+      viewer.pageSize = pagedResults.itemsPerPage || 30;
+      viewer.events = pagedResults.member || [];
+      viewer.totalItems = pagedResults.totalItems || 0;
+
+      viewer.loading = false;
+      if (this.querySelected) {
         this.selectPageItems();
-      },
-      updateSelectionState: function () {
-        var selectedOffers = this.selectedOffers,
-            selectedPageItems = _.filter(this.events, function (event) {
-              return _.contains(selectedOffers, event);
-            });
-
-        if (selectedPageItems.length === this.pageSize) {
-          this.selectionState = SelectionState.ALL;
-        } else if (selectedPageItems.length > 0) {
-          this.selectionState = SelectionState.SOME;
-        } else {
-          this.selectionState = SelectionState.NONE;
-        }
-      },
-      toggleSelect: function (offer) {
-
-        // Prevent toggling individual items when the whole query is selected
-        if (this.querySelected) {
-          return;
-        }
-
-        // select the offer from the result viewer events
-        // it's this "event" that will get stored
-        var theOffer = _.filter(this.events, function (event) {
-              return offer.apiUrl === event['@id'];
-            }).pop();
-
-        var selectedOffers = this.selectedOffers,
-            isSelected = _.contains(selectedOffers, theOffer);
-
-        if (isSelected) {
-          _.remove(selectedOffers, function (selectedOffer) {
-            return selectedOffer['@id'] === theOffer['@id'];
-          });
-        } else {
-          selectedOffers.push(theOffer);
-        }
-
-        this.updateSelectionState();
-      },
-      deselectAll: function () {
-        this.selectedOffers = [];
-        this.selectionState = SelectionState.NONE;
-      },
-      deselectPageItems: function () {
-        var selectedOffers = this.selectedOffers;
-        _.forEach(this.events, function (event) {
-          _.remove(selectedOffers, function (offer) {
-            return offer['@id'] === event['@id'];
-          });
-        });
-
-        this.selectionState = SelectionState.NONE;
-      },
-      selectPageItems: function () {
-        var events = this.events,
-            selectedOffers = this.selectedOffers;
-
-        _.each(events, function (event) {
-          selectedOffers.push(event);
-        });
-
-        this.selectedOffers = _.uniq(selectedOffers);
-        this.selectionState = SelectionState.ALL;
-      },
-      isOfferSelected: function (offer) {
-        // get the right offer object from the events list
-        var theOffer = _.filter(this.events, function (event) {
-              return offer.apiUrl === event['@id'];
-            }).pop();
-
-        return _.contains(this.selectedOffers, theOffer);
-      },
-      setResults: function (pagedResults) {
-        var viewer = this;
-
-        viewer.pageSize = pagedResults.itemsPerPage || 30;
-        viewer.events = pagedResults.member || [];
-        viewer.totalItems = pagedResults.totalItems || 0;
-
-        viewer.loading = false;
-        if (this.querySelected) {
-          this.selectPageItems();
-        }
-        this.updateSelectionState();
-      },
-      queryChanged: function (query) {
-        this.loading = true;
-        this.selectedOffers = [];
-        this.querySelected = false;
-
-        // prevent the initial search from resetting the active page
-        if (this.lastQuery && this.lastQuery !== query) {
-          this.currentPage = 1;
-        }
-
-        this.lastQuery = query;
-      },
-      activateSpecific: function (specific) {
-        this.activeSpecific = specific;
-      },
-      /**
-       * Checks if at least one of the event properties is visible
-       * @return {boolean}
-       */
-      isShowingProperties: function () {
-        var property = _.find(this.eventProperties, function (property) {
-          return property.visible;
-        });
-
-        return !!property;
       }
-    };
+      this.updateSelectionState();
+    },
+    queryChanged: function (query) {
+      this.loading = true;
+      this.selectedOffers = [];
+      this.querySelected = false;
 
-    return (SearchResultViewer);
-  });
+      // prevent the initial search from resetting the active page
+      if (this.lastQuery && this.lastQuery !== query) {
+        this.currentPage = 1;
+      }
+
+      this.lastQuery = query;
+    },
+    activateSpecific: function (specific) {
+      this.activeSpecific = specific;
+    },
+    /**
+     * Checks if at least one of the event properties is visible
+     * @return {boolean}
+     */
+    isShowingProperties: function () {
+      var property = _.find(this.eventProperties, function (property) {
+        return property.visible;
+      });
+
+      return !!property;
+    }
+  };
+
+  return (SearchResultViewer);
+}
 
 // Source: src/search/services/variation-repository.service.js
 /**
@@ -14315,6 +14476,226 @@ $templateCache.put('templates/unexpected-error-modal.html',
   );
 
 
+  $templateCache.put('templates/event-preview.directive.html',
+    "<div class=\"panel panel-default preview\">\n" +
+    "\n" +
+    "  <div class=\"panel-heading\" ng-style=\"{'background-image': 'url(' + event.image + ')'}\">\n" +
+    "    <ul class=\"list-inline\">\n" +
+    "      <li><small class=\"label label-default\" ng-bind=\"::event.type.label\"></small></li>\n" +
+    "    </ul>\n" +
+    "    <p class=\"title\" ng-bind=\"::event.name\"></p>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <div class=\"panel-body\">\n" +
+    "\n" +
+    "    <span ng-bind-html=\"::event.description\"></span>\n" +
+    "\n" +
+    "    <table class=\"table table-condended\">\n" +
+    "      <tbody>\n" +
+    "      <tr>\n" +
+    "        <td class=\"\">\n" +
+    "          <strong class=\"hidden-xs hidden-sm\">Waar</strong>\n" +
+    "          <i class=\"fa fa-map-marker hidden-md hidden-lg\"></i>\n" +
+    "        </td>\n" +
+    "        <td ng-bind=\"::event.location.name\"></td>\n" +
+    "      </tr>\n" +
+    "      <tr>\n" +
+    "        <td>\n" +
+    "          <strong class=\"hidden-xs hidden-sm\">Wanneer</strong>\n" +
+    "          <i class=\"fa fa-calendar hidden-md hidden-lg\"></i>\n" +
+    "        </td>\n" +
+    "        <td class=\"cf-when scroll scroll-150\">\n" +
+    "          <ng-switch on=\"::event.calendarType\">\n" +
+    "            <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                <span ng-switch-when=\"multiple\">\n" +
+    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                  <span> tot </span>\n" +
+    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                </span>\n" +
+    "                <span ng-switch-when=\"periodic\">\n" +
+    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                  <span> tot </span>\n" +
+    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                </span>\n" +
+    "                <span ng-switch-when=\"permanent\">\n" +
+    "                   Permanent\n" +
+    "                </span>\n" +
+    "          </ng-switch>\n" +
+    "        </td>\n" +
+    "      </tr>\n" +
+    "      <tr>\n" +
+    "        <td>\n" +
+    "          <strong class=\"hidden-xs hidden-sm\">Organisatie</strong>\n" +
+    "          <i class=\"fa fa-building-o hidden-md hidden-lg\"></i>\n" +
+    "        </td>\n" +
+    "        <td ng-bind=\"::event.organizer.name\"></td>\n" +
+    "      </tr>\n" +
+    "      <tr>\n" +
+    "        <td><strong class=\"hidden-xs hidden-sm\">Prijs</strong><i class=\"fa fa-eur hidden-md hidden-lg\"></i></td>\n" +
+    "        <td>\n" +
+    "          <div ng-switch=\"::event.pricing\">\n" +
+    "            <span ng-switch-when=\"free\">gratis</span>\n" +
+    "                <span ng-switch-when=\"payed\">\n" +
+    "                  <i class=\"fa fa-eur meta icon\"></i>\n" +
+    "                  <span ng-if=\"::event.price\" ng-bind=\"::event.price | currency\">\n" +
+    "                </span>\n" +
+    "                </span>\n" +
+    "            <span ng-switch-when=\"unknown\">niet ingevoerd</span>\n" +
+    "          </div>\n" +
+    "        </td>\n" +
+    "      </tr>\n" +
+    "      </tbody>\n" +
+    "    </table>\n" +
+    "  </div>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div>\n" +
+    "  <em>\n" +
+    "    Ingevoerd door <span ng-bind=\"::event.organizer.name\"></span>\n" +
+    "    <span> op </span>\n" +
+    "    <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span>\n" +
+    "  </em>\n" +
+    "</div>"
+  );
+
+
+  $templateCache.put('templates/event-suggestion.directive.html',
+    "<div class=\"col-xs-12 col-sm-6 col-md-4 col-lg-3\" ng-hide=\"eventCtrl.fetching\">\n" +
+    "  <a class=\"btn btn-tile\"\n" +
+    "     ng-click=\"previewSuggestedItem(event)\">\n" +
+    "    <small class=\"label label-default\" ng-bind=\"::event.type.label\"></small><br>\n" +
+    "    <strong class=\"title\" ng-bind=\"::event.name\"></strong><br>\n" +
+    "    <span ng-bind=\"::event.location.name\"></span> -\n" +
+    "    <ng-switch on=\"event.calendarType\">\n" +
+    "      <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM'\"></span>\n" +
+    "      <span ng-switch-when=\"multiple\">\n" +
+    "        Van <span ng-bind=\"::event.startDate | date: 'dd/MM'\"></span> tot <span ng-bind=\"::event.endDate | date: 'dd/MM'\"></span>\n" +
+    "      </span>\n" +
+    "      <span ng-switch-when=\"periodic\">\n" +
+    "        Van <span ng-bind=\"::event.startDate | date: 'dd/MM'\"></span> tot <span ng-bind=\"::event.endDate | date: 'dd/MM'\"></span>\n" +
+    "      </span>\n" +
+    "      <span ng-switch-when=\"permanent\">\n" +
+    "        Permanent\n" +
+    "      </span>\n" +
+    "    </ng-switch>\n" +
+    "    <br>\n" +
+    "    <small class=\"preview-corner\"></small>\n" +
+    "    <i class=\"fa fa-eye preview-icon\"></i>\n" +
+    "  </a>\n" +
+    "</div>"
+  );
+
+
+  $templateCache.put('templates/place-preview.directive.html',
+    "<div class=\"panel panel-default preview\">\n" +
+    "\n" +
+    "  <div class=\"panel-heading\" ng-style=\"{'background-image': 'url(' + event.image + ')'}\">\n" +
+    "    <ul class=\"list-inline\">\n" +
+    "      <li><small class=\"label label-default\" ng-bind=\"::event.type.label\"></small></li>\n" +
+    "    </ul>\n" +
+    "    <p class=\"title\" ng-bind=\"::event.name\"></p>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <div class=\"panel-body\">\n" +
+    "\n" +
+    "    <span ng-bind-html=\"::event.description\"></span>\n" +
+    "\n" +
+    "    <table class=\"table table-condended\">\n" +
+    "      <tbody>\n" +
+    "      <tr>\n" +
+    "        <td>\n" +
+    "          <strong class=\"hidden-xs hidden-sm\">Waar</strong>\n" +
+    "          <i class=\"fa fa-map-marker hidden-md hidden-lg\"></i>\n" +
+    "        </td>\n" +
+    "        <td>\n" +
+    "          <span ng-bind=\"::event.address.streetAddress\"></span>\n" +
+    "          <br>\n" +
+    "          <span ng-bind=\"::event.address.postalCode\"></span>\n" +
+    "          <span ng-bind=\"::event.address.addressLocality\"></span>\n" +
+    "        </td>\n" +
+    "      </tr>\n" +
+    "      <tr ng-if=\"::event.calendarType\">\n" +
+    "        <td>\n" +
+    "          <strong class=\"hidden-xs hidden-sm\">Wanneer</strong>\n" +
+    "          <i class=\"fa fa-calendar hidden-md hidden-lg\"></i>\n" +
+    "        </td>\n" +
+    "        <td class=\"cf-when scroll scroll-150\">\n" +
+    "          <ng-switch on=\"::event.calendarType\">\n" +
+    "            <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                <span ng-switch-when=\"multiple\">\n" +
+    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                  <span> tot </span>\n" +
+    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                </span>\n" +
+    "                <span ng-switch-when=\"periodic\">\n" +
+    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                  <span> tot </span>\n" +
+    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                </span>\n" +
+    "                <span ng-switch-when=\"permanent\">\n" +
+    "                   Permanent\n" +
+    "                </span>\n" +
+    "          </ng-switch>\n" +
+    "        </td>\n" +
+    "      </tr>\n" +
+    "      </tbody>\n" +
+    "    </table>\n" +
+    "  </div>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div>\n" +
+    "  <em>\n" +
+    "    Ingevoerd door <span ng-bind=\"::event.creator\"></span>\n" +
+    "    <span ng-if=\"event.created\"> op <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span></span>\n" +
+    "  </em>\n" +
+    "</div>"
+  );
+
+
+  $templateCache.put('templates/place-suggestion.directive.html',
+    "<div class=\"col-xs-12 col-sm-6 col-md-4 col-lg-3\" ng-hide=\"eventCtrl.fetching\">\n" +
+    "  <a class=\"btn btn-tile\"\n" +
+    "     ng-click=\"previewSuggestedItem(event)\">\n" +
+    "    <small class=\"label label-default\" ng-bind=\"::event.type.label\"></small><br>\n" +
+    "    <strong class=\"title\" ng-bind=\"::event.name\"></strong><br>\n" +
+    "    permanent\n" +
+    "    <br>\n" +
+    "    <small class=\"preview-corner\"></small>\n" +
+    "    <i class=\"fa fa-eye preview-icon\"></i>\n" +
+    "  </a>\n" +
+    "</div>"
+  );
+
+
+  $templateCache.put('templates/suggestion-preview-modal.html',
+    "<div class=\"modal-header\">\n" +
+    "  <div class=\"pull-right\">\n" +
+    "\n" +
+    "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"previousSuggestion()\">Vorige</button>\n" +
+    "\n" +
+    "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"nextSuggestion()\">Volgende</button>\n" +
+    "\n" +
+    "    <button type=\"button\" class=\"close\" aria-label=\"Close\" ng-click=\"closePreview()\">\n" +
+    "      <span aria-hidden=\"true\">×</span>\n" +
+    "    </button>\n" +
+    "  </div>\n" +
+    "  <h4 class=\"modal-title\">\n" +
+    "    Gelijkaardige items\n" +
+    "    <span> </span>\n" +
+    "    <small>\n" +
+    "      Evenement <span ng-bind=\"(currentSuggestionIndex + 1)\"></span> van <span ng-bind=\"::suggestionCount\"></span>\n" +
+    "    </small>\n" +
+    "  </h4>\n" +
+    "</div>\n" +
+    "<div class=\"modal-body\">\n" +
+    "  <div ng-repeat=\"event in suggestions\" ng-show=\"$index === currentSuggestionIndex\">\n" +
+    "    <udb-event-preview ng-if=\"suggestionType === 'event'\"></udb-event-preview>\n" +
+    "    <udb-place-preview ng-if=\"suggestionType === 'place'\"></udb-place-preview>\n" +
+    "  </div>\n" +
+    "</div>\n"
+  );
+
+
   $templateCache.put('templates/event-form-step1.html',
     "<div ng-controller=\"EventFormStep1Controller as EventFormStep1\">\n" +
     "  <a name=\"wat\"></a>\n" +
@@ -14603,35 +14984,16 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"alert alert-info\" ng-show=\"resultViewer.totalItems > 0\">\n" +
     "      <p class=\"h2\" style=\"margin-top: 0;\">Vermijd dubbel werk</p>\n" +
     "      <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>\n" +
-    "      <div class=\"row clearfix\">\n" +
-    "        <div class=\"col-xs-12 col-sm-6 col-md-4 col-lg-3\"\n" +
-    "             ng-repeat=\"event in resultViewer.events\"\n" +
-    "             udb-event=\"event\"\n" +
-    "             ng-hide=\"fetching\">\n" +
-    "          <a class=\"btn btn-tile\"\n" +
-    "             ng-click=\"setActiveDuplicate(event.id)\"\n" +
-    "             data-toggle=\"modal\"\n" +
-    "             data-target=\"#dubbeldetectie-voorbeeld\">\n" +
-    "            <small class=\"label label-default\" ng-bind=\"::event.type.label\"></small><br>\n" +
-    "            <strong class=\"title\" ng-bind=\"::event.name\"></strong><br>\n" +
-    "             <span ng-bind=\"::event.location.name\"></span> -\n" +
-    "             <ng-switch on=\"event.calendarType\">\n" +
-    "               <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM'\">\n" +
-    "               </span>\n" +
-    "               <span ng-switch-when=\"multiple\">\n" +
-    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM'\"></span> tot <span ng-bind=\"::event.endDate | date: 'dd/MM'\"></span>\n" +
-    "               </span>\n" +
-    "               <span ng-switch-when=\"periodic\">\n" +
-    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM'\"></span> tot <span ng-bind=\"::event.endDate | date: 'dd/MM'\"></span>\n" +
-    "               </span>\n" +
-    "               <span ng-switch-when=\"permanent\">\n" +
-    "                  Permanent\n" +
-    "               </span>\n" +
-    "             </ng-switch>\n" +
-    "             <br>\n" +
-    "            <small class=\"preview-corner\"></small>\n" +
-    "            <i class=\"fa fa-eye preview-icon\"></i>\n" +
-    "          </a>\n" +
+    "\n" +
+    "      <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'event'\">\n" +
+    "        <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Event'}\">\n" +
+    "          <udb-event-suggestion></udb-event-suggestion>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "\n" +
+    "      <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'place'\">\n" +
+    "        <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Place'}\">\n" +
+    "          <udb-place-suggestion></udb-place-suggestion>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -14657,133 +15019,6 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"alert alert-danger\" ng-show=\"error\">\n" +
     "      Er ging iets fout tijdens het opslaan van je activiteit. Gelieve later opnieuw te proberen.\n" +
     "    </div>\n" +
-    "\n" +
-    "    <div class=\"modal fade\" id=\"dubbeldetectie-voorbeeld\" aria-hidden=\"true\" ng-hide=\"currentDuplicateId === ''\">\n" +
-    "\n" +
-    "      <div class=\"modal-dialog modal-lg\">\n" +
-    "        <div class=\"modal-content \"\n" +
-    "           ng-repeat=\"event in resultViewer.events\"\n" +
-    "           udb-event=\"event\"\n" +
-    "           ng-show=\"event.id === currentDuplicateId\">\n" +
-    "          <div class=\"modal-header\">\n" +
-    "            <div class=\"pull-right\">\n" +
-    "              <button type=\"button\"\n" +
-    "                      class=\"btn btn-default\"\n" +
-    "                      ng-if=\"currentDuplicateDelta === 1\"\n" +
-    "                      data-dismiss=\"modal\">Vorige</button>\n" +
-    "              <button type=\"button\"\n" +
-    "                      class=\"btn btn-default\"\n" +
-    "                      ng-if=\"currentDuplicateDelta > 1\"\n" +
-    "                      ng-click=\"previousDuplicate()\">Vorige</button>\n" +
-    "\n" +
-    "              <button type=\"button\"\n" +
-    "                      class=\"btn btn-default\"\n" +
-    "                      ng-if=\"currentDuplicateDelta === resultViewer.totalItems\"\n" +
-    "                      data-dismiss=\"modal\">Volgende</button>\n" +
-    "              <button type=\"button\"\n" +
-    "                      class=\"btn btn-default\"\n" +
-    "                      ng-if=\"currentDuplicateDelta < resultViewer.totalItems\"\n" +
-    "                      ng-click=\"nextDuplicate()\">Volgende</button>\n" +
-    "\n" +
-    "              <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\">\n" +
-    "                <span aria-hidden=\"true\">×</span>\n" +
-    "              </button>\n" +
-    "            </div>\n" +
-    "            <h4 class=\"modal-title\">\n" +
-    "              Gelijkaardige items\n" +
-    "              <span> </span>\n" +
-    "              <small>\n" +
-    "                Evenement <span ng-bind=\"currentDuplicateDelta\"></span> van <span ng-bind=\"resultViewer.totalItems\"></span>\n" +
-    "              </small>\n" +
-    "            </h4>\n" +
-    "          </div>\n" +
-    "          <div class=\"modal-body\">\n" +
-    "            <div class=\"panel panel-default preview\">\n" +
-    "\n" +
-    "                <div class=\"panel-heading\" ng-style=\"{'background-image': 'url(' + event.image + ')'}\">\n" +
-    "                  <ul class=\"list-inline\">\n" +
-    "                    <li><small class=\"label label-default\" ng-bind=\"::event.type.label\"></small></li>\n" +
-    "                  </ul>\n" +
-    "                  <p class=\"title\" ng-bind=\"::event.getName('nl')\"></p>\n" +
-    "                </div>\n" +
-    "\n" +
-    "                <div class=\"panel-body\">\n" +
-    "\n" +
-    "                  <span ng-bind=\"::event.getDescription('nl')\"></span>\n" +
-    "\n" +
-    "                  <table class=\"table table-condended\">\n" +
-    "                    <tbody>\n" +
-    "                      <tr>\n" +
-    "                        <td class=\"\">\n" +
-    "                          <strong class=\"hidden-xs hidden-sm\">Waar</strong>\n" +
-    "                          <i class=\"fa fa-map-marker hidden-md hidden-lg\"></i>\n" +
-    "                        </td>\n" +
-    "                        <td ng-bind=\"::event.location.name\"></td>\n" +
-    "                      </tr>\n" +
-    "                      <tr>\n" +
-    "                        <td>\n" +
-    "                          <strong class=\"hidden-xs hidden-sm\">Wanneer</strong>\n" +
-    "                          <i class=\"fa fa-calendar hidden-md hidden-lg\"></i>\n" +
-    "                        </td>\n" +
-    "                        <td class=\"cf-when scroll scroll-150\">\n" +
-    "                          <ng-switch on=\"::event.calendarType\">\n" +
-    "                            <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                            <span ng-switch-when=\"multiple\">\n" +
-    "                              Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                              <span> tot </span>\n" +
-    "                              <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                            </span>\n" +
-    "                            <span ng-switch-when=\"periodic\">\n" +
-    "                              Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                              <span> tot </span>\n" +
-    "                              <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                            </span>\n" +
-    "                            <span ng-switch-when=\"permanent\">\n" +
-    "                               Permanent\n" +
-    "                            </span>\n" +
-    "                          </ng-switch>\n" +
-    "                        </td>\n" +
-    "                      </tr>\n" +
-    "                      <tr>\n" +
-    "                        <td>\n" +
-    "                          <strong class=\"hidden-xs hidden-sm\">Organisatie</strong>\n" +
-    "                          <i class=\"fa fa-building-o hidden-md hidden-lg\"></i>\n" +
-    "                        </td>\n" +
-    "                        <td ng-bind=\"::event.organizer.name\"></td>\n" +
-    "                      </tr>\n" +
-    "                      <tr>\n" +
-    "                        <td><strong class=\"hidden-xs hidden-sm\">Prijs</strong><i class=\"fa fa-eur hidden-md hidden-lg\"></i></td>\n" +
-    "                        <td>\n" +
-    "                          <div ng-switch=\"::event.pricing\">\n" +
-    "                          <span ng-switch-when=\"free\">gratis</span>\n" +
-    "                          <span ng-switch-when=\"payed\">\n" +
-    "                            <i class=\"fa fa-eur meta icon\"></i>\n" +
-    "                            <span ng-if=\"::event.price\" ng-bind=\"::event.price | currency\">\n" +
-    "                          </span>\n" +
-    "                          </span>\n" +
-    "                          <span ng-switch-when=\"unknown\">niet ingevoerd</span>\n" +
-    "                      </div>\n" +
-    "                        </td>\n" +
-    "                      </tr>\n" +
-    "                    </tbody>\n" +
-    "                  </table>\n" +
-    "                </div>\n" +
-    "            </div>\n" +
-    "\n" +
-    "            <div>\n" +
-    "              <em>\n" +
-    "                Ingevoerd door <span ng-bind=\"::event.organizer.name\"></span>\n" +
-    "                <span> op </span>\n" +
-    "                <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span>\n" +
-    "              </em>\n" +
-    "            </div>\n" +
-    "\n" +
-    "          </div>\n" +
-    "        </div><!-- /.modal-content -->\n" +
-    "\n" +
-    "      </div><!-- /.modal-dialog -->\n" +
-    "    </div>\n" +
-    "\n" +
     "  </section>\n" +
     "\n" +
     "</div>\n"

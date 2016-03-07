@@ -1,0 +1,25 @@
+<div class="modal-header">
+  <div class="pull-right">
+
+    <button type="button" class="btn btn-default" ng-click="previousSuggestion()">Vorige</button>
+
+    <button type="button" class="btn btn-default" ng-click="nextSuggestion()">Volgende</button>
+
+    <button type="button" class="close" aria-label="Close" ng-click="closePreview()">
+      <span aria-hidden="true">×</span>
+    </button>
+  </div>
+  <h4 class="modal-title">
+    Gelijkaardige items
+    <span> </span>
+    <small>
+      Evenement <span ng-bind="(currentSuggestionIndex + 1)"></span> van <span ng-bind="::suggestionCount"></span>
+    </small>
+  </h4>
+</div>
+<div class="modal-body">
+  <div ng-repeat="event in suggestions" ng-show="$index === currentSuggestionIndex">
+    <udb-event-preview ng-if="suggestionType === 'event'"></udb-event-preview>
+    <udb-place-preview ng-if="suggestionType === 'place'"></udb-place-preview>
+  </div>
+</div>
