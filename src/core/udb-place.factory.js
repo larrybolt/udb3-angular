@@ -106,7 +106,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       'addressCountry' : '',
       'addressLocality' : '',
       'postalCode' : '',
-      'streetAddress' : '',
+      'streetAddress' : ''
     };
 
     if (placeJson) {
@@ -143,9 +143,12 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.facilities = getCategoriesByType(jsonPlace, 'facility') || [];
       this.additionalData = jsonPlace.additionalData || {};
       if (jsonPlace['@id']) {
-        this.url = '/place/' + this.id;
+        this.url = 'place/' + this.id;
       }
       this.creator = jsonPlace.creator;
+      if (jsonPlace.created) {
+        this.created = new Date(jsonPlace.created);
+      }
       this.modified = jsonPlace.modified;
 
       if (jsonPlace.terms) {

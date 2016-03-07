@@ -2,7 +2,7 @@
 
 describe('Controller: Facilities Modal Controller', function () {
 
-  var EventFormData, facilities, $controller, $rootScope, scope, $modalInstance;
+  var EventFormData, facilities, $controller, $rootScope, scope, $uibModalInstance;
 
   beforeEach(module('udb.event-form'));
 
@@ -11,14 +11,14 @@ describe('Controller: Facilities Modal Controller', function () {
     EventFormData = $injector.get('EventFormData');
     $rootScope = $injector.get('$rootScope');
     scope = $rootScope;
-    $modalInstance = jasmine.createSpyObj('$modalInstance', ['close', 'dismiss']);
+    $uibModalInstance = jasmine.createSpyObj('$uibModalInstance', ['close', 'dismiss']);
   }));
 
   function getController() {
     return $controller('EventFormFacilitiesModalController', {
       $scope: scope,
       EventFormData: EventFormData,
-      $modalInstance: $modalInstance
+      $uibModalInstance: $uibModalInstance
     });
   }
 
@@ -37,7 +37,7 @@ describe('Controller: Facilities Modal Controller', function () {
         'id': '3.17.2.0.0'
       }
     ];
-    
+
     var expectedFacilities = {
       'motor': [
         {
@@ -93,7 +93,7 @@ describe('Controller: Facilities Modal Controller', function () {
         }
       ]
     };
-    
+
     var formController = getController();
     expect(scope.facilities).toEqual(expectedFacilities);
   });

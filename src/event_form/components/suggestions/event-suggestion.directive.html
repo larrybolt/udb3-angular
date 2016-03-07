@@ -1,0 +1,23 @@
+<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" ng-hide="eventCtrl.fetching">
+  <a class="btn btn-tile"
+     ng-click="previewSuggestedItem(event)">
+    <small class="label label-default" ng-bind="::event.type.label"></small><br>
+    <strong class="title" ng-bind="::event.name"></strong><br>
+    <span ng-bind="::event.location.name"></span> -
+    <ng-switch on="event.calendarType">
+      <span ng-switch-when="single" ng-bind="::event.startDate | date: 'dd/MM'"></span>
+      <span ng-switch-when="multiple">
+        Van <span ng-bind="::event.startDate | date: 'dd/MM'"></span> tot <span ng-bind="::event.endDate | date: 'dd/MM'"></span>
+      </span>
+      <span ng-switch-when="periodic">
+        Van <span ng-bind="::event.startDate | date: 'dd/MM'"></span> tot <span ng-bind="::event.endDate | date: 'dd/MM'"></span>
+      </span>
+      <span ng-switch-when="permanent">
+        Permanent
+      </span>
+    </ng-switch>
+    <br>
+    <small class="preview-corner"></small>
+    <i class="fa fa-eye preview-icon"></i>
+  </a>
+</div>

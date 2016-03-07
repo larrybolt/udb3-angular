@@ -12,7 +12,16 @@ angular
   .controller('EventFormStep4Controller', EventFormStep4Controller);
 
 /* @ngInject */
-function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, SearchResultViewer, eventCrud, $rootScope) {
+function EventFormStep4Controller(
+  $scope,
+  EventFormData,
+  udbApi,
+  appConfig,
+  SearchResultViewer,
+  eventCrud,
+  $rootScope,
+  $uibModal
+) {
 
   var controller = this;
 
@@ -29,16 +38,12 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
   $scope.saving = false;
   $scope.error = false;
   $scope.udb3DashboardUrl = appConfig.udb3BaseUrl;
-  $scope.currentDuplicateId = '';
-  $scope.currentDuplicateDelta = 0;
 
   $scope.validateEvent = validateEvent;
   $scope.saveEvent = saveEvent;
-  $scope.setActiveDuplicate = setActiveDuplicate;
-  $scope.previousDuplicate = previousDuplicate;
-  $scope.nextDuplicate = nextDuplicate;
   $scope.resultViewer = new SearchResultViewer();
   $scope.eventTitleChanged = eventTitleChanged;
+  $scope.previewSuggestedItem = previewSuggestedItem;
 
   // Check if we need to show the leave warning
   window.onbeforeunload = function (event) {
@@ -141,7 +146,7 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
       /*jscs:disable requireCamelCaseOrUpperCaseIdentifiers */
       return {
         text: EventFormData.name.nl,
-        location_cdbid : location.id
+        location_label : location.name
       };
     }
     else {
@@ -199,50 +204,6 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
   };
 
   /**
-   * Set a focus to a duplicate
-   * @param {type} id
-   */
-  function setActiveDuplicate(id) {
-
-    for (var duplicateId in $scope.resultViewer.events) {
-      var eventId = $scope.resultViewer.events[duplicateId]['@id'].split('/').pop();
-      if (eventId === id) {
-        $scope.currentDuplicateId = id;
-        $scope.currentDuplicateDelta = parseInt(duplicateId) + 1;
-      }
-    }
-
-  }
-
-  /**
-   * Set the previous duplicate active or close modal.
-   */
-  function previousDuplicate() {
-
-    var previousDelta = parseInt($scope.currentDuplicateDelta) - 2;
-    if ($scope.resultViewer.events[previousDelta] !== undefined) {
-      var eventId = $scope.resultViewer.events[previousDelta]['@id'].split('/').pop();
-      $scope.currentDuplicateId = eventId;
-      $scope.currentDuplicateDelta = parseInt(previousDelta) + 1;
-    }
-
-  }
-
-  /**
-   * Set the next duplicate active or close modal.
-   */
-  function nextDuplicate() {
-
-    var nextDelta = parseInt($scope.currentDuplicateDelta);
-    if ($scope.resultViewer.events[nextDelta] !== undefined) {
-      var eventId = $scope.resultViewer.events[nextDelta]['@id'].split('/').pop();
-      $scope.currentDuplicateId = eventId;
-      $scope.currentDuplicateDelta = parseInt(nextDelta) + 1;
-    }
-
-  }
-
-  /**
    * Notify that the title of an event has changed.
    */
   function eventTitleChanged() {
@@ -251,4 +212,27 @@ function EventFormStep4Controller($scope, EventFormData, udbApi, appConfig, Sear
     }
   }
 
+  /**
+   * Open the organizer modal.
+   *
+   * @param {object} item
+   *  An item to preview from the suggestions in the current result viewer.
+   */
+  function previewSuggestedItem(item) {
+    $uibModal.open({
+      templateUrl: 'templates/suggestion-preview-modal.html',
+      controller: 'SuggestionPreviewModalController',
+      resolve: {
+        selectedSuggestionId: function () {
+          return item.id;
+        },
+        resultViewer: function () {
+          return $scope.resultViewer;
+        },
+        suggestionType: function () {
+          return EventFormData.getType();
+        }
+      }
+    });
+  }
 }
