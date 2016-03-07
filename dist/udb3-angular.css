@@ -2778,6 +2778,9 @@ body {
   border-bottom: 1px solid #dddddd;
   padding: 10px;
 }
+.offer-form .media-actions {
+  margin-top: 10px;
+}
 .offer-form #publiceren {
   margin-top: 2em;
   border-top: 1px solid #dddddd;
