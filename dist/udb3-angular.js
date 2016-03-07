@@ -3718,7 +3718,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       if (jsonPlace.organizer) {
         this.organizer = jsonPlace.organizer;
       }
-      this.image = getImages(jsonPlace);
+      this.image = jsonPlace.image;
       this.labels = _.map(jsonPlace.labels, function (label) {
         return label;
       });
