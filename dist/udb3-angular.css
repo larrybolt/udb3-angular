@@ -3040,6 +3040,10 @@ h2.block-header {
 .event-detail-description {
   color: black;
 }
+img.offer-image-thumbnail {
+  max-width: 400px;
+  max-height: 300px;
+}
 .editable-click {
   border: 1px solid #eeeeee;
   padding: 15px;

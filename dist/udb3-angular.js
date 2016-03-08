@@ -13757,7 +13757,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "            <tr ng-class=\"{muted: !event.image}\">\n" +
     "              <td><strong>Afbeelding</strong></td>\n" +
     "              <td>\n" +
-    "                <img ng-if=\"event.image\" src=\"{{event.image}}?maxwidth=400&maxheight=300\"/>\n" +
+    "                <img ng-if=\"event.image\" class=\"offer-image-thumbnail\" ng-src=\"{{event.image}}\"/>\n" +
     "                <span ng-if=\"!event.image\">Geen afbeelding</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
@@ -15848,13 +15848,11 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                  <span ng-if=\"!place.typicalAgeRange\">Geen leeftijdsinformatie</span>\n" +
     "                </td>\n" +
     "              </tr>\n" +
-    "              <tr ng-class=\"{muted: place.image.length === 0}\">\n" +
+    "              <tr ng-class=\"{muted: !place.image}\">\n" +
     "                <td><strong>Afbeelding</strong></td>\n" +
     "                <td>\n" +
-    "                  <div ng-if=\"place.image.length > 0\" class=\"image-list\">\n" +
-    "                    <img ng-repeat=\"image in place.image\" src=\"{{image.thumbnailUrl}}\" class=\"img-thumbnail\"/>\n" +
-    "                  </div>\n" +
-    "                  <span ng-if=\"place.image.length === 0\">Geen afbeelding</span>\n" +
+    "                  <img ng-if=\"place.image\" class=\"offer-image-thumbnail\" ng-src=\"{{place.image}}\"/>\n" +
+    "                  <span ng-if=\"!place.image\">Geen afbeelding</span>\n" +
     "                </td>\n" +
     "              </tr>\n" +
     "            </tbody>\n" +
