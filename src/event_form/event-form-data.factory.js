@@ -381,8 +381,20 @@ function EventFormDataFactory() {
      *
      *@param {MediaObject} mediaObject
      */
-    removeMediaObject : function(mediaObject) {
+    removeMediaObject: function(mediaObject) {
       this.mediaObjects = _.reject(this.mediaObjects, {'@id': mediaObject['@id']});
+    },
+
+    /**
+     * Select the main image for this item.
+     *
+     * @param {mediaObject} image
+     */
+    selectMainImage: function (image) {
+      var reindexedMedia = _.without(this.mediaObjects, image);
+      reindexedMedia.unshift(image);
+
+      this.mediaObjects = reindexedMedia;
     },
 
     /**

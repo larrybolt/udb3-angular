@@ -493,7 +493,7 @@
 
       <div class="col-sm-4">
 
-        <div class="image-upload" ng-class="imageCssClass">
+        <div class="image-upload" ng-class="eventFormData.mediaObjects.length ? 'state-complete' : 'state-incomplete'">
           <div class="image-upload-none state incomplete">
             <span class="image-upload-icon"></span>
             <p class="muted">Voeg een afbeelding toe zodat je bezoekers je activiteit beter herkennen.</p>
@@ -503,22 +503,22 @@
             <h4>Afbeeldingen</h4>
             <div ng-repeat="image in eventFormData.mediaObjects | filter:{'@type': 'schema:ImageObject'} track by image.contentUrl">
               <div class="uploaded-image">
-                <div class="media">
+                <div class="media" ng-class="{'main-image': ($index === 0)}">
                   <a class="media-left" href="#">
                     <img ng-src="{{ image.thumbnailUrl }}" style="max-width: 50px; max-height: 50px;">
                   </a>
 
                   <div class="media-body">
-                    <span>
-                      <span ng-bind="image.description"></span>
-                      <br/>
-                      <small ng-bind="image.copyrightHolder">Copyright</small>
-                    </span>
-                    <span>
-                      <a class="btn btn-link" ng-click="editImage(image)">Wijzigen</a>
-                      <a class="btn btn-link" ng-click="removeImage(image)">Verwijderen</a>
-                    </span>
+                    <div ng-bind="image.description"></div>
+                    <div class="text-muted">&copy; <span ng-bind="image.copyrightHolder">Copyright</span></div>
                   </div>
+
+                  <div class="media-actions">
+                      <a class="btn btn-xs btn-primary" ng-click="editImage(image)">Wijzigen</a>
+                      <a class="btn btn-xs btn-danger" ng-click="removeImage(image)">Verwijderen</a>
+                      <a class="btn btn-xs btn-default select-main-image" ng-click="selectMainImage(image)">Hoofdafbeelding</a>
+                  </div>
+
                 </div>
               </div>
             </div>
