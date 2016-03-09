@@ -75,13 +75,11 @@
                   <span ng-if="!place.typicalAgeRange">Geen leeftijdsinformatie</span>
                 </td>
               </tr>
-              <tr ng-class="{muted: place.image.length === 0}">
+              <tr ng-class="{muted: !place.image}">
                 <td><strong>Afbeelding</strong></td>
                 <td>
-                  <div ng-if="place.image.length > 0" class="image-list">
-                    <img ng-repeat="image in place.image" src="{{image.thumbnailUrl}}" class="img-thumbnail"/>
-                  </div>
-                  <span ng-if="place.image.length === 0">Geen afbeelding</span>
+                  <img ng-if="place.image" class="offer-image-thumbnail" ng-src="{{place.image}}"/>
+                  <span ng-if="!place.image">Geen afbeelding</span>
                 </td>
               </tr>
             </tbody>
