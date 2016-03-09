@@ -81,6 +81,7 @@ function EventFormDataFactory() {
       this.timestamps = [];
       this.openingHours = [];
       this.ageRange = '';
+      this.typicalAgeRange = '';
       this.organizer = {};
       this.contactPoint = {
         url : [],
