@@ -281,18 +281,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.labelEvents = function (eventIds, label) {
-    return $http.post(appConfig.baseUrl + 'events/label',
+  this.labelOffers = function (offers, label) {
+    return $http.post(appConfig.baseUrl + 'offers/labels',
       {
         'label': label,
-        'events': eventIds
+        'offers': offers
       },
       defaultApiConfig
     );
   };
 
   this.labelQuery = function (query, label) {
-    return $http.post(appConfig.baseUrl + 'query/label',
+    return $http.post(appConfig.baseUrl + 'query/labels',
       {
         'label': label,
         'query': query
@@ -498,10 +498,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       mediaObjectId: imageId
     };
 
-    function returnJobData(response) {
-      return $q.resolve(response.data);
-    }
-
     return $http
       .post(
         appConfig.baseUrl + itemType + '/' + itemId + '/images',
@@ -519,10 +515,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       description: description,
       copyrightHolder: copyrightHolder
     };
-
-    function returnJobData(response) {
-      return $q.resolve(response.data);
-    }
 
     return $http
       .post(
@@ -543,15 +535,45 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
    * @return {Promise}
    */
   this.removeImage = function(itemId, itemType, imageId) {
-    function returnJobData(response) {
-      return $q.resolve(response.data);
-    }
-
     return $http['delete'](
       appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
       defaultApiConfig
     ).then(returnJobData);
   };
+
+  /**
+   * Select the main image for an offer.
+   *
+   * @param {string} itemId
+   * @param {OfferTypes} itemType
+   * @param {string} imageId
+   *
+   * @return {Promise.<Object>}
+   */
+  this.selectMainImage = function(itemId, itemType, imageId) {
+    var postData = {
+      mediaObjectId: imageId
+    };
+
+    return $http
+      .post(
+        appConfig.baseUrl + itemType + '/' + itemId + '/images/main',
+        postData,
+        defaultApiConfig
+      )
+      .then(returnJobData);
+  };
+
+  /**
+   * @param {object} response
+   *  The response that is returned when creating a job.
+   *
+   * @return {Promise.<Object>}
+   *  The object containing the job data
+   */
+  function returnJobData(response) {
+    return $q.resolve(response.data);
+  }
 
   this.getOfferVariations = function (ownerId, purpose, offerUrl) {
     var parameters = {

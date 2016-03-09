@@ -12,5 +12,6 @@ angular
     'ui.bootstrap',
     'udb.config',
     'udb.entry',
+    'udb.search',
     'ngFileUpload'
   ]);

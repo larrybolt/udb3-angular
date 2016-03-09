@@ -352,6 +352,20 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
       .then(logJob);
   };
 
+  service.selectMainImage = function (item, image) {
+    var imageId = image['@id'].split('/').pop();
+
+    function logJob(jobData) {
+      var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
+      jobLogger.addJob(job);
+      return $q.resolve(job);
+    }
+
+    return udbApi
+      .selectMainImage(item.id, item.getType(), imageId)
+      .then(logJob);
+  };
+
   /**
    * @param {Object} event
    * @param {EventFormData} eventFormData

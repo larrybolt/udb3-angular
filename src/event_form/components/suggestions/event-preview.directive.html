@@ -1,0 +1,79 @@
+<div class="panel panel-default preview">
+
+  <div class="panel-heading" ng-style="{'background-image': 'url(' + event.image + ')'}">
+    <ul class="list-inline">
+      <li><small class="label label-default" ng-bind="::event.type.label"></small></li>
+    </ul>
+    <p class="title" ng-bind="::event.name"></p>
+  </div>
+
+  <div class="panel-body">
+
+    <span ng-bind-html="::event.description"></span>
+
+    <table class="table table-condended">
+      <tbody>
+      <tr>
+        <td class="">
+          <strong class="hidden-xs hidden-sm">Waar</strong>
+          <i class="fa fa-map-marker hidden-md hidden-lg"></i>
+        </td>
+        <td ng-bind="::event.location.name"></td>
+      </tr>
+      <tr>
+        <td>
+          <strong class="hidden-xs hidden-sm">Wanneer</strong>
+          <i class="fa fa-calendar hidden-md hidden-lg"></i>
+        </td>
+        <td class="cf-when scroll scroll-150">
+          <ng-switch on="::event.calendarType">
+            <span ng-switch-when="single" ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+                <span ng-switch-when="multiple">
+                  Van <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+                  <span> tot </span>
+                  <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
+                </span>
+                <span ng-switch-when="periodic">
+                  Van <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+                  <span> tot </span>
+                  <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
+                </span>
+                <span ng-switch-when="permanent">
+                   Permanent
+                </span>
+          </ng-switch>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <strong class="hidden-xs hidden-sm">Organisatie</strong>
+          <i class="fa fa-building-o hidden-md hidden-lg"></i>
+        </td>
+        <td ng-bind="::event.organizer.name"></td>
+      </tr>
+      <tr>
+        <td><strong class="hidden-xs hidden-sm">Prijs</strong><i class="fa fa-eur hidden-md hidden-lg"></i></td>
+        <td>
+          <div ng-switch="::event.pricing">
+            <span ng-switch-when="free">gratis</span>
+                <span ng-switch-when="payed">
+                  <i class="fa fa-eur meta icon"></i>
+                  <span ng-if="::event.price" ng-bind="::event.price | currency">
+                </span>
+                </span>
+            <span ng-switch-when="unknown">niet ingevoerd</span>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div>
+  <em>
+    Ingevoerd door <span ng-bind="::event.organizer.name"></span>
+    <span> op </span>
+    <span ng-bind="::event.created | date : 'dd/MM/yyyy • HH:mm'"></span>
+  </em>
+</div>

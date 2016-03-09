@@ -1703,6 +1703,7 @@ input + .alert {
 .save-time-tracker {
   border-top: 1px solid #cccccc;
   color: #777777;
+  margin-top: 3em;
   padding-bottom: 1em;
   padding-top: 1em;
 }
@@ -2775,6 +2776,10 @@ body {
 }
 .offer-form .image-upload-list .media {
   border-bottom: 1px solid #dddddd;
+  padding: 10px;
+}
+.offer-form .media-actions {
+  margin-top: 10px;
 }
 .offer-form #publiceren {
   margin-top: 2em;
@@ -2977,6 +2982,13 @@ body {
   padding: 4px 12px;
   line-height: initial;
 }
+.offer-form .media.main-image {
+  background-color: aliceblue;
+  border-color: black;
+}
+.offer-form .main-image .select-main-image {
+  display: none;
+}
 .image-copyright-agreements {
   font-size: 0.85em;
 }
@@ -3027,6 +3039,10 @@ h2.block-header {
 }
 .event-detail-description {
   color: black;
+}
+img.offer-image-thumbnail {
+  max-width: 400px;
+  max-height: 300px;
 }
 .editable-click {
   border: 1px solid #eeeeee;

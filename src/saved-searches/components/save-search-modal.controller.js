@@ -12,19 +12,19 @@ angular
   .controller('SaveSearchModalController', SaveSearchModalController);
 
 /* @ngInject */
-function SaveSearchModalController($scope, $modalInstance) {
+function SaveSearchModalController($scope, $uibModalInstance) {
 
   var ok = function () {
     var name = $scope.queryName;
     $scope.wasSubmitted = true;
 
     if (name) {
-      $modalInstance.close(name);
+      $uibModalInstance.close(name);
     }
   };
 
   var cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 
   $scope.cancel = cancel;

@@ -2,8 +2,8 @@
   <div class="col-sm-5 rv-first-column">
     <div class="rv-item-sidebar">
       <div class="rv-selection-state" ng-class="{'disabled': resultViewer.querySelected}"
-           ng-click="resultViewer.toggleSelectId(event.id)">
-        <span class="fa" ng-class="resultViewer.isIdSelected(event.id) ? 'fa-check-square' : 'fa-square-o'"></span>
+           ng-click="resultViewer.toggleSelect(event)">
+        <span class="fa" ng-class="resultViewer.isOfferSelected(event) ? 'fa-check-square' : 'fa-square-o'"></span>
       </div>
     </div>
 

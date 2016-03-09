@@ -12,7 +12,7 @@ angular
   .controller('EventFormFacilitiesModalController', EventFormFacilitiesModalController);
 
 /* @ngInject */
-function EventFormFacilitiesModalController($scope, $modalInstance, EventFormData, eventCrud, facilities) {
+function EventFormFacilitiesModalController($scope, $uibModalInstance, EventFormData, eventCrud, facilities) {
 
   // Scope vars.
   $scope.saving = false;
@@ -57,7 +57,7 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
    * Cancel the modal.
    */
   function cancel() {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   }
 
   /**
@@ -79,7 +79,7 @@ function EventFormFacilitiesModalController($scope, $modalInstance, EventFormDat
     promise.then(function() {
 
       $scope.saving = false;
-      $modalInstance.close();
+      $uibModalInstance.close();
 
     }, function() {
       $scope.error = true;
