@@ -40,55 +40,60 @@ function EventFormDataFactory() {
    * @class EventFormData
    */
   var eventFormData = {
-    isEvent : true, // Is current item an event.
-    isPlace : false, // Is current item a place.
-    showStep1 : true,
-    showStep2 : false,
-    showStep3 : false,
-    showStep4 : false,
-    showStep5 : false,
-    majorInfoChanged : false,
-    // Properties that will be copied to UdbEvent / UdbPlace.
-    id : '',
-    name : {
-      nl : ''
+    /**
+     * Initialize the properties with default data
+     */
+    init: function() {
+      this.isEvent = true; // Is current item an event.
+      this.isPlace = false; // Is current item a place.
+      this.showStep1 = true;
+      this.showStep2 = false;
+      this.showStep3 = false;
+      this.showStep4 = false;
+      this.showStep5 = false;
+      this.majorInfoChanged = false;
+      // Properties that will be copied to UdbEvent / UdbPlace.
+      this.id = '';
+      this.name = {
+        nl : ''
+      };
+      this.description = {};
+      this.location = {
+        'id' : null,
+        'name': '',
+        'address': {
+          'addressCountry': '',
+          'addressLocality': '',
+          'postalCode': '',
+          'streetAddress': ''
+        }
+      };
+      this.place = {};
+      /** @type {EventType} */
+      this.type = {};
+      /** @type {EventTheme} */
+      this.theme = {};
+      this.activeCalendarType = ''; // only needed for the angular.
+      this.activeCalendarLabel = ''; // only needed for the angular.
+      this.calendarType = '';
+      this.startDate = '';
+      this.endDate = '';
+      this.timestamps = [];
+      this.openingHours = [];
+      this.ageRange = '';
+      this.organizer = {};
+      this.contactPoint = {
+        url : [],
+        phone : [],
+        email : []
+      };
+      this.facilities = [];
+      this.bookingInfo = {};
+      /** @type {MediaObject[]} **/
+      this.mediaObjects = [];
+      this.image = [];
+      this.additionalData = {};
     },
-    description : {},
-    location : {
-      'id' : null,
-      'name': '',
-      'address': {
-        'addressCountry': '',
-        'addressLocality': '',
-        'postalCode': '',
-        'streetAddress': ''
-      }
-    },
-    place : {},
-    /** @type {EventType} */
-    type : {},
-    /** @type {EventTheme} */
-    theme : {},
-    activeCalendarType : '', // only needed for the angular.
-    activeCalendarLabel : '', // only needed for the angular.
-    calendarType : '',
-    startDate : '',
-    endDate : '',
-    timestamps : [],
-    openingHours : [],
-    ageRange : '',
-    organizer : {},
-    contactPoint : {
-      url : [],
-      phone : [],
-      email : []
-    },
-    facilities : [],
-    bookingInfo : {},
-    /** @type {MediaObject[]} **/
-    mediaObjects : [],
-    image : [],
-    additionalData : {},
 
     /**
      * Show the given step.
@@ -409,6 +414,9 @@ function EventFormDataFactory() {
     }
 
   };
+
+  // initialize the data
+  eventFormData.init();
 
   return eventFormData;
 }
