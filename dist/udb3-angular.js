@@ -2497,6 +2497,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   this.mainLanguage = 'nl';
 
   /**
+   * Removes an item from the eventCache.
+   * @param {string} id - The uuid of the item.
+   */
+  this.removeItemFromCache = function (id) {
+    var event = eventCache.get(id);
+
+    if (event) {
+      eventCache.remove(id);
+    }
+  };
+
+  /**
    * @param {string} queryString - The query used to find events.
    * @param {?number} start - From which event offset the result set should start.
    * @returns {Promise} A promise that signals a successful retrieval of
@@ -3716,7 +3728,11 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.bookingInfo = jsonPlace.bookingInfo || {};
       this.contactPoint = jsonPlace.contactPoint || {};
       if (jsonPlace.organizer) {
-        this.organizer = jsonPlace.organizer;
+        this.organizer = {
+          name: jsonPlace.organizer.name,
+          email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
+          phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
+        };
       }
       this.image = jsonPlace.image;
       this.labels = _.map(jsonPlace.labels, function (label) {
@@ -4384,7 +4400,7 @@ angular
   .factory('EventCrudJob', EventCrudJobFactory);
 
 /* @ngInject */
-function EventCrudJobFactory(BaseJob) {
+function EventCrudJobFactory(BaseJob, $q, JobStates) {
 
   /**
    * @class EventCrudJob
@@ -4397,10 +4413,20 @@ function EventCrudJobFactory(BaseJob) {
     BaseJob.call(this, commandId);
     this.item = item;
     this.action = action;
+    this.task = $q.defer();
   };
 
   EventCrudJob.prototype = Object.create(BaseJob.prototype);
   EventCrudJob.prototype.constructor = EventCrudJob;
+
+  EventCrudJob.prototype.finish = function () {
+    if (this.state !== JobStates.FAILED) {
+      this.state = JobStates.FINISHED;
+      this.finished = new Date();
+      this.task.resolve(this.item.id);
+    }
+    this.progress = 100;
+  };
 
   EventCrudJob.prototype.getDescription = function() {
 
@@ -4466,7 +4492,7 @@ function EventCrudJobFactory(BaseJob) {
 
   return (EventCrudJob);
 }
-EventCrudJobFactory.$inject = ["BaseJob"];
+EventCrudJobFactory.$inject = ["BaseJob", "$q", "JobStates"];
 
 // Source: src/entry/crud/event-crud.service.js
 /**
@@ -4563,6 +4589,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, eventFormData, 'updateItem');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4597,6 +4627,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateDescription');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4616,25 +4650,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
       jobLogger.addJob(job);
-    });
-
-    return jobPromise;
-
-  };
-
-  /**
-   * Update the typical age range and add it to the job logger.
-   *
-   * @param {EventFormData} item
-   * @returns {EventCrud.updateTypicalAgeRange.jobPromise}
-   */
-  service.updateTypicalAgeRange = function(item) {
-
-    var jobPromise = udbApi.updateProperty(item.id, item.getType(), 'typicalAgeRange', item.typicalAgeRange);
-
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4654,6 +4673,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4673,6 +4696,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateOrganizer');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4692,6 +4719,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'deleteOrganizer');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4711,6 +4742,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateContactInfo');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4730,6 +4765,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateFacilities');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4750,6 +4789,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateBookingInfo');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
     });
 
     return jobPromise;
@@ -4769,6 +4812,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'addImage');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
       return $q.resolve(job);
     }
 
@@ -4792,6 +4839,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateImage');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
       return $q.resolve(job);
     }
 
@@ -4813,6 +4864,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'removeImage');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
       return $q.resolve(job);
     }
 
@@ -4827,6 +4882,10 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
       jobLogger.addJob(job);
+      // unvalidate cache on success
+      job.task.promise.then(function (itemId) {
+        udbApi.removeItemFromCache(itemId);
+      }, function() {});
       return $q.resolve(job);
     }
 
@@ -7324,55 +7383,60 @@ function EventFormDataFactory() {
    * @class EventFormData
    */
   var eventFormData = {
-    isEvent : true, // Is current item an event.
-    isPlace : false, // Is current item a place.
-    showStep1 : true,
-    showStep2 : false,
-    showStep3 : false,
-    showStep4 : false,
-    showStep5 : false,
-    majorInfoChanged : false,
-    // Properties that will be copied to UdbEvent / UdbPlace.
-    id : '',
-    name : {
-      nl : ''
+    /**
+     * Initialize the properties with default data
+     */
+    init: function() {
+      this.isEvent = true; // Is current item an event.
+      this.isPlace = false; // Is current item a place.
+      this.showStep1 = true;
+      this.showStep2 = false;
+      this.showStep3 = false;
+      this.showStep4 = false;
+      this.showStep5 = false;
+      this.majorInfoChanged = false;
+      // Properties that will be copied to UdbEvent / UdbPlace.
+      this.id = '';
+      this.name = {
+        nl : ''
+      };
+      this.description = {};
+      this.location = {
+        'id' : null,
+        'name': '',
+        'address': {
+          'addressCountry': '',
+          'addressLocality': '',
+          'postalCode': '',
+          'streetAddress': ''
+        }
+      };
+      this.place = {};
+      /** @type {EventType} */
+      this.type = {};
+      /** @type {EventTheme} */
+      this.theme = {};
+      this.activeCalendarType = ''; // only needed for the angular.
+      this.activeCalendarLabel = ''; // only needed for the angular.
+      this.calendarType = '';
+      this.startDate = '';
+      this.endDate = '';
+      this.timestamps = [];
+      this.openingHours = [];
+      this.typicalAgeRange = '';
+      this.organizer = {};
+      this.contactPoint = {
+        url : [],
+        phone : [],
+        email : []
+      };
+      this.facilities = [];
+      this.bookingInfo = {};
+      /** @type {MediaObject[]} **/
+      this.mediaObjects = [];
+      this.image = [];
+      this.additionalData = {};
     },
-    description : {},
-    location : {
-      'id' : null,
-      'name': '',
-      'address': {
-        'addressCountry': '',
-        'addressLocality': '',
-        'postalCode': '',
-        'streetAddress': ''
-      }
-    },
-    place : {},
-    /** @type {EventType} */
-    type : {},
-    /** @type {EventTheme} */
-    theme : {},
-    activeCalendarType : '', // only needed for the angular.
-    activeCalendarLabel : '', // only needed for the angular.
-    calendarType : '',
-    startDate : '',
-    endDate : '',
-    timestamps : [],
-    openingHours : [],
-    ageRange : '',
-    organizer : {},
-    contactPoint : {
-      url : [],
-      phone : [],
-      email : []
-    },
-    facilities : [],
-    bookingInfo : {},
-    /** @type {MediaObject[]} **/
-    mediaObjects : [],
-    image : [],
-    additionalData : {},
 
     /**
      * Show the given step.
@@ -7524,20 +7588,6 @@ function EventFormDataFactory() {
      */
     getLocation: function() {
       return this.location;
-    },
-
-    /**
-     * Set the age range.
-     */
-    setAgeRange: function(range) {
-      this.ageRange = range;
-    },
-
-    /**
-     * Get the age range.
-     */
-    getAgeRange: function() {
-      return this.ageRange;
     },
 
     /**
@@ -7694,6 +7744,9 @@ function EventFormDataFactory() {
 
   };
 
+  // initialize the data
+  eventFormData.init();
+
   return eventFormData;
 }
 
@@ -7714,6 +7767,9 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
+
+  // Make sure we start off with clean data every time this controller gets called
+  EventFormData.init();
 
   // Fill the event form data if an event is being edited.
   if (eventId) {
@@ -9060,7 +9116,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
    * @type {AgeRangeEnum|null}
    */
   $scope.ageRange = null;
-  $scope.ageCssClass = EventFormData.ageRange ? 'state-complete' : 'state-incomplete';
+  $scope.ageCssClass = EventFormData.typicalAgeRange ? 'state-complete' : 'state-incomplete';
   /**
    * * @type {number|null}
    */
