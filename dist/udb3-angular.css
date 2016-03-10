@@ -1687,6 +1687,9 @@ textarea.resize-vertical {
   content: "\f20c";
 }
 /* General Styles */
+.btn-tile {
+  white-space: normal;
+}
 .nav-pills a {
   cursor: pointer;
 }
