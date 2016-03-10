@@ -1,18 +1,15 @@
 <div class="modal-body">
-
     <div class="row">
 
       <div class="col-xs-12" ng-if="!hasEvents">
-        <p>Ben je zeker dat je "{{item.name}}" wil verwijderen?</p>
+        <p>Ben je zeker dat je "<span ng-bind="::item.name"></span>" wil verwijderen?</p>
       </div>
 
       <div class="col-xs-12" ng-if="hasEvents">
-        <p>De locatie "{{item.name}}" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>
+        <p>De locatie "<span ng-bind="::item.name"></span>" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>
 
         <ul>
-          <li ng-repeat="event in events" udb-event="event" ng-hide="fetching">
-            <a href="{{baseUrl}}{{event.url}}">{{event.name}}</a>
-          </li>
+          <li ng-repeat="event in events" udb-event-link ng-hide="fetching"></li>
         </ul>
 
       </div>
@@ -26,5 +23,7 @@
 <div class="modal-footer">
   <button type="button" class="btn btn-primary" data-dismiss="modal" ng-show="hasEvents" ng-click="cancelRemoval()">Sluiten</button>
   <button type="button" class="btn btn-default" data-dismiss="modal" ng-hide="hasEvents" ng-click="cancelRemoval()">Annuleren</button>
-  <button type="button" class="btn btn-primary" ng-if="!hasEvents" ng-click="deletePlace()">Verwijderen <i class="fa fa-circle-o-notch fa-spin" ng-show="saving"></i></button>
+  <button type="button" class="btn btn-primary" ng-if="!hasEvents" ng-click="deletePlace()">
+    Verwijderen <i class="fa fa-circle-o-notch fa-spin" ng-show="saving"></i>
+  </button>
 </div>
