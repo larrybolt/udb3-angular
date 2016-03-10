@@ -38,20 +38,22 @@
 
   <a name="dubbeldetectie"></a>
   <section class="dubbeldetectie" ng-show="eventFormData.name.nl !== ''">
+    
+    <div class="panel panel-info" ng-show="resultViewer.totalItems > 0">
+      <div class="panel-body bg-info text-info">
+        <p class="h2" style="margin-top: 0;">Vermijd dubbel werk</p>
+        <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>
 
-    <div class="alert alert-info" ng-show="resultViewer.totalItems > 0">
-      <p class="h2" style="margin-top: 0;">Vermijd dubbel werk</p>
-      <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>
-
-      <div class="row clearfix" ng-if="eventFormData.getType() === 'event'">
-        <div ng-repeat="event in resultViewer.events | filter:{'@type': 'Event'}">
-          <udb-event-suggestion></udb-event-suggestion>
+        <div class="row clearfix" ng-if="eventFormData.getType() === 'event'">
+          <div ng-repeat="event in resultViewer.events | filter:{'@type': 'Event'}">
+            <udb-event-suggestion></udb-event-suggestion>
+          </div>
         </div>
-      </div>
 
-      <div class="row clearfix" ng-if="eventFormData.getType() === 'place'">
-        <div ng-repeat="event in resultViewer.events | filter:{'@type': 'Place'}">
-          <udb-place-suggestion></udb-place-suggestion>
+        <div class="row clearfix" ng-if="eventFormData.getType() === 'place'">
+          <div ng-repeat="event in resultViewer.events | filter:{'@type': 'Place'}">
+            <udb-place-suggestion></udb-place-suggestion>
+          </div>
         </div>
       </div>
     </div>

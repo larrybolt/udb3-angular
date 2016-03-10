@@ -14530,9 +14530,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  <div class=\"panel-body\">\n" +
     "\n" +
-    "    <span ng-bind-html=\"::event.description\"></span>\n" +
+    "    <p ng-bind-html=\"::event.description\"></p>\n" +
     "\n" +
-    "    <table class=\"table table-condended\">\n" +
+    "    <table class=\"table table-condensed\">\n" +
     "      <tbody>\n" +
     "      <tr>\n" +
     "        <td class=\"\">\n" +
@@ -14597,7 +14597,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <span> op </span>\n" +
     "    <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span>\n" +
     "  </em>\n" +
-    "</div>"
+    "</div>\n"
   );
 
 
@@ -14640,9 +14640,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  <div class=\"panel-body\">\n" +
     "\n" +
-    "    <span ng-bind-html=\"::event.description\"></span>\n" +
+    "    <p ng-bind-html=\"::event.description\"></p>\n" +
     "\n" +
-    "    <table class=\"table table-condended\">\n" +
+    "    <table class=\"table table-condensed\">\n" +
     "      <tbody>\n" +
     "      <tr>\n" +
     "        <td>\n" +
@@ -14690,7 +14690,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    Ingevoerd door <span ng-bind=\"::event.creator\"></span>\n" +
     "    <span ng-if=\"event.created\"> op <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span></span>\n" +
     "  </em>\n" +
-    "</div>"
+    "</div>\n"
   );
 
 
@@ -14711,16 +14711,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
   $templateCache.put('templates/suggestion-preview-modal.html',
     "<div class=\"modal-header\">\n" +
-    "  <div class=\"pull-right\">\n" +
-    "\n" +
-    "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"previousSuggestion()\">Vorige</button>\n" +
-    "\n" +
-    "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"nextSuggestion()\">Volgende</button>\n" +
-    "\n" +
-    "    <button type=\"button\" class=\"close\" aria-label=\"Close\" ng-click=\"closePreview()\">\n" +
-    "      <span aria-hidden=\"true\">×</span>\n" +
-    "    </button>\n" +
-    "  </div>\n" +
+    "  <button type=\"button\" class=\"close\" aria-label=\"Close\" ng-click=\"closePreview()\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n" +
     "  <h4 class=\"modal-title\">\n" +
     "    Gelijkaardige items\n" +
     "    <span> </span>\n" +
@@ -14734,6 +14725,10 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <udb-event-preview ng-if=\"suggestionType === 'event'\"></udb-event-preview>\n" +
     "    <udb-place-preview ng-if=\"suggestionType === 'place'\"></udb-place-preview>\n" +
     "  </div>\n" +
+    "</div>\n" +
+    "<div class=\"modal-footer\">\n" +
+    "  <button type=\"button\" class=\"btn btn-default\" ng-click=\"previousSuggestion()\">Vorige</button>\n" +
+    "  <button type=\"button\" class=\"btn btn-default\" ng-click=\"nextSuggestion()\">Volgende</button>\n" +
     "</div>\n"
   );
 
@@ -15022,20 +15017,22 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  <a name=\"dubbeldetectie\"></a>\n" +
     "  <section class=\"dubbeldetectie\" ng-show=\"eventFormData.name.nl !== ''\">\n" +
+    "    \n" +
+    "    <div class=\"panel panel-info\" ng-show=\"resultViewer.totalItems > 0\">\n" +
+    "      <div class=\"panel-body bg-info text-info\">\n" +
+    "        <p class=\"h2\" style=\"margin-top: 0;\">Vermijd dubbel werk</p>\n" +
+    "        <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>\n" +
     "\n" +
-    "    <div class=\"alert alert-info\" ng-show=\"resultViewer.totalItems > 0\">\n" +
-    "      <p class=\"h2\" style=\"margin-top: 0;\">Vermijd dubbel werk</p>\n" +
-    "      <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>\n" +
-    "\n" +
-    "      <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'event'\">\n" +
-    "        <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Event'}\">\n" +
-    "          <udb-event-suggestion></udb-event-suggestion>\n" +
+    "        <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'event'\">\n" +
+    "          <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Event'}\">\n" +
+    "            <udb-event-suggestion></udb-event-suggestion>\n" +
+    "          </div>\n" +
     "        </div>\n" +
-    "      </div>\n" +
     "\n" +
-    "      <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'place'\">\n" +
-    "        <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Place'}\">\n" +
-    "          <udb-place-suggestion></udb-place-suggestion>\n" +
+    "        <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'place'\">\n" +
+    "          <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Place'}\">\n" +
+    "            <udb-place-suggestion></udb-place-suggestion>\n" +
+    "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
