@@ -80,7 +80,6 @@ function EventFormDataFactory() {
       this.endDate = '';
       this.timestamps = [];
       this.openingHours = [];
-      this.ageRange = '';
       this.typicalAgeRange = '';
       this.organizer = {};
       this.contactPoint = {
@@ -246,20 +245,6 @@ function EventFormDataFactory() {
      */
     getLocation: function() {
       return this.location;
-    },
-
-    /**
-     * Set the age range.
-     */
-    setAgeRange: function(range) {
-      this.ageRange = range;
-    },
-
-    /**
-     * Get the age range.
-     */
-    getAgeRange: function() {
-      return this.ageRange;
     },
 
     /**

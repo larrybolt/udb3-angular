@@ -55,7 +55,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
    * @type {AgeRangeEnum|null}
    */
   $scope.ageRange = null;
-  $scope.ageCssClass = EventFormData.ageRange ? 'state-complete' : 'state-incomplete';
+  $scope.ageCssClass = EventFormData.typicalAgeRange ? 'state-complete' : 'state-incomplete';
   /**
    * * @type {number|null}
    */
