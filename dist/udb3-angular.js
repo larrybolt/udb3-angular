@@ -4053,8 +4053,14 @@ angular
   .controller('PlaceDeleteConfirmModalCtrl', PlaceDeleteConfirmModalController);
 
 /* @ngInject */
-function PlaceDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item, events, appConfig) {
-
+function PlaceDeleteConfirmModalController(
+  $scope,
+  $uibModalInstance,
+  eventCrud,
+  item,
+  events,
+  appConfig
+) {
   $scope.item = item;
   $scope.saving = false;
   $scope.events = events ? events : [];
@@ -4151,6 +4157,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
             else if (content.data.content[key].type === 'place') {
               item.details = new UdbPlace();
               item.details.parseJson(content.data.content[key]);
+              item.details = jsonLDLangFilter(item.details, 'nl');
             }
 
             if (!item.details) {
@@ -4176,6 +4183,8 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
 
     /**
      * Open the confirmation modal to delete an event/place.
+     *
+     * @param {Object} item
      */
     function openDeleteConfirmModal(item) {
 
@@ -4258,7 +4267,7 @@ angular
 function udbDashboardDirective() {
   return {
     templateUrl: 'templates/dashboard.html',
-    restrict: 'EA',
+    restrict: 'EA'
   };
 }
 
@@ -10739,6 +10748,29 @@ function SavedSearchesList($scope, savedSearchesService, $uibModal, $rootScope) 
 }
 SavedSearchesList.$inject = ["$scope", "savedSearchesService", "$uibModal", "$rootScope"];
 
+// Source: src/search/components/event-link.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbEventLink
+ * @description
+ *  Renders a link for an event.
+ */
+angular
+  .module('udb.event-form')
+  .directive('udbEventLink', udbEventLink);
+
+/* @ngInject */
+function udbEventLink() {
+  var eventLinkDirective = {
+    restrict: 'AE',
+    controller: 'EventController',
+    controllerAs: 'eventCtrl',
+    templateUrl: 'templates/event-link.directive.html'
+  };
+
+  return eventLinkDirective;
+}
+
 // Source: src/search/components/query-editor-daterangepicker.directive.js
 /**
  * @ngdoc directive
@@ -13332,7 +13364,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"row\">\n" +
     "\n" +
     "      <div class=\"col-xs-12\">\n" +
-    "        <p>Ben je zeker dat je \"{{item.name}}\" wil verwijderen?</p>\n" +
+    "        <p>Ben je zeker dat je \"<span ng-bind=\"::item.name\"></span>\" wil verwijderen?</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"alert alert-danger\" ng-show=\"error\">\n" +
@@ -13350,20 +13382,17 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
   $templateCache.put('templates/place-delete-confirm-modal.html',
     "<div class=\"modal-body\">\n" +
-    "\n" +
     "    <div class=\"row\">\n" +
     "\n" +
     "      <div class=\"col-xs-12\" ng-if=\"!hasEvents\">\n" +
-    "        <p>Ben je zeker dat je \"{{item.name}}\" wil verwijderen?</p>\n" +
+    "        <p>Ben je zeker dat je \"<span ng-bind=\"::item.name\"></span>\" wil verwijderen?</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"col-xs-12\" ng-if=\"hasEvents\">\n" +
-    "        <p>De locatie \"{{item.name}}\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
+    "        <p>De locatie \"<span ng-bind=\"::item.name\"></span>\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
     "\n" +
     "        <ul>\n" +
-    "          <li ng-repeat=\"event in events\" udb-event=\"event\" ng-hide=\"fetching\">\n" +
-    "            <a href=\"{{baseUrl}}{{event.url}}\">{{event.name}}</a>\n" +
-    "          </li>\n" +
+    "          <li ng-repeat=\"event in events\" udb-event-link ng-hide=\"fetching\"></li>\n" +
     "        </ul>\n" +
     "\n" +
     "      </div>\n" +
@@ -13377,14 +13406,15 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "<div class=\"modal-footer\">\n" +
     "  <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\" ng-show=\"hasEvents\" ng-click=\"cancelRemoval()\">Sluiten</button>\n" +
     "  <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\" ng-hide=\"hasEvents\" ng-click=\"cancelRemoval()\">Annuleren</button>\n" +
-    "  <button type=\"button\" class=\"btn btn-primary\" ng-if=\"!hasEvents\" ng-click=\"deletePlace()\">Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i></button>\n" +
+    "  <button type=\"button\" class=\"btn btn-primary\" ng-if=\"!hasEvents\" ng-click=\"deletePlace()\">\n" +
+    "    Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i>\n" +
+    "  </button>\n" +
     "</div>"
   );
 
 
   $templateCache.put('templates/dashboard.html',
     "<div>\n" +
-    "\n" +
     "  <div class=\"alert alert-default no-new no-data\" ng-show=\"userContent.length === 0\">\n" +
     "    <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
     "      <br/><a href=\"/udb3/event/add\">Een activiteit of monument toevoegen?</a>\n" +
@@ -13395,7 +13425,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "    <div class=\"clearfix\">\n" +
     "      <p class=\"invoer-title\"><span class=\"block-header\">Laatst toegevoegd</span>\n" +
-    "        <span class=\"pull-right\"><a class=\"btn btn-primary \" href=\"/udb3/event/add\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a></span>\n" +
+    "        <span class=\"pull-right\">\n" +
+    "          <a class=\"btn btn-primary \" href=\"/udb3/event/add\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
+    "        </span>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
@@ -13405,35 +13437,41 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "        <tr ng-repeat=\"userContentItem in userContent\">\n" +
     "          <td>\n" +
-    "            <strong><a href=\"{{ userContentItem.exampleUrl }}\">{{userContentItem.details.name}}</a></strong><br/>\n" +
-    "            <small><ng-switch on=\"userContentItem.details.calendarType\">\n" +
-    "                 <span ng-switch-when=\"single\">\n" +
-    "                    {{ userContentItem.details.type.label }} - {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }}\n" +
-    "                 </span>\n" +
-    "                 <span ng-switch-when=\"multiple\">\n" +
-    "                    {{ userContentItem.details.type.label }} - Van {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }} tot {{ userContentItem.details.endDate | date: 'dd/MM/yyyy' }}\n" +
-    "                 </span>\n" +
-    "                 <span ng-switch-when=\"periodic\">\n" +
-    "                    {{ userContentItem.details.type.label }} - Van {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }} tot {{ userContentItem.details.endDate | date: 'dd/MM/yyyy' }}\n" +
-    "                 </span>\n" +
-    "                 <span ng-switch-when=\"permanent\">\n" +
-    "                    {{ userContentItem.details.type.label }} - Permanent\n" +
-    "                 </span>\n" +
-    "               </ng-switch>\n" +
+    "            <strong>\n" +
+    "              <a ng-href=\"{{ ::userContentItem.exampleUrl }}\" ng-bind=\"::userContentItem.details.name\"></a>\n" +
+    "            </strong>\n" +
+    "            <br/>\n" +
+    "            <small ng-switch=\"userContentItem.details.calendarType\">\n" +
+    "              <span ng-switch-when=\"single\">\n" +
+    "                <span ng-bind=\"::userContentItem.details.type.label\"></span>\n" +
+    "                <span> - </span>\n" +
+    "                <span ng-bind=\"::userContentItem.details.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "              </span>\n" +
+    "              <span ng-switch-when=\"permanent\">\n" +
+    "                <span ng-bind=\"::userContentItem.details.type.label\"></span> - Permanent\n" +
+    "              </span>\n" +
+    "              <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
+    "              <span ng-switch-default>\n" +
+    "                <span ng-bind=\"::userContentItem.details.type.label\"></span>\n" +
+    "                <span> - Van </span>\n" +
+    "                <span ng-bind=\"::userContentItem.details.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                <span> tot </span>\n" +
+    "                <span ng-bind=\"::userContentItem.details.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "              </span>\n" +
     "            </small>\n" +
     "          </td>\n" +
     "\n" +
     "          <td>\n" +
     "            <div class=\"pull-right btn-group\" uib-dropdown>\n" +
-    "              <a class=\"btn btn-default\" href=\"{{ userContentItem.editUrl }}\">Bewerken</a>\n" +
+    "              <a class=\"btn btn-default\" ng-href=\"{{ userContentItem.editUrl }}\">Bewerken</a>\n" +
     "              <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
-    "              <ul class=\"dropdown-menu\" role=\"menu\">\n" +
-    "                <li>\n" +
-    "                  <a href=\"{{ userContentItem.exampleUrl }}\">Voorbeeld</a>\n" +
+    "              <ul uib-dropdown-menu role=\"menu\">\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a ng-href=\"{{ userContentItem.exampleUrl }}\">Voorbeeld</a>\n" +
     "                </li>\n" +
     "                <li class=\"divider\"></li>\n" +
-    "                <li>\n" +
-    "                  <a href=\"{{ userContentItem.exampleUrl }}\" data-toggle=\"modal\" data-target=\"#remove-confirm-modal\" ng-click=\"openDeleteConfirmModal(userContentItem)\">Verwijderen</a>\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a href=\"\" ng-click=\"openDeleteConfirmModal(userContentItem)\">Verwijderen</a>\n" +
     "                </li>\n" +
     "              </ul>\n" +
     "            </div>\n" +
@@ -13444,7 +13482,6 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "\n" +
     "</div>\n"
   );
 
@@ -15985,6 +16022,11 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        </tr>\n" +
     "    </table>\n" +
     "</div>\n"
+  );
+
+
+  $templateCache.put('templates/event-link.directive.html',
+    "<a ng-href=\"{{ event.url }}\" ng-bind=\"::event.name\"></a>\n"
   );
 
 
