@@ -3193,6 +3193,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
   UdbEvent.prototype = {
     parseJson: function (jsonEvent) {
       this.id = jsonEvent['@id'].split('/').pop();
+      this['@type'] = jsonEvent['@type'];
       this.apiUrl = jsonEvent['@id'];
       this.name = jsonEvent.name || {};
       this.description = angular.copy(jsonEvent.description) || {};
@@ -3701,6 +3702,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
         this.apiUrl = jsonPlace['@id'];
       }
@@ -13210,7 +13212,12 @@ function Search(
     if (exportingQuery) {
       eventCount = $scope.resultViewer.totalItems;
     } else {
-      selectedIds = $scope.resultViewer.selectedIds;
+      selectedIds = _.chain($scope.resultViewer.selectedOffers)
+        .filter({'@type': 'Event'})
+        .map(function(offer) {
+          return offer['@id'].split('/').pop();
+        })
+        .value();
 
       if (!selectedIds.length) {
         $window.alert('First select the events you want to label.');

@@ -1,7 +1,14 @@
 'use strict';
 
 describe('Controller: Search', function() {
-  var $scope, $window, udbApi, $controller, offerLabeller = null, $location, $q, searchHelper;
+  var $scope,
+    $window,
+    udbApi,
+    $controller,
+    offerLabeller = null,
+    $location,
+    $q,
+    searchHelper;
 
   beforeEach(module('udb.core', function ($translateProvider) {
     $translateProvider.translations('en', {
@@ -49,7 +56,18 @@ describe('Controller: Search', function() {
 
   it('alerts if there is no query when trying to export events', function() {
     getController();
-    $scope.resultViewer.selectedIds = ['foo', 'bar'];
+
+    var place = {
+      '@id':'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c',
+      '@type':'Place'
+    };
+    var event = {
+      '@id':'http://culudb-silex.dev:8080/event/35560d45-984c-47f2-b392-f40c2b8f9b45',
+      '@type':'Event'
+    };
+
+
+    $scope.resultViewer.selectedOffers = [event, place];
     $scope.exportEvents();
 
     // Explicitly start the digest cycle in order to let $translate's promises resolve.

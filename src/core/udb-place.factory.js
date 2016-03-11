@@ -118,6 +118,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
         this.apiUrl = jsonPlace['@id'];
       }

@@ -176,7 +176,12 @@ function Search(
     if (exportingQuery) {
       eventCount = $scope.resultViewer.totalItems;
     } else {
-      selectedIds = $scope.resultViewer.selectedIds;
+      selectedIds = _.chain($scope.resultViewer.selectedOffers)
+        .filter({'@type': 'Event'})
+        .map(function(offer) {
+          return offer['@id'].split('/').pop();
+        })
+        .value();
 
       if (!selectedIds.length) {
         $window.alert('First select the events you want to label.');
