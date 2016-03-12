@@ -6431,8 +6431,8 @@ function EventFormImageUploadController(
 ) {
 
   // Scope vars.
-  $scope.userAgreementUrl = appConfig.media.userAgreementUrl;
-  $scope.copyrightUrl = appConfig.media.copyrightUrl;
+  $scope.userAgreementUrl = _.get(appConfig, 'media.userAgreementUrl', '/user-agreement');
+  $scope.copyrightUrl = _.get(appConfig, 'media.copyrightUrl', '/copyright');
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
@@ -13751,7 +13751,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "              <td><strong>Waar</strong></td>\n" +
     "              <td ng-show=\"event.location.url\"><a href=\"{{event.location.url}}\">{{eventLocation(event)}}</a></td>\n" +
     "              <td ng-hide=\"event.location.url\">\n" +
-    "                {{event.location.name}},\n" +
+    "                {{event.location.name.nl}},\n" +
     "                {{event.location.address.streetAddress}},\n" +
     "                {{event.location.address.postalCode}}\n" +
     "                {{event.location.address.addressLocality}}\n" +
