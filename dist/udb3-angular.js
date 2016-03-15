@@ -4588,11 +4588,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, eventFormData, 'updateItem');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4626,11 +4622,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateDescription');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4649,11 +4641,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4672,11 +4660,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4695,11 +4679,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateOrganizer');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4718,11 +4698,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'deleteOrganizer');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4741,11 +4717,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateContactInfo');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4764,11 +4736,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateFacilities');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4788,11 +4756,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateBookingInfo');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4811,11 +4775,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'addImage');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4838,11 +4799,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateImage');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4863,11 +4821,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'removeImage');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4881,11 +4836,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
-      jobLogger.addJob(job);
-      // unvalidate cache on success
-      job.task.promise.then(function (itemId) {
-        udbApi.removeItemFromCache(itemId);
-      }, function() {});
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4900,6 +4852,19 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
    */
   function updateMajorInfo(event, eventFormData) {
     service.updateMajorInfo(eventFormData);
+  }
+
+  /**
+   * @param {JobLogger} jobLogger
+   * @param {EventCrudJob} job
+     */
+  function addJobAndInvalidateCache(jobLogger, job) {
+    jobLogger.addJob(job);
+
+    // unvalidate cache on success
+    job.task.promise.then(function (itemId) {
+      udbApi.removeItemFromCache(itemId);
+    }, function() {});
   }
 
   $rootScope.$on('eventTypeChanged', updateMajorInfo);
