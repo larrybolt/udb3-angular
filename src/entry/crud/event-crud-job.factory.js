@@ -11,7 +11,7 @@ angular
   .factory('EventCrudJob', EventCrudJobFactory);
 
 /* @ngInject */
-function EventCrudJobFactory(BaseJob) {
+function EventCrudJobFactory(BaseJob, $q, JobStates) {
 
   /**
    * @class EventCrudJob
@@ -24,10 +24,20 @@ function EventCrudJobFactory(BaseJob) {
     BaseJob.call(this, commandId);
     this.item = item;
     this.action = action;
+    this.task = $q.defer();
   };
 
   EventCrudJob.prototype = Object.create(BaseJob.prototype);
   EventCrudJob.prototype.constructor = EventCrudJob;
+
+  EventCrudJob.prototype.finish = function () {
+    if (this.state !== JobStates.FAILED) {
+      this.state = JobStates.FINISHED;
+      this.finished = new Date();
+      this.task.resolve(this.item.id);
+    }
+    this.progress = 100;
+  };
 
   EventCrudJob.prototype.getDescription = function() {
 

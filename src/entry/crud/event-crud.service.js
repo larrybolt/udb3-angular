@@ -93,7 +93,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, eventFormData, 'updateItem');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -127,7 +127,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateDescription');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -146,26 +146,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
-    });
-
-    return jobPromise;
-
-  };
-
-  /**
-   * Update the typical age range and add it to the job logger.
-   *
-   * @param {EventFormData} item
-   * @returns {EventCrud.updateTypicalAgeRange.jobPromise}
-   */
-  service.updateTypicalAgeRange = function(item) {
-
-    var jobPromise = udbApi.updateProperty(item.id, item.getType(), 'typicalAgeRange', item.typicalAgeRange);
-
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -184,7 +165,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -203,7 +184,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateOrganizer');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -222,7 +203,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'deleteOrganizer');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -241,7 +222,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateContactInfo');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -260,7 +241,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateFacilities');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -280,7 +261,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateBookingInfo');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -299,7 +280,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'addImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -322,7 +304,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -343,7 +326,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'removeImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -357,7 +341,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -372,6 +357,19 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
    */
   function updateMajorInfo(event, eventFormData) {
     service.updateMajorInfo(eventFormData);
+  }
+
+  /**
+   * @param {JobLogger} jobLogger
+   * @param {EventCrudJob} job
+     */
+  function addJobAndInvalidateCache(jobLogger, job) {
+    jobLogger.addJob(job);
+
+    // unvalidate cache on success
+    job.task.promise.then(function (itemId) {
+      udbApi.removeItemFromCache(itemId);
+    }, function() {});
   }
 
   $rootScope.$on('eventTypeChanged', updateMajorInfo);
