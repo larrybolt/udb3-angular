@@ -37,8 +37,13 @@
           format: 'd MM yyyy',
           language: 'nl-BE',
           beforeShowDay: function (date) {
-            var dateFormat = date.getUTCFullYear() + '-' + date.getUTCMonth() + '-' + date.getUTCDate();
-            if (attrs.highlightDate && dateFormat === attrs.highlightDate) {
+            if (!attrs.highlightDate) {
+              return;
+            }
+
+            // init Date with ISO string
+            var highlightDate = new Date(attrs.highlightDate);
+            if (highlightDate.toLocaleDateString() === date.toLocaleDateString()) {
               return {classes: 'highlight'};
             }
           }
