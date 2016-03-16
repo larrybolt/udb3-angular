@@ -12,12 +12,13 @@ angular
   .controller('EventFormStep2Controller', EventFormStep2Controller);
 
 /* @ngInject */
-function EventFormStep2Controller($scope, $rootScope, EventFormData) {
+function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) {
   var controller = this;
 
   // Scope vars.
   // main storage for event form.
   $scope.eventFormData = EventFormData;
+  $scope.omdDate = appConfig.omdDate;
 
   $scope.calendarLabels = [
     {'label': 'Eén of meerdere dagen', 'id' : 'single', 'eventOnly' : true},
