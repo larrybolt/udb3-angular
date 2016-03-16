@@ -10,7 +10,7 @@
         <div class="add-date">
           <label>Reserveren van</label>
           <div udb-datepicker
-               highlight-date="2015-8-12"
+               highlight-date="{{omdDate}}"
                ng-model="eventFormData.bookingInfo.availabilityStarts"></div>
           <span class="help-block" ng-show="showStartDateRequired">Gelieve een start datum te kiezen</span>
         </div>
@@ -19,7 +19,7 @@
         <div class="add-date">
           <label>Tot</label>
           <div udb-datepicker
-               highlight-date="2015-8-12"
+               highlight-date="{{omdDate}}"
                ng-model="eventFormData.bookingInfo.availabilityEnds"></div>
           <span class="help-block" ng-show="showEndDateRequired">Gelieve een eind datum te kiezen</span>
         </div>

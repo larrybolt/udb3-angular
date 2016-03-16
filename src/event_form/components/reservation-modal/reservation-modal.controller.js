@@ -12,7 +12,7 @@ angular
   .controller('EventFormReservationModalController', EventFormReservationModalController);
 
 /* @ngInject */
-function EventFormReservationModalController($scope, $uibModalInstance, EventFormData, eventCrud) {
+function EventFormReservationModalController($scope, $uibModalInstance, EventFormData, eventCrud, appConfig) {
 
   // Scope vars.
   $scope.eventFormData = EventFormData;
@@ -20,6 +20,7 @@ function EventFormReservationModalController($scope, $uibModalInstance, EventFor
   $scope.showEndDateRequired = false;
   $scope.saving = false;
   $scope.errorMessage = '';
+  $scope.omdDate = appConfig.omdDate;
 
   // Scope functions.
   $scope.cancel = cancel;
