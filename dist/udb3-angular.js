@@ -1980,7 +1980,13 @@ CityAutocomplete.$inject = ["$q", "$http", "appConfig", "UdbPlace", "jsonLDLangF
             // init Date with ISO string
             var highlightDate = new Date(attrs.highlightDate);
             if (highlightDate.toLocaleDateString() === date.toLocaleDateString()) {
-              return {classes: 'highlight'};
+              var highlightClasses = 'highlight';
+
+              if (attrs.highlightExtraClass) {
+                highlightClasses += ' ' + attrs.highlightExtraClass;
+              }
+
+              return {classes: highlightClasses};
             }
           }
         };
@@ -6935,7 +6941,7 @@ function EventFormReservationModalController($scope, $uibModalInstance, EventFor
   $scope.showEndDateRequired = false;
   $scope.saving = false;
   $scope.errorMessage = '';
-  $scope.omdDate = appConfig.omdDate;
+  $scope.calendarHighlight = appConfig.calendarHighlight;
 
   // Scope functions.
   $scope.cancel = cancel;
@@ -8240,7 +8246,7 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
   // Scope vars.
   // main storage for event form.
   $scope.eventFormData = EventFormData;
-  $scope.omdDate = appConfig.omdDate;
+  $scope.calendarHighlight = appConfig.calendarHighlight;
 
   $scope.calendarLabels = [
     {'label': 'Eén of meerdere dagen', 'id' : 'single', 'eventOnly' : true},
@@ -13900,7 +13906,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      <div class=\"form-group\">\n" +
     "        <p class=\"module-title\">Vanaf</p>\n" +
     "        <div udb-datepicker\n" +
-    "             highlight-date=\"{{omdDate}}\"\n" +
+    "             highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "             highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "             ng-change=\"EventFormStep2.periodicEventTimingChanged()\"\n" +
     "             ng-model=\"eventFormData.startDate\"></div>\n" +
     "      </div>\n" +
@@ -13912,7 +13919,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      <div class=\"form-group\">\n" +
     "        <p class=\"module-title\">Tot en met</p>\n" +
     "        <div udb-datepicker\n" +
-    "             highlight-date=\"{{omdDate}}\"\n" +
+    "             highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "             highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "             ng-change=\"EventFormStep2.periodicEventTimingChanged()\"\n" +
     "             ng-model=\"eventFormData.endDate\"></div>\n" +
     "      </div>\n" +
@@ -13936,7 +13944,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "      <div udb-datepicker\n" +
     "           ng-change=\"EventFormStep2.eventTimingChanged()\"\n" +
-    "           highlight-date=\"{{omdDate}}\"\n" +
+    "           highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "           highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "           ng-model=\"timestamp.date\"></div>\n" +
     "\n" +
     "      <div class=\"row\">\n" +
@@ -14560,7 +14569,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        <div class=\"add-date\">\n" +
     "          <label>Reserveren van</label>\n" +
     "          <div udb-datepicker\n" +
-    "               highlight-date=\"{{omdDate}}\"\n" +
+    "               highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "               highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "               ng-model=\"eventFormData.bookingInfo.availabilityStarts\"></div>\n" +
     "          <span class=\"help-block\" ng-show=\"showStartDateRequired\">Gelieve een start datum te kiezen</span>\n" +
     "        </div>\n" +
@@ -14569,7 +14579,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        <div class=\"add-date\">\n" +
     "          <label>Tot</label>\n" +
     "          <div udb-datepicker\n" +
-    "               highlight-date=\"{{omdDate}}\"\n" +
+    "               highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "               highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "               ng-model=\"eventFormData.bookingInfo.availabilityEnds\"></div>\n" +
     "          <span class=\"help-block\" ng-show=\"showEndDateRequired\">Gelieve een eind datum te kiezen</span>\n" +
     "        </div>\n" +
