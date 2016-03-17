@@ -18,7 +18,7 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
   // Scope vars.
   // main storage for event form.
   $scope.eventFormData = EventFormData;
-  $scope.omdDate = appConfig.omdDate;
+  $scope.calendarHighlight = appConfig.calendarHighlight;
 
   $scope.calendarLabels = [
     {'label': 'Eén of meerdere dagen', 'id' : 'single', 'eventOnly' : true},

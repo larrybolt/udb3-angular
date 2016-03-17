@@ -44,7 +44,13 @@
             // init Date with ISO string
             var highlightDate = new Date(attrs.highlightDate);
             if (highlightDate.toLocaleDateString() === date.toLocaleDateString()) {
-              return {classes: 'highlight'};
+              var highlightClasses = 'highlight';
+
+              if (attrs.highlightExtraClass) {
+                highlightClasses += ' ' + attrs.highlightExtraClass;
+              }
+
+              return {classes: highlightClasses};
             }
           }
         };

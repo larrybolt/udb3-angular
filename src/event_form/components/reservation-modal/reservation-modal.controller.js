@@ -20,7 +20,7 @@ function EventFormReservationModalController($scope, $uibModalInstance, EventFor
   $scope.showEndDateRequired = false;
   $scope.saving = false;
   $scope.errorMessage = '';
-  $scope.omdDate = appConfig.omdDate;
+  $scope.calendarHighlight = appConfig.calendarHighlight;
 
   // Scope functions.
   $scope.cancel = cancel;
