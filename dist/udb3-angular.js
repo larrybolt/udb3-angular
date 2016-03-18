@@ -4138,11 +4138,11 @@ function PlaceDeleteConfirmModalController(
   $scope,
   $uibModalInstance,
   eventCrud,
-  item,
+  place,
   events,
   appConfig
 ) {
-  $scope.item = item;
+  $scope.place = place;
   $scope.saving = false;
   $scope.events = events ? events : [];
   $scope.hasEvents = $scope.events.length > 0;
@@ -4162,10 +4162,10 @@ function PlaceDeleteConfirmModalController(
 
     $scope.saving = true;
     $scope.error = false;
-    var promise = eventCrud.removePlace(item);
+    var promise = eventCrud.removePlace(place);
     promise.then(function(jsonResponse) {
       $scope.saving = false;
-      $uibModalInstance.close(item);
+      $uibModalInstance.close(place);
     }, function() {
       $scope.saving = false;
       $scope.error = true;
@@ -4181,7 +4181,7 @@ function PlaceDeleteConfirmModalController(
   }
 
 }
-PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eventCrud", "item", "events", "appConfig"];
+PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eventCrud", "place", "events", "appConfig"];
 
 // Source: src/dashboard/dashboard.controller.js
 (function () {
@@ -4216,58 +4216,60 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     }
     updateItemViewer();
 
+    function openEventDeleteConfirmModal(item) {
+      var modalInstance = $uibModal.open({
+        templateUrl: 'templates/event-delete-confirm-modal.html',
+        controller: 'EventDeleteConfirmModalCtrl',
+        resolve: {
+          item: function () {
+            return item;
+          }
+        }
+      });
+      modalInstance.result.then(updateItemViewer);
+    }
+
+    function openPlaceDeleteConfirmModal(item) {
+
+      function displayModal(place, events) {
+        var modalInstance = $uibModal.open({
+          templateUrl: 'templates/place-delete-confirm-modal.html',
+          controller: 'PlaceDeleteConfirmModalCtrl',
+          resolve: {
+            place: function () {
+              return place;
+            },
+            events: function () {
+              return event;
+            }
+          }
+        });
+
+        modalInstance.result.then(updateItemViewer);
+      }
+
+      // Check if this place has planned events.
+      eventCrud
+        .findEventsForLocation(item.id)
+        .then(function(jsonResponse) {
+          displayModal(item, jsonResponse.data.events);
+        });
+    }
+
     /**
      * Open the confirmation modal to delete an event/place.
      *
      * @param {Object} item
      */
     function openDeleteConfirmModal(item) {
-
-      var modalInstance = null;
       var itemType = item['@id'].indexOf('event') === -1 ? 'place' : 'event';
 
       if (itemType === 'event') {
-
-        modalInstance = $uibModal.open({
-          templateUrl: 'templates/event-delete-confirm-modal.html',
-          controller: 'EventDeleteConfirmModalCtrl',
-          resolve: {
-            item: function () {
-              return item;
-            }
-          }
-        });
-        modalInstance.result.then(function (item) {
-          updateItemViewer();
-        });
-
+        openEventDeleteConfirmModal(item);
       }
       else {
-
-        // Check if this place has planned events.
-        var promise = eventCrud.findEventsForLocation(item.id);
-        promise.then(function(jsonResponse) {
-
-          modalInstance = $uibModal.open({
-            templateUrl: 'templates/place-delete-confirm-modal.html',
-            controller: 'PlaceDeleteConfirmModalCtrl',
-            resolve: {
-              item: function () {
-                return item;
-              },
-              events: function () {
-                return jsonResponse.data.events;
-              }
-            }
-          });
-          modalInstance.result.then(function (item) {
-            updateItemViewer();
-          });
-
-        });
-
+        openPlaceDeleteConfirmModal(item);
       }
-
     }
 
   }
@@ -13467,11 +13469,11 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"row\">\n" +
     "\n" +
     "      <div class=\"col-xs-12\" ng-if=\"!hasEvents\">\n" +
-    "        <p>Ben je zeker dat je \"<span ng-bind=\"::item.name\"></span>\" wil verwijderen?</p>\n" +
+    "        <p>Ben je zeker dat je \"<span ng-bind=\"::place.name\"></span>\" wil verwijderen?</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"col-xs-12\" ng-if=\"hasEvents\">\n" +
-    "        <p>De locatie \"<span ng-bind=\"::item.name\"></span>\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
+    "        <p>De locatie \"<span ng-bind=\"::place.name\"></span>\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
     "\n" +
     "        <ul>\n" +
     "          <li ng-repeat=\"event in events\" udb-event-link ng-hide=\"fetching\"></li>\n" +
@@ -13491,7 +13493,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "  <button type=\"button\" class=\"btn btn-primary\" ng-if=\"!hasEvents\" ng-click=\"deletePlace()\">\n" +
     "    Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i>\n" +
     "  </button>\n" +
-    "</div>"
+    "</div>\n"
   );
 
 

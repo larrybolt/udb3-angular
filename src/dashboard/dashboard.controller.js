@@ -33,7 +33,7 @@
     updateItemViewer();
 
     function openEventDeleteConfirmModal(item) {
-      modalInstance = $uibModal.open({
+      var modalInstance = $uibModal.open({
         templateUrl: 'templates/event-delete-confirm-modal.html',
         controller: 'EventDeleteConfirmModalCtrl',
         resolve: {
@@ -48,7 +48,7 @@
     function openPlaceDeleteConfirmModal(item) {
 
       function displayModal(place, events) {
-        modalInstance = $uibModal.open({
+        var modalInstance = $uibModal.open({
           templateUrl: 'templates/place-delete-confirm-modal.html',
           controller: 'PlaceDeleteConfirmModalCtrl',
           resolve: {
@@ -78,17 +78,14 @@
      * @param {Object} item
      */
     function openDeleteConfirmModal(item) {
-
-      var modalInstance = null;
       var itemType = item['@id'].indexOf('event') === -1 ? 'place' : 'event';
 
       if (itemType === 'event') {
         openEventDeleteConfirmModal(item);
       }
       else {
-
+        openPlaceDeleteConfirmModal(item);
       }
-
     }
 
   }
