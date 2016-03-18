@@ -117,6 +117,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
   UdbEvent.prototype = {
     parseJson: function (jsonEvent) {
       this.id = jsonEvent['@id'].split('/').pop();
+      this['@id'] = jsonEvent['@id'];
       this['@type'] = jsonEvent['@type'];
       this.apiUrl = jsonEvent['@id'];
       this.name = jsonEvent.name || {};

@@ -1,68 +1,45 @@
-<div>
-  <div class="alert alert-default no-new no-data" ng-show="userContent.length === 0">
+<div ng-show="dash.pagedItemViewer.loading">
+  <i class="fa fa-circle-o-notch fa-spin"></i>
+</div>
+
+<div ng-cloak ng-show="!dash.pagedItemViewer.loading">
+  <div class="alert alert-default no-new no-data" ng-hide="dash.pagedItemViewer.events.length">
     <p class="text-center">Je hebt nog geen items toegevoegd.
-      <br/><a href="/udb3/event/add">Een activiteit of monument toevoegen?</a>
+      <br/><a href="/event">Een activiteit of monument toevoegen?</a>
     </p>
   </div>
 
-  <div ng-show="userContent.length > 0">
+  <div ng-show="dash.pagedItemViewer.events.length">
 
     <div class="clearfix">
-      <p class="invoer-title"><span class="block-header">Laatst toegevoegd</span>
+      <p class="invoer-title"><span class="block-header">Recent</span>
         <span class="pull-right">
-          <a class="btn btn-primary " href="/udb3/event/add"><i class="fa fa-plus-circle"></i> Toevoegen</a>
+          <a class="btn btn-primary " href="/event"><i class="fa fa-plus-circle"></i> Toevoegen</a>
         </span>
       </p>
     </div>
 
     <div class="panel panel-default">
 
-      <table class="table ">
-
-        <tr ng-repeat="userContentItem in userContent">
-          <td>
-            <strong>
-              <a ng-href="{{ ::userContentItem.exampleUrl }}" ng-bind="::userContentItem.details.name"></a>
-            </strong>
-            <br/>
-            <small ng-switch="userContentItem.details.calendarType">
-              <span ng-switch-when="single">
-                <span ng-bind="::userContentItem.details.type.label"></span>
-                <span> - </span>
-                <span ng-bind="::userContentItem.details.startDate | date: 'dd/MM/yyyy'"></span>
-              </span>
-              <span ng-switch-when="permanent">
-                <span ng-bind="::userContentItem.details.type.label"></span> - Permanent
-              </span>
-              <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->
-              <span ng-switch-default>
-                <span ng-bind="::userContentItem.details.type.label"></span>
-                <span> - Van </span>
-                <span ng-bind="::userContentItem.details.startDate | date: 'dd/MM/yyyy'"></span>
-                <span> tot </span>
-                <span ng-bind="::userContentItem.details.endDate | date: 'dd/MM/yyyy'"></span>
-              </span>
-            </small>
-          </td>
-
-          <td>
-            <div class="pull-right btn-group" uib-dropdown>
-              <a class="btn btn-default" ng-href="{{ userContentItem.editUrl }}">Bewerken</a>
-              <button type="button" class="btn btn-default" uib-dropdown-toggle><span class="caret"></span></button>
-              <ul uib-dropdown-menu role="menu">
-                <li role="menuitem">
-                  <a ng-href="{{ userContentItem.exampleUrl }}">Voorbeeld</a>
-                </li>
-                <li class="divider"></li>
-                <li role="menuitem">
-                  <a href="" ng-click="openDeleteConfirmModal(userContentItem)">Verwijderen</a>
-                </li>
-              </ul>
-            </div>
-          </td>
-
-        </tr>
+      <table class="table">
+        <tbody>
+            <udb-dashboard-event-item ng-if="event['@type'] === 'Event'"
+              ng-repeat-start="event in dash.pagedItemViewer.events">
+            </udb-dashboard-event-item>
+            <udb-dashboard-place-item ng-if="event['@type'] === 'Place'"
+              ng-repeat-end>
+            </udb-dashboard-place-item>
+        </tbody>
       </table>
+
+      <uib-pagination
+        total-items="dash.pagedItemViewer.totalItems"
+        ng-model="dash.pagedItemViewer.currentPage"
+        items-per-page="dash.pagedItemViewer.pageSize"
+        ng-show="dash.pagedItemViewer.totalItems > 0"
+        max-size="10"
+        ng-change="dash.updateItemViewer()">
+      </uib-pagination>
 
     </div>
   </div>

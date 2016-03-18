@@ -1,0 +1,43 @@
+<tr>
+  <td>
+    <strong>
+      <a ng-href="{{ ::event.url }}" ng-bind="::event.name"></a>
+    </strong>
+    <br/>
+    <small>
+      <span class="dashboard-item-type" ng-bind="::event.type.label"></span>
+      <span  ng-if="event.calendarType" ng-switch="event.calendarType">
+        <span> - </span>
+        <span class="dashboard-item-calendar" ng-switch-when="single">
+          <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+        </span>
+        <span class="dashboard-item-calendar" ng-switch-when="permanent">
+          Permanent
+        </span>
+        <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->
+        <span class="dashboard-item-calendar" ng-switch-default>
+          <span>Van </span>
+          <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
+          <span> tot </span>
+          <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
+        </span>
+      </span>
+    </small>
+  </td>
+
+  <td>
+    <div class="pull-right btn-group" uib-dropdown>
+      <a class="btn btn-default" ng-href="{{ ::event.url + '/edit' }}">Bewerken</a>
+      <button type="button" class="btn btn-default" uib-dropdown-toggle><span class="caret"></span></button>
+      <ul uib-dropdown-menu role="menu">
+        <li role="menuitem">
+          <a ng-href="{{ ::event.url }}">Voorbeeld</a>
+        </li>
+        <li class="divider"></li>
+        <li role="menuitem">
+          <a href="" ng-click="dash.openDeleteConfirmModal(event)">Verwijderen</a>
+        </li>
+      </ul>
+    </div>
+  </td>
+</tr>

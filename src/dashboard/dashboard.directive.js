@@ -14,6 +14,8 @@ angular
 function udbDashboardDirective() {
   return {
     templateUrl: 'templates/dashboard.html',
+    controller: 'DashboardController',
+    controllerAs: 'dash',
     restrict: 'EA'
   };
 }

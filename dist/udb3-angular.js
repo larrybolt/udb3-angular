@@ -2490,7 +2490,8 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     withCredentials: true,
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    params: {}
   };
   var eventCache = $cacheFactory('eventCache');
 
@@ -3084,6 +3085,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
     return deferredVariation.promise;
   };
+
+  this.getDashboardItems = function(page) {
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    if (page > 1) {
+      requestConfig.params.page = page;
+    }
+
+    return $http.get(
+        appConfig.baseUrl + 'dashboard/items',
+        requestConfig
+    );
+  };
 }
 UdbApi.$inject = ["$q", "$http", "appConfig", "$cookieStore", "uitidAuth", "$cacheFactory", "UdbEvent", "UdbPlace", "UdbOrganizer"];
 
@@ -3205,6 +3218,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
   UdbEvent.prototype = {
     parseJson: function (jsonEvent) {
       this.id = jsonEvent['@id'].split('/').pop();
+      this['@id'] = jsonEvent['@id'];
       this['@type'] = jsonEvent['@type'];
       this.apiUrl = jsonEvent['@id'];
       this.name = jsonEvent.name || {};
@@ -3714,6 +3728,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      this['@id'] = jsonPlace['@id'];
       this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
         this.apiUrl = jsonPlace['@id'];
@@ -4005,6 +4020,54 @@ function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
 }
 UitidAuth.$inject = ["$window", "$location", "$http", "appConfig", "$cookieStore"];
 
+// Source: src/dashboard/components/dashboard-event-item.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.dashboard.directive:udbDashboardEventItem
+ * @description
+ *  Renders a dashboard item for place
+ */
+angular
+  .module('udb.dashboard')
+  .directive('udbDashboardEventItem', udbDashboardEventItem);
+
+/* @ngInject */
+function udbDashboardEventItem() {
+  var dashboardEventItemDirective = {
+    restrict: 'AE',
+    controller: 'EventController',
+    controllerAs: 'eventCtrl',
+    templateUrl: 'templates/dashboard-item.directive.html',
+    replace: true
+  };
+
+  return dashboardEventItemDirective;
+}
+
+// Source: src/dashboard/components/dashboard-place-item.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.dashboard.directive:udbDashboardPlaceItem
+ * @description
+ *  Renders a dashboard item for place.
+ */
+angular
+  .module('udb.dashboard')
+  .directive('udbDashboardPlaceItem', udbDashboardPlaceItem);
+
+/* @ngInject */
+function udbDashboardPlaceItem() {
+  var dashboardPlaceItemDirective = {
+    restrict: 'AE',
+    controller: 'PlaceController',
+    controllerAs: 'placeCtrl',
+    templateUrl: 'templates/dashboard-item.directive.html',
+    replace: true
+  };
+
+  return dashboardPlaceItemDirective;
+}
+
 // Source: src/dashboard/components/event-delete-confirm-modal.controller.js
 
 /**
@@ -4131,73 +4194,27 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
    */
   angular
     .module('udb.dashboard')
-    .controller('DashboardCtrl', DashboardController);
+    .controller('DashboardController', DashboardController);
 
   /* @ngInject */
-  function DashboardController($scope, $uibModal, udb3Content, eventCrud, UdbEvent, UdbPlace, jsonLDLangFilter) {
+  function DashboardController($scope, $uibModal, udbApi, eventCrud, jsonLDLangFilter, SearchResultViewer) {
 
-    // Scope variables.
-    $scope.loaded = false;
-    $scope.userContent = null;
-    $scope.noContent = true;
+    var dash = this;
 
-    // Scope functions.
-    $scope.getUdb3ContentForCurrentUser = getUdb3ContentForCurrentUser;
-    $scope.openDeleteConfirmModal = openDeleteConfirmModal;
+    dash.pagedItemViewer = new SearchResultViewer(50, 1);
+    dash.openDeleteConfirmModal = openDeleteConfirmModal;
+    dash.updateItemViewer = updateItemViewer;
 
-    // Load the udb3 content for the current user.
-    getUdb3ContentForCurrentUser();
-
-    /**
-     * function to get udb3 content for the current user.
-     */
-    function getUdb3ContentForCurrentUser() {
-
-      $scope.userContent = [];
-
-      var promise = udb3Content.getUdb3ContentForCurrentUser();
-      return promise.then(function (content) {
-
-        if (content.data.content && content.data.content.length > 0) {
-
-          // Loop through content to prepare data for html.
-          for (var key in content.data.content) {
-
-            var type = content.data.content[key].type;
-            var item = {
-              type : type
-            };
-            if (type === 'event') {
-              item.details = new UdbEvent();
-              item.details.parseJson(content.data.content[key]);
-              item.details = jsonLDLangFilter(item.details, 'nl');
-            }
-            else if (content.data.content[key].type === 'place') {
-              item.details = new UdbPlace();
-              item.details.parseJson(content.data.content[key]);
-              item.details = jsonLDLangFilter(item.details, 'nl');
-            }
-
-            if (!item.details) {
-              continue;
-            }
-
-            // set urls
-            item.editUrl = '/udb3/' + type + '/' + item.details.id + '/edit';
-            item.exampleUrl = '/udb3/' + type + '/' + item.details.id;
-
-            $scope.userContent[key] = item;
-          }
-
-          $scope.loaded = true;
-
-        }
-        else {
-          $scope.loaded = true;
-        }
-
-      });
+    function setItemViewerData(response) {
+      dash.pagedItemViewer.setResults(response.data);
     }
+
+    function updateItemViewer() {
+      udbApi
+        .getDashboardItems(dash.pagedItemViewer.currentPage)
+        .then(setItemViewerData);
+    }
+    updateItemViewer();
 
     /**
      * Open the confirmation modal to delete an event/place.
@@ -4207,27 +4224,28 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     function openDeleteConfirmModal(item) {
 
       var modalInstance = null;
+      var itemType = item['@id'].indexOf('event') === -1 ? 'place' : 'event';
 
-      if (item.type === 'event') {
+      if (itemType === 'event') {
 
         modalInstance = $uibModal.open({
           templateUrl: 'templates/event-delete-confirm-modal.html',
           controller: 'EventDeleteConfirmModalCtrl',
           resolve: {
             item: function () {
-              return item.details;
+              return item;
             }
           }
         });
         modalInstance.result.then(function (item) {
-          removeItem(item);
+          updateItemViewer();
         });
 
       }
       else {
 
         // Check if this place has planned events.
-        var promise = eventCrud.findEventsForLocation(item.details.id);
+        var promise = eventCrud.findEventsForLocation(item.id);
         promise.then(function(jsonResponse) {
 
           modalInstance = $uibModal.open({
@@ -4235,7 +4253,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
             controller: 'PlaceDeleteConfirmModalCtrl',
             resolve: {
               item: function () {
-                return item.details;
+                return item;
               },
               events: function () {
                 return jsonResponse.data.events;
@@ -4243,7 +4261,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
             }
           });
           modalInstance.result.then(function (item) {
-            removeItem(item);
+            updateItemViewer();
           });
 
         });
@@ -4252,21 +4270,8 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
 
     }
 
-    /**
-     * Open the confirmation modal to delete an event/place.
-     */
-    function removeItem(item) {
-      var i = 0;
-      for (; i < $scope.userContent.length; i++) {
-        if ($scope.userContent[i].details.id === item.id) {
-          break;
-        }
-      }
-      $scope.userContent.splice(i, 1);
-    }
-
   }
-  DashboardController.$inject = ["$scope", "$uibModal", "udb3Content", "eventCrud", "UdbEvent", "UdbPlace", "jsonLDLangFilter"];
+  DashboardController.$inject = ["$scope", "$uibModal", "udbApi", "eventCrud", "jsonLDLangFilter", "SearchResultViewer"];
 
 })();
 
@@ -4285,6 +4290,8 @@ angular
 function udbDashboardDirective() {
   return {
     templateUrl: 'templates/dashboard.html',
+    controller: 'DashboardController',
+    controllerAs: 'dash',
     restrict: 'EA'
   };
 }
@@ -13386,6 +13393,53 @@ $templateCache.put('templates/unexpected-error-modal.html',
   );
 
 
+  $templateCache.put('templates/dashboard-item.directive.html',
+    "<tr>\n" +
+    "  <td>\n" +
+    "    <strong>\n" +
+    "      <a ng-href=\"{{ ::event.url }}\" ng-bind=\"::event.name\"></a>\n" +
+    "    </strong>\n" +
+    "    <br/>\n" +
+    "    <small>\n" +
+    "      <span class=\"dashboard-item-type\" ng-bind=\"::event.type.label\"></span>\n" +
+    "      <span  ng-if=\"event.calendarType\" ng-switch=\"event.calendarType\">\n" +
+    "        <span> - </span>\n" +
+    "        <span class=\"dashboard-item-calendar\" ng-switch-when=\"single\">\n" +
+    "          <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "        </span>\n" +
+    "        <span class=\"dashboard-item-calendar\" ng-switch-when=\"permanent\">\n" +
+    "          Permanent\n" +
+    "        </span>\n" +
+    "        <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
+    "        <span class=\"dashboard-item-calendar\" ng-switch-default>\n" +
+    "          <span>Van </span>\n" +
+    "          <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "          <span> tot </span>\n" +
+    "          <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "        </span>\n" +
+    "      </span>\n" +
+    "    </small>\n" +
+    "  </td>\n" +
+    "\n" +
+    "  <td>\n" +
+    "    <div class=\"pull-right btn-group\" uib-dropdown>\n" +
+    "      <a class=\"btn btn-default\" ng-href=\"{{ ::event.url + '/edit' }}\">Bewerken</a>\n" +
+    "      <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
+    "      <ul uib-dropdown-menu role=\"menu\">\n" +
+    "        <li role=\"menuitem\">\n" +
+    "          <a ng-href=\"{{ ::event.url }}\">Voorbeeld</a>\n" +
+    "        </li>\n" +
+    "        <li class=\"divider\"></li>\n" +
+    "        <li role=\"menuitem\">\n" +
+    "          <a href=\"\" ng-click=\"dash.openDeleteConfirmModal(event)\">Verwijderen</a>\n" +
+    "        </li>\n" +
+    "      </ul>\n" +
+    "    </div>\n" +
+    "  </td>\n" +
+    "</tr>\n"
+  );
+
+
   $templateCache.put('templates/event-delete-confirm-modal.html',
     "<div class=\"modal-body\">\n" +
     "\n" +
@@ -13442,71 +13496,48 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
 
   $templateCache.put('templates/dashboard.html',
-    "<div>\n" +
-    "  <div class=\"alert alert-default no-new no-data\" ng-show=\"userContent.length === 0\">\n" +
+    "<div ng-show=\"dash.pagedItemViewer.loading\">\n" +
+    "  <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-cloak ng-show=\"!dash.pagedItemViewer.loading\">\n" +
+    "  <div class=\"alert alert-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
     "    <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
-    "      <br/><a href=\"/udb3/event/add\">Een activiteit of monument toevoegen?</a>\n" +
+    "      <br/><a href=\"/event\">Een activiteit of monument toevoegen?</a>\n" +
     "    </p>\n" +
     "  </div>\n" +
     "\n" +
-    "  <div ng-show=\"userContent.length > 0\">\n" +
+    "  <div ng-show=\"dash.pagedItemViewer.events.length\">\n" +
     "\n" +
     "    <div class=\"clearfix\">\n" +
-    "      <p class=\"invoer-title\"><span class=\"block-header\">Laatst toegevoegd</span>\n" +
+    "      <p class=\"invoer-title\"><span class=\"block-header\">Recent</span>\n" +
     "        <span class=\"pull-right\">\n" +
-    "          <a class=\"btn btn-primary \" href=\"/udb3/event/add\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
+    "          <a class=\"btn btn-primary \" href=\"/event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
     "        </span>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
     "    <div class=\"panel panel-default\">\n" +
     "\n" +
-    "      <table class=\"table \">\n" +
-    "\n" +
-    "        <tr ng-repeat=\"userContentItem in userContent\">\n" +
-    "          <td>\n" +
-    "            <strong>\n" +
-    "              <a ng-href=\"{{ ::userContentItem.exampleUrl }}\" ng-bind=\"::userContentItem.details.name\"></a>\n" +
-    "            </strong>\n" +
-    "            <br/>\n" +
-    "            <small ng-switch=\"userContentItem.details.calendarType\">\n" +
-    "              <span ng-switch-when=\"single\">\n" +
-    "                <span ng-bind=\"::userContentItem.details.type.label\"></span>\n" +
-    "                <span> - </span>\n" +
-    "                <span ng-bind=\"::userContentItem.details.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "              </span>\n" +
-    "              <span ng-switch-when=\"permanent\">\n" +
-    "                <span ng-bind=\"::userContentItem.details.type.label\"></span> - Permanent\n" +
-    "              </span>\n" +
-    "              <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
-    "              <span ng-switch-default>\n" +
-    "                <span ng-bind=\"::userContentItem.details.type.label\"></span>\n" +
-    "                <span> - Van </span>\n" +
-    "                <span ng-bind=\"::userContentItem.details.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                <span> tot </span>\n" +
-    "                <span ng-bind=\"::userContentItem.details.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "              </span>\n" +
-    "            </small>\n" +
-    "          </td>\n" +
-    "\n" +
-    "          <td>\n" +
-    "            <div class=\"pull-right btn-group\" uib-dropdown>\n" +
-    "              <a class=\"btn btn-default\" ng-href=\"{{ userContentItem.editUrl }}\">Bewerken</a>\n" +
-    "              <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
-    "              <ul uib-dropdown-menu role=\"menu\">\n" +
-    "                <li role=\"menuitem\">\n" +
-    "                  <a ng-href=\"{{ userContentItem.exampleUrl }}\">Voorbeeld</a>\n" +
-    "                </li>\n" +
-    "                <li class=\"divider\"></li>\n" +
-    "                <li role=\"menuitem\">\n" +
-    "                  <a href=\"\" ng-click=\"openDeleteConfirmModal(userContentItem)\">Verwijderen</a>\n" +
-    "                </li>\n" +
-    "              </ul>\n" +
-    "            </div>\n" +
-    "          </td>\n" +
-    "\n" +
-    "        </tr>\n" +
+    "      <table class=\"table\">\n" +
+    "        <tbody>\n" +
+    "            <udb-dashboard-event-item ng-if=\"event['@type'] === 'Event'\"\n" +
+    "              ng-repeat-start=\"event in dash.pagedItemViewer.events\">\n" +
+    "            </udb-dashboard-event-item>\n" +
+    "            <udb-dashboard-place-item ng-if=\"event['@type'] === 'Place'\"\n" +
+    "              ng-repeat-end>\n" +
+    "            </udb-dashboard-place-item>\n" +
+    "        </tbody>\n" +
     "      </table>\n" +
+    "\n" +
+    "      <uib-pagination\n" +
+    "        total-items=\"dash.pagedItemViewer.totalItems\"\n" +
+    "        ng-model=\"dash.pagedItemViewer.currentPage\"\n" +
+    "        items-per-page=\"dash.pagedItemViewer.pageSize\"\n" +
+    "        ng-show=\"dash.pagedItemViewer.totalItems > 0\"\n" +
+    "        max-size=\"10\"\n" +
+    "        ng-change=\"dash.updateItemViewer()\">\n" +
+    "      </uib-pagination>\n" +
     "\n" +
     "    </div>\n" +
     "  </div>\n" +
