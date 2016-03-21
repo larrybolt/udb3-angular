@@ -4037,8 +4037,7 @@ function udbDashboardEventItem() {
     restrict: 'AE',
     controller: 'EventController',
     controllerAs: 'eventCtrl',
-    templateUrl: 'templates/dashboard-item.directive.html',
-    replace: true
+    templateUrl: 'templates/dashboard-item.directive.html'
   };
 
   return dashboardEventItemDirective;
@@ -4061,8 +4060,7 @@ function udbDashboardPlaceItem() {
     restrict: 'AE',
     controller: 'PlaceController',
     controllerAs: 'placeCtrl',
-    templateUrl: 'templates/dashboard-item.directive.html',
-    replace: true
+    templateUrl: 'templates/dashboard-item.directive.html'
   };
 
   return dashboardPlaceItemDirective;
@@ -13396,49 +13394,47 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
 
   $templateCache.put('templates/dashboard-item.directive.html',
-    "<tr>\n" +
-    "  <td>\n" +
-    "    <strong>\n" +
-    "      <a ng-href=\"{{ ::event.url }}\" ng-bind=\"::event.name\"></a>\n" +
-    "    </strong>\n" +
-    "    <br/>\n" +
-    "    <small>\n" +
-    "      <span class=\"dashboard-item-type\" ng-bind=\"::event.type.label\"></span>\n" +
-    "      <span  ng-if=\"event.calendarType\" ng-switch=\"event.calendarType\">\n" +
-    "        <span> - </span>\n" +
-    "        <span class=\"dashboard-item-calendar\" ng-switch-when=\"single\">\n" +
-    "          <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "        </span>\n" +
-    "        <span class=\"dashboard-item-calendar\" ng-switch-when=\"permanent\">\n" +
-    "          Permanent\n" +
-    "        </span>\n" +
-    "        <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
-    "        <span class=\"dashboard-item-calendar\" ng-switch-default>\n" +
-    "          <span>Van </span>\n" +
-    "          <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "          <span> tot </span>\n" +
-    "          <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "        </span>\n" +
+    "<td>\n" +
+    "  <strong>\n" +
+    "    <a ng-href=\"{{ ::event.url }}\" ng-bind=\"::event.name\"></a>\n" +
+    "  </strong>\n" +
+    "  <br/>\n" +
+    "  <small>\n" +
+    "    <span class=\"dashboard-item-type\" ng-bind=\"::event.type.label\"></span>\n" +
+    "    <span  ng-if=\"event.calendarType\" ng-switch=\"event.calendarType\">\n" +
+    "      <span> - </span>\n" +
+    "      <span class=\"dashboard-item-calendar\" ng-switch-when=\"single\">\n" +
+    "        <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
     "      </span>\n" +
-    "    </small>\n" +
-    "  </td>\n" +
+    "      <span class=\"dashboard-item-calendar\" ng-switch-when=\"permanent\">\n" +
+    "        Permanent\n" +
+    "      </span>\n" +
+    "      <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
+    "      <span class=\"dashboard-item-calendar\" ng-switch-default>\n" +
+    "        <span>Van </span>\n" +
+    "        <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "        <span> tot </span>\n" +
+    "        <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "      </span>\n" +
+    "    </span>\n" +
+    "  </small>\n" +
+    "</td>\n" +
     "\n" +
-    "  <td>\n" +
-    "    <div class=\"pull-right btn-group\" uib-dropdown>\n" +
-    "      <a class=\"btn btn-default\" ng-href=\"{{ ::event.url + '/edit' }}\">Bewerken</a>\n" +
-    "      <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
-    "      <ul uib-dropdown-menu role=\"menu\">\n" +
-    "        <li role=\"menuitem\">\n" +
-    "          <a ng-href=\"{{ ::event.url }}\">Voorbeeld</a>\n" +
-    "        </li>\n" +
-    "        <li class=\"divider\"></li>\n" +
-    "        <li role=\"menuitem\">\n" +
-    "          <a href=\"\" ng-click=\"dash.openDeleteConfirmModal(event)\">Verwijderen</a>\n" +
-    "        </li>\n" +
-    "      </ul>\n" +
-    "    </div>\n" +
-    "  </td>\n" +
-    "</tr>\n"
+    "<td>\n" +
+    "  <div class=\"pull-right btn-group\" uib-dropdown>\n" +
+    "    <a class=\"btn btn-default\" ng-href=\"{{ ::event.url + '/edit' }}\">Bewerken</a>\n" +
+    "    <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
+    "    <ul uib-dropdown-menu role=\"menu\">\n" +
+    "      <li role=\"menuitem\">\n" +
+    "        <a ng-href=\"{{ ::event.url }}\">Voorbeeld</a>\n" +
+    "      </li>\n" +
+    "      <li class=\"divider\"></li>\n" +
+    "      <li role=\"menuitem\">\n" +
+    "        <a href=\"\" ng-click=\"dash.openDeleteConfirmModal(event)\">Verwijderen</a>\n" +
+    "      </li>\n" +
+    "    </ul>\n" +
+    "  </div>\n" +
+    "</td>\n"
   );
 
 
@@ -13498,15 +13494,18 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
 
   $templateCache.put('templates/dashboard.html',
-    "<div ng-show=\"dash.pagedItemViewer.loading\">\n" +
+    "<h1 class=\"title\" id=\"page-title\">Welkom, username</h1>\n" +
+    "<div class=\"text-center\" ng-show=\"dash.pagedItemViewer.loading\">\n" +
     "  <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
     "</div>\n" +
     "\n" +
     "<div ng-cloak ng-show=\"!dash.pagedItemViewer.loading\">\n" +
-    "  <div class=\"alert alert-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
-    "    <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
-    "      <br/><a href=\"/event\">Een activiteit of monument toevoegen?</a>\n" +
-    "    </p>\n" +
+    "  <div class=\"panel panel-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
+    "    <div class=\"panel-body text-center\">\n" +
+    "      <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
+    "        <br/><a href=\"/event\">Een activiteit of monument toevoegen?</a>\n" +
+    "      </p>\n" +
+    "    </div>\n" +
     "  </div>\n" +
     "\n" +
     "  <div ng-show=\"dash.pagedItemViewer.events.length\">\n" +
@@ -13520,26 +13519,26 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    </div>\n" +
     "\n" +
     "    <div class=\"panel panel-default\">\n" +
-    "\n" +
     "      <table class=\"table\">\n" +
     "        <tbody>\n" +
-    "            <udb-dashboard-event-item ng-if=\"event['@type'] === 'Event'\"\n" +
-    "              ng-repeat-start=\"event in dash.pagedItemViewer.events\">\n" +
-    "            </udb-dashboard-event-item>\n" +
-    "            <udb-dashboard-place-item ng-if=\"event['@type'] === 'Place'\"\n" +
-    "              ng-repeat-end>\n" +
-    "            </udb-dashboard-place-item>\n" +
+    "          <tr udb-dashboard-event-item ng-if=\"event['@type'] === 'Event'\"\n" +
+    "            ng-repeat-start=\"event in dash.pagedItemViewer.events\">\n" +
+    "          </tr>\n" +
+    "          <tr udb-dashboard-place-item ng-if=\"event['@type'] === 'Place'\"\n" +
+    "            ng-repeat-end>\n" +
+    "          </tr>\n" +
     "        </tbody>\n" +
     "      </table>\n" +
-    "\n" +
-    "      <uib-pagination\n" +
-    "        total-items=\"dash.pagedItemViewer.totalItems\"\n" +
-    "        ng-model=\"dash.pagedItemViewer.currentPage\"\n" +
-    "        items-per-page=\"dash.pagedItemViewer.pageSize\"\n" +
-    "        ng-show=\"dash.pagedItemViewer.totalItems > 0\"\n" +
-    "        max-size=\"10\"\n" +
-    "        ng-change=\"dash.updateItemViewer()\">\n" +
-    "      </uib-pagination>\n" +
+    "      <div class=\"panel-footer\">\n" +
+    "        <uib-pagination\n" +
+    "          total-items=\"dash.pagedItemViewer.totalItems\"\n" +
+    "          ng-model=\"dash.pagedItemViewer.currentPage\"\n" +
+    "          items-per-page=\"dash.pagedItemViewer.pageSize\"\n" +
+    "          ng-show=\"dash.pagedItemViewer.totalItems > 0\"\n" +
+    "          max-size=\"10\"\n" +
+    "          ng-change=\"dash.updateItemViewer()\">\n" +
+    "        </uib-pagination>\n" +
+    "      </div>\n" +
     "\n" +
     "    </div>\n" +
     "  </div>\n" +

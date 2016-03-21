@@ -16,8 +16,7 @@ function udbDashboardEventItem() {
     restrict: 'AE',
     controller: 'EventController',
     controllerAs: 'eventCtrl',
-    templateUrl: 'templates/dashboard-item.directive.html',
-    replace: true
+    templateUrl: 'templates/dashboard-item.directive.html'
   };
 
   return dashboardEventItemDirective;

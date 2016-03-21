@@ -1,12 +1,15 @@
-<div ng-show="dash.pagedItemViewer.loading">
+<h1 class="title" id="page-title">Welkom, username</h1>
+<div class="text-center" ng-show="dash.pagedItemViewer.loading">
   <i class="fa fa-circle-o-notch fa-spin"></i>
 </div>
 
 <div ng-cloak ng-show="!dash.pagedItemViewer.loading">
-  <div class="alert alert-default no-new no-data" ng-hide="dash.pagedItemViewer.events.length">
-    <p class="text-center">Je hebt nog geen items toegevoegd.
-      <br/><a href="/event">Een activiteit of monument toevoegen?</a>
-    </p>
+  <div class="panel panel-default no-new no-data" ng-hide="dash.pagedItemViewer.events.length">
+    <div class="panel-body text-center">
+      <p class="text-center">Je hebt nog geen items toegevoegd.
+        <br/><a href="/event">Een activiteit of monument toevoegen?</a>
+      </p>
+    </div>
   </div>
 
   <div ng-show="dash.pagedItemViewer.events.length">
@@ -20,26 +23,26 @@
     </div>
 
     <div class="panel panel-default">
-
       <table class="table">
         <tbody>
-            <udb-dashboard-event-item ng-if="event['@type'] === 'Event'"
-              ng-repeat-start="event in dash.pagedItemViewer.events">
-            </udb-dashboard-event-item>
-            <udb-dashboard-place-item ng-if="event['@type'] === 'Place'"
-              ng-repeat-end>
-            </udb-dashboard-place-item>
+          <tr udb-dashboard-event-item ng-if="event['@type'] === 'Event'"
+            ng-repeat-start="event in dash.pagedItemViewer.events">
+          </tr>
+          <tr udb-dashboard-place-item ng-if="event['@type'] === 'Place'"
+            ng-repeat-end>
+          </tr>
         </tbody>
       </table>
-
-      <uib-pagination
-        total-items="dash.pagedItemViewer.totalItems"
-        ng-model="dash.pagedItemViewer.currentPage"
-        items-per-page="dash.pagedItemViewer.pageSize"
-        ng-show="dash.pagedItemViewer.totalItems > 0"
-        max-size="10"
-        ng-change="dash.updateItemViewer()">
-      </uib-pagination>
+      <div class="panel-footer">
+        <uib-pagination
+          total-items="dash.pagedItemViewer.totalItems"
+          ng-model="dash.pagedItemViewer.currentPage"
+          items-per-page="dash.pagedItemViewer.pageSize"
+          ng-show="dash.pagedItemViewer.totalItems > 0"
+          max-size="10"
+          ng-change="dash.updateItemViewer()">
+        </uib-pagination>
+      </div>
 
     </div>
   </div>
