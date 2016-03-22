@@ -54,6 +54,7 @@
             else if (content.data.content[key].type === 'place') {
               item.details = new UdbPlace();
               item.details.parseJson(content.data.content[key]);
+              item.details = jsonLDLangFilter(item.details, 'nl');
             }
 
             if (!item.details) {
@@ -79,6 +80,8 @@
 
     /**
      * Open the confirmation modal to delete an event/place.
+     *
+     * @param {Object} item
      */
     function openDeleteConfirmModal(item) {
 

@@ -1687,6 +1687,9 @@ textarea.resize-vertical {
   content: "\f20c";
 }
 /* General Styles */
+.btn-tile {
+  white-space: normal;
+}
 .nav-pills a {
   cursor: pointer;
 }
@@ -2974,13 +2977,6 @@ body {
 }
 .offer-form .preview table {
   margin-bottom: 0;
-}
-.offer-form #dubbeldetectie-voorbeeld .modal-body {
-  background-color: #EEE;
-}
-.offer-form #dubbeldetectie-voorbeeld .close {
-  padding: 4px 12px;
-  line-height: initial;
 }
 .offer-form .media.main-image {
   background-color: aliceblue;

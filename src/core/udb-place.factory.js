@@ -118,6 +118,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
         this.apiUrl = jsonPlace['@id'];
       }
@@ -133,7 +134,11 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.bookingInfo = jsonPlace.bookingInfo || {};
       this.contactPoint = jsonPlace.contactPoint || {};
       if (jsonPlace.organizer) {
-        this.organizer = jsonPlace.organizer;
+        this.organizer = {
+          name: jsonPlace.organizer.name,
+          email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
+          phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
+        };
       }
       this.image = jsonPlace.image;
       this.labels = _.map(jsonPlace.labels, function (label) {

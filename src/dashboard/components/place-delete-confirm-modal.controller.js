@@ -13,8 +13,14 @@ angular
   .controller('PlaceDeleteConfirmModalCtrl', PlaceDeleteConfirmModalController);
 
 /* @ngInject */
-function PlaceDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item, events, appConfig) {
-
+function PlaceDeleteConfirmModalController(
+  $scope,
+  $uibModalInstance,
+  eventCrud,
+  item,
+  events,
+  appConfig
+) {
   $scope.item = item;
   $scope.saving = false;
   $scope.events = events ? events : [];

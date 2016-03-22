@@ -3,7 +3,7 @@
     <div class="row">
 
       <div class="col-xs-12">
-        <p>Ben je zeker dat je "{{item.name}}" wil verwijderen?</p>
+        <p>Ben je zeker dat je "<span ng-bind="::item.name"></span>" wil verwijderen?</p>
       </div>
 
       <div class="alert alert-danger" ng-show="error">

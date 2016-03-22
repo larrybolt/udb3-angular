@@ -43,6 +43,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   this.mainLanguage = 'nl';
 
   /**
+   * Removes an item from the eventCache.
+   * @param {string} id - The uuid of the item.
+   */
+  this.removeItemFromCache = function (id) {
+    var event = eventCache.get(id);
+
+    if (event) {
+      eventCache.remove(id);
+    }
+  };
+
+  /**
    * @param {string} queryString - The query used to find events.
    * @param {?number} start - From which event offset the result set should start.
    * @returns {Promise} A promise that signals a successful retrieval of

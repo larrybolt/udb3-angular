@@ -17,6 +17,9 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
 
+  // Make sure we start off with clean data every time this controller gets called
+  EventFormData.init();
+
   // Fill the event form data if an event is being edited.
   if (eventId) {
 

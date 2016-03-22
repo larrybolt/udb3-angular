@@ -2497,6 +2497,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   this.mainLanguage = 'nl';
 
   /**
+   * Removes an item from the eventCache.
+   * @param {string} id - The uuid of the item.
+   */
+  this.removeItemFromCache = function (id) {
+    var event = eventCache.get(id);
+
+    if (event) {
+      eventCache.remove(id);
+    }
+  };
+
+  /**
    * @param {string} queryString - The query used to find events.
    * @param {?number} start - From which event offset the result set should start.
    * @returns {Promise} A promise that signals a successful retrieval of
@@ -3193,6 +3205,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
   UdbEvent.prototype = {
     parseJson: function (jsonEvent) {
       this.id = jsonEvent['@id'].split('/').pop();
+      this['@type'] = jsonEvent['@type'];
       this.apiUrl = jsonEvent['@id'];
       this.name = jsonEvent.name || {};
       this.description = angular.copy(jsonEvent.description) || {};
@@ -3701,6 +3714,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
     parseJson: function (jsonPlace) {
 
       this.id = jsonPlace['@id'] ? jsonPlace['@id'].split('/').pop() : '';
+      this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
         this.apiUrl = jsonPlace['@id'];
       }
@@ -3716,7 +3730,11 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.bookingInfo = jsonPlace.bookingInfo || {};
       this.contactPoint = jsonPlace.contactPoint || {};
       if (jsonPlace.organizer) {
-        this.organizer = jsonPlace.organizer;
+        this.organizer = {
+          name: jsonPlace.organizer.name,
+          email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
+          phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
+        };
       }
       this.image = jsonPlace.image;
       this.labels = _.map(jsonPlace.labels, function (label) {
@@ -4053,8 +4071,14 @@ angular
   .controller('PlaceDeleteConfirmModalCtrl', PlaceDeleteConfirmModalController);
 
 /* @ngInject */
-function PlaceDeleteConfirmModalController($scope, $uibModalInstance, eventCrud, item, events, appConfig) {
-
+function PlaceDeleteConfirmModalController(
+  $scope,
+  $uibModalInstance,
+  eventCrud,
+  item,
+  events,
+  appConfig
+) {
   $scope.item = item;
   $scope.saving = false;
   $scope.events = events ? events : [];
@@ -4151,6 +4175,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
             else if (content.data.content[key].type === 'place') {
               item.details = new UdbPlace();
               item.details.parseJson(content.data.content[key]);
+              item.details = jsonLDLangFilter(item.details, 'nl');
             }
 
             if (!item.details) {
@@ -4176,6 +4201,8 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
 
     /**
      * Open the confirmation modal to delete an event/place.
+     *
+     * @param {Object} item
      */
     function openDeleteConfirmModal(item) {
 
@@ -4258,7 +4285,7 @@ angular
 function udbDashboardDirective() {
   return {
     templateUrl: 'templates/dashboard.html',
-    restrict: 'EA',
+    restrict: 'EA'
   };
 }
 
@@ -4384,7 +4411,7 @@ angular
   .factory('EventCrudJob', EventCrudJobFactory);
 
 /* @ngInject */
-function EventCrudJobFactory(BaseJob) {
+function EventCrudJobFactory(BaseJob, $q, JobStates) {
 
   /**
    * @class EventCrudJob
@@ -4397,10 +4424,20 @@ function EventCrudJobFactory(BaseJob) {
     BaseJob.call(this, commandId);
     this.item = item;
     this.action = action;
+    this.task = $q.defer();
   };
 
   EventCrudJob.prototype = Object.create(BaseJob.prototype);
   EventCrudJob.prototype.constructor = EventCrudJob;
+
+  EventCrudJob.prototype.finish = function () {
+    if (this.state !== JobStates.FAILED) {
+      this.state = JobStates.FINISHED;
+      this.finished = new Date();
+      this.task.resolve(this.item.id);
+    }
+    this.progress = 100;
+  };
 
   EventCrudJob.prototype.getDescription = function() {
 
@@ -4466,7 +4503,7 @@ function EventCrudJobFactory(BaseJob) {
 
   return (EventCrudJob);
 }
-EventCrudJobFactory.$inject = ["BaseJob"];
+EventCrudJobFactory.$inject = ["BaseJob", "$q", "JobStates"];
 
 // Source: src/entry/crud/event-crud.service.js
 /**
@@ -4562,7 +4599,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, eventFormData, 'updateItem');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4596,7 +4633,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateDescription');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4615,26 +4652,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
-    });
-
-    return jobPromise;
-
-  };
-
-  /**
-   * Update the typical age range and add it to the job logger.
-   *
-   * @param {EventFormData} item
-   * @returns {EventCrud.updateTypicalAgeRange.jobPromise}
-   */
-  service.updateTypicalAgeRange = function(item) {
-
-    var jobPromise = udbApi.updateProperty(item.id, item.getType(), 'typicalAgeRange', item.typicalAgeRange);
-
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4653,7 +4671,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateTypicalAgeRange');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4672,7 +4690,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateOrganizer');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4691,7 +4709,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'deleteOrganizer');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4710,7 +4728,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateContactInfo');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4729,7 +4747,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateFacilities');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4749,7 +4767,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     jobPromise.success(function (jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateBookingInfo');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
     });
 
     return jobPromise;
@@ -4768,7 +4786,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'addImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4791,7 +4810,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'updateImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4812,7 +4832,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'removeImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4826,7 +4847,8 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
 
     function logJob(jobData) {
       var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
-      jobLogger.addJob(job);
+      addJobAndInvalidateCache(jobLogger, job);
+
       return $q.resolve(job);
     }
 
@@ -4841,6 +4863,19 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
    */
   function updateMajorInfo(event, eventFormData) {
     service.updateMajorInfo(eventFormData);
+  }
+
+  /**
+   * @param {JobLogger} jobLogger
+   * @param {EventCrudJob} job
+     */
+  function addJobAndInvalidateCache(jobLogger, job) {
+    jobLogger.addJob(job);
+
+    // unvalidate cache on success
+    job.task.promise.then(function (itemId) {
+      udbApi.removeItemFromCache(itemId);
+    }, function() {});
   }
 
   $rootScope.$on('eventTypeChanged', updateMajorInfo);
@@ -6420,8 +6455,8 @@ function EventFormImageUploadController(
 ) {
 
   // Scope vars.
-  $scope.userAgreementUrl = appConfig.media.userAgreementUrl;
-  $scope.copyrightUrl = appConfig.media.copyrightUrl;
+  $scope.userAgreementUrl = _.get(appConfig, 'media.userAgreementUrl', '/user-agreement');
+  $scope.copyrightUrl = _.get(appConfig, 'media.copyrightUrl', '/copyright');
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
@@ -7324,55 +7359,60 @@ function EventFormDataFactory() {
    * @class EventFormData
    */
   var eventFormData = {
-    isEvent : true, // Is current item an event.
-    isPlace : false, // Is current item a place.
-    showStep1 : true,
-    showStep2 : false,
-    showStep3 : false,
-    showStep4 : false,
-    showStep5 : false,
-    majorInfoChanged : false,
-    // Properties that will be copied to UdbEvent / UdbPlace.
-    id : '',
-    name : {
-      nl : ''
+    /**
+     * Initialize the properties with default data
+     */
+    init: function() {
+      this.isEvent = true; // Is current item an event.
+      this.isPlace = false; // Is current item a place.
+      this.showStep1 = true;
+      this.showStep2 = false;
+      this.showStep3 = false;
+      this.showStep4 = false;
+      this.showStep5 = false;
+      this.majorInfoChanged = false;
+      // Properties that will be copied to UdbEvent / UdbPlace.
+      this.id = '';
+      this.name = {
+        nl : ''
+      };
+      this.description = {};
+      this.location = {
+        'id' : null,
+        'name': '',
+        'address': {
+          'addressCountry': '',
+          'addressLocality': '',
+          'postalCode': '',
+          'streetAddress': ''
+        }
+      };
+      this.place = {};
+      /** @type {EventType} */
+      this.type = {};
+      /** @type {EventTheme} */
+      this.theme = {};
+      this.activeCalendarType = ''; // only needed for the angular.
+      this.activeCalendarLabel = ''; // only needed for the angular.
+      this.calendarType = '';
+      this.startDate = '';
+      this.endDate = '';
+      this.timestamps = [];
+      this.openingHours = [];
+      this.typicalAgeRange = '';
+      this.organizer = {};
+      this.contactPoint = {
+        url : [],
+        phone : [],
+        email : []
+      };
+      this.facilities = [];
+      this.bookingInfo = {};
+      /** @type {MediaObject[]} **/
+      this.mediaObjects = [];
+      this.image = [];
+      this.additionalData = {};
     },
-    description : {},
-    location : {
-      'id' : null,
-      'name': '',
-      'address': {
-        'addressCountry': '',
-        'addressLocality': '',
-        'postalCode': '',
-        'streetAddress': ''
-      }
-    },
-    place : {},
-    /** @type {EventType} */
-    type : {},
-    /** @type {EventTheme} */
-    theme : {},
-    activeCalendarType : '', // only needed for the angular.
-    activeCalendarLabel : '', // only needed for the angular.
-    calendarType : '',
-    startDate : '',
-    endDate : '',
-    timestamps : [],
-    openingHours : [],
-    ageRange : '',
-    organizer : {},
-    contactPoint : {
-      url : [],
-      phone : [],
-      email : []
-    },
-    facilities : [],
-    bookingInfo : {},
-    /** @type {MediaObject[]} **/
-    mediaObjects : [],
-    image : [],
-    additionalData : {},
 
     /**
      * Show the given step.
@@ -7524,20 +7564,6 @@ function EventFormDataFactory() {
      */
     getLocation: function() {
       return this.location;
-    },
-
-    /**
-     * Set the age range.
-     */
-    setAgeRange: function(range) {
-      this.ageRange = range;
-    },
-
-    /**
-     * Get the age range.
-     */
-    getAgeRange: function() {
-      return this.ageRange;
     },
 
     /**
@@ -7694,6 +7720,9 @@ function EventFormDataFactory() {
 
   };
 
+  // initialize the data
+  eventFormData.init();
+
   return eventFormData;
 }
 
@@ -7714,6 +7743,9 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
+
+  // Make sure we start off with clean data every time this controller gets called
+  EventFormData.init();
 
   // Fill the event form data if an event is being edited.
   if (eventId) {
@@ -9060,7 +9092,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
    * @type {AgeRangeEnum|null}
    */
   $scope.ageRange = null;
-  $scope.ageCssClass = EventFormData.ageRange ? 'state-complete' : 'state-incomplete';
+  $scope.ageCssClass = EventFormData.typicalAgeRange ? 'state-complete' : 'state-incomplete';
   /**
    * * @type {number|null}
    */
@@ -10766,6 +10798,29 @@ function SavedSearchesList($scope, savedSearchesService, $uibModal, $rootScope) 
   $scope.deleteSavedSearch = this.deleteSavedSearch;
 }
 SavedSearchesList.$inject = ["$scope", "savedSearchesService", "$uibModal", "$rootScope"];
+
+// Source: src/search/components/event-link.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbEventLink
+ * @description
+ *  Renders a link for an event.
+ */
+angular
+  .module('udb.event-form')
+  .directive('udbEventLink', udbEventLink);
+
+/* @ngInject */
+function udbEventLink() {
+  var eventLinkDirective = {
+    restrict: 'AE',
+    controller: 'EventController',
+    controllerAs: 'eventCtrl',
+    templateUrl: 'templates/event-link.directive.html'
+  };
+
+  return eventLinkDirective;
+}
 
 // Source: src/search/components/query-editor-daterangepicker.directive.js
 /**
@@ -13211,7 +13266,12 @@ function Search(
     if (exportingQuery) {
       eventCount = $scope.resultViewer.totalItems;
     } else {
-      selectedIds = $scope.resultViewer.selectedIds;
+      selectedIds = _.chain($scope.resultViewer.selectedOffers)
+        .filter({'@type': 'Event'})
+        .map(function(offer) {
+          return offer['@id'].split('/').pop();
+        })
+        .value();
 
       if (!selectedIds.length) {
         $window.alert('First select the events you want to label.');
@@ -13365,7 +13425,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"row\">\n" +
     "\n" +
     "      <div class=\"col-xs-12\">\n" +
-    "        <p>Ben je zeker dat je \"{{item.name}}\" wil verwijderen?</p>\n" +
+    "        <p>Ben je zeker dat je \"<span ng-bind=\"::item.name\"></span>\" wil verwijderen?</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"alert alert-danger\" ng-show=\"error\">\n" +
@@ -13383,20 +13443,17 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
   $templateCache.put('templates/place-delete-confirm-modal.html',
     "<div class=\"modal-body\">\n" +
-    "\n" +
     "    <div class=\"row\">\n" +
     "\n" +
     "      <div class=\"col-xs-12\" ng-if=\"!hasEvents\">\n" +
-    "        <p>Ben je zeker dat je \"{{item.name}}\" wil verwijderen?</p>\n" +
+    "        <p>Ben je zeker dat je \"<span ng-bind=\"::item.name\"></span>\" wil verwijderen?</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"col-xs-12\" ng-if=\"hasEvents\">\n" +
-    "        <p>De locatie \"{{item.name}}\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
+    "        <p>De locatie \"<span ng-bind=\"::item.name\"></span>\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
     "\n" +
     "        <ul>\n" +
-    "          <li ng-repeat=\"event in events\" udb-event=\"event\" ng-hide=\"fetching\">\n" +
-    "            <a href=\"{{baseUrl}}{{event.url}}\">{{event.name}}</a>\n" +
-    "          </li>\n" +
+    "          <li ng-repeat=\"event in events\" udb-event-link ng-hide=\"fetching\"></li>\n" +
     "        </ul>\n" +
     "\n" +
     "      </div>\n" +
@@ -13410,14 +13467,15 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "<div class=\"modal-footer\">\n" +
     "  <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\" ng-show=\"hasEvents\" ng-click=\"cancelRemoval()\">Sluiten</button>\n" +
     "  <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\" ng-hide=\"hasEvents\" ng-click=\"cancelRemoval()\">Annuleren</button>\n" +
-    "  <button type=\"button\" class=\"btn btn-primary\" ng-if=\"!hasEvents\" ng-click=\"deletePlace()\">Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i></button>\n" +
+    "  <button type=\"button\" class=\"btn btn-primary\" ng-if=\"!hasEvents\" ng-click=\"deletePlace()\">\n" +
+    "    Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i>\n" +
+    "  </button>\n" +
     "</div>"
   );
 
 
   $templateCache.put('templates/dashboard.html',
     "<div>\n" +
-    "\n" +
     "  <div class=\"alert alert-default no-new no-data\" ng-show=\"userContent.length === 0\">\n" +
     "    <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
     "      <br/><a href=\"/udb3/event/add\">Een activiteit of monument toevoegen?</a>\n" +
@@ -13428,7 +13486,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "    <div class=\"clearfix\">\n" +
     "      <p class=\"invoer-title\"><span class=\"block-header\">Laatst toegevoegd</span>\n" +
-    "        <span class=\"pull-right\"><a class=\"btn btn-primary \" href=\"/udb3/event/add\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a></span>\n" +
+    "        <span class=\"pull-right\">\n" +
+    "          <a class=\"btn btn-primary \" href=\"/udb3/event/add\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
+    "        </span>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
@@ -13438,35 +13498,41 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "        <tr ng-repeat=\"userContentItem in userContent\">\n" +
     "          <td>\n" +
-    "            <strong><a href=\"{{ userContentItem.exampleUrl }}\">{{userContentItem.details.name}}</a></strong><br/>\n" +
-    "            <small><ng-switch on=\"userContentItem.details.calendarType\">\n" +
-    "                 <span ng-switch-when=\"single\">\n" +
-    "                    {{ userContentItem.details.type.label }} - {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }}\n" +
-    "                 </span>\n" +
-    "                 <span ng-switch-when=\"multiple\">\n" +
-    "                    {{ userContentItem.details.type.label }} - Van {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }} tot {{ userContentItem.details.endDate | date: 'dd/MM/yyyy' }}\n" +
-    "                 </span>\n" +
-    "                 <span ng-switch-when=\"periodic\">\n" +
-    "                    {{ userContentItem.details.type.label }} - Van {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }} tot {{ userContentItem.details.endDate | date: 'dd/MM/yyyy' }}\n" +
-    "                 </span>\n" +
-    "                 <span ng-switch-when=\"permanent\">\n" +
-    "                    {{ userContentItem.details.type.label }} - Permanent\n" +
-    "                 </span>\n" +
-    "               </ng-switch>\n" +
+    "            <strong>\n" +
+    "              <a ng-href=\"{{ ::userContentItem.exampleUrl }}\" ng-bind=\"::userContentItem.details.name\"></a>\n" +
+    "            </strong>\n" +
+    "            <br/>\n" +
+    "            <small ng-switch=\"userContentItem.details.calendarType\">\n" +
+    "              <span ng-switch-when=\"single\">\n" +
+    "                <span ng-bind=\"::userContentItem.details.type.label\"></span>\n" +
+    "                <span> - </span>\n" +
+    "                <span ng-bind=\"::userContentItem.details.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "              </span>\n" +
+    "              <span ng-switch-when=\"permanent\">\n" +
+    "                <span ng-bind=\"::userContentItem.details.type.label\"></span> - Permanent\n" +
+    "              </span>\n" +
+    "              <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
+    "              <span ng-switch-default>\n" +
+    "                <span ng-bind=\"::userContentItem.details.type.label\"></span>\n" +
+    "                <span> - Van </span>\n" +
+    "                <span ng-bind=\"::userContentItem.details.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "                <span> tot </span>\n" +
+    "                <span ng-bind=\"::userContentItem.details.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "              </span>\n" +
     "            </small>\n" +
     "          </td>\n" +
     "\n" +
     "          <td>\n" +
     "            <div class=\"pull-right btn-group\" uib-dropdown>\n" +
-    "              <a class=\"btn btn-default\" href=\"{{ userContentItem.editUrl }}\">Bewerken</a>\n" +
+    "              <a class=\"btn btn-default\" ng-href=\"{{ userContentItem.editUrl }}\">Bewerken</a>\n" +
     "              <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
-    "              <ul class=\"dropdown-menu\" role=\"menu\">\n" +
-    "                <li>\n" +
-    "                  <a href=\"{{ userContentItem.exampleUrl }}\">Voorbeeld</a>\n" +
+    "              <ul uib-dropdown-menu role=\"menu\">\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a ng-href=\"{{ userContentItem.exampleUrl }}\">Voorbeeld</a>\n" +
     "                </li>\n" +
     "                <li class=\"divider\"></li>\n" +
-    "                <li>\n" +
-    "                  <a href=\"{{ userContentItem.exampleUrl }}\" data-toggle=\"modal\" data-target=\"#remove-confirm-modal\" ng-click=\"openDeleteConfirmModal(userContentItem)\">Verwijderen</a>\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a href=\"\" ng-click=\"openDeleteConfirmModal(userContentItem)\">Verwijderen</a>\n" +
     "                </li>\n" +
     "              </ul>\n" +
     "            </div>\n" +
@@ -13477,7 +13543,6 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "\n" +
     "</div>\n"
   );
 
@@ -13740,7 +13805,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "              <td><strong>Waar</strong></td>\n" +
     "              <td ng-show=\"event.location.url\"><a href=\"{{event.location.url}}\">{{eventLocation(event)}}</a></td>\n" +
     "              <td ng-hide=\"event.location.url\">\n" +
-    "                {{event.location.name}},\n" +
+    "                {{event.location.name.nl}},\n" +
     "                {{event.location.address.streetAddress}},\n" +
     "                {{event.location.address.postalCode}}\n" +
     "                {{event.location.address.addressLocality}}\n" +
@@ -14563,9 +14628,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  <div class=\"panel-body\">\n" +
     "\n" +
-    "    <span ng-bind-html=\"::event.description\"></span>\n" +
+    "    <p ng-bind-html=\"::event.description\"></p>\n" +
     "\n" +
-    "    <table class=\"table table-condended\">\n" +
+    "    <table class=\"table table-condensed\">\n" +
     "      <tbody>\n" +
     "      <tr>\n" +
     "        <td class=\"\">\n" +
@@ -14630,7 +14695,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <span> op </span>\n" +
     "    <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span>\n" +
     "  </em>\n" +
-    "</div>"
+    "</div>\n"
   );
 
 
@@ -14673,9 +14738,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  <div class=\"panel-body\">\n" +
     "\n" +
-    "    <span ng-bind-html=\"::event.description\"></span>\n" +
+    "    <p ng-bind-html=\"::event.description\"></p>\n" +
     "\n" +
-    "    <table class=\"table table-condended\">\n" +
+    "    <table class=\"table table-condensed\">\n" +
     "      <tbody>\n" +
     "      <tr>\n" +
     "        <td>\n" +
@@ -14723,7 +14788,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    Ingevoerd door <span ng-bind=\"::event.creator\"></span>\n" +
     "    <span ng-if=\"event.created\"> op <span ng-bind=\"::event.created | date : 'dd/MM/yyyy • HH:mm'\"></span></span>\n" +
     "  </em>\n" +
-    "</div>"
+    "</div>\n"
   );
 
 
@@ -14744,16 +14809,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
   $templateCache.put('templates/suggestion-preview-modal.html',
     "<div class=\"modal-header\">\n" +
-    "  <div class=\"pull-right\">\n" +
-    "\n" +
-    "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"previousSuggestion()\">Vorige</button>\n" +
-    "\n" +
-    "    <button type=\"button\" class=\"btn btn-default\" ng-click=\"nextSuggestion()\">Volgende</button>\n" +
-    "\n" +
-    "    <button type=\"button\" class=\"close\" aria-label=\"Close\" ng-click=\"closePreview()\">\n" +
-    "      <span aria-hidden=\"true\">×</span>\n" +
-    "    </button>\n" +
-    "  </div>\n" +
+    "  <button type=\"button\" class=\"close\" aria-label=\"Close\" ng-click=\"closePreview()\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n" +
     "  <h4 class=\"modal-title\">\n" +
     "    Gelijkaardige items\n" +
     "    <span> </span>\n" +
@@ -14767,6 +14823,10 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <udb-event-preview ng-if=\"suggestionType === 'event'\"></udb-event-preview>\n" +
     "    <udb-place-preview ng-if=\"suggestionType === 'place'\"></udb-place-preview>\n" +
     "  </div>\n" +
+    "</div>\n" +
+    "<div class=\"modal-footer\">\n" +
+    "  <button type=\"button\" class=\"btn btn-default\" ng-click=\"previousSuggestion()\">Vorige</button>\n" +
+    "  <button type=\"button\" class=\"btn btn-default\" ng-click=\"nextSuggestion()\">Volgende</button>\n" +
     "</div>\n"
   );
 
@@ -15034,10 +15094,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      </div>\n" +
     "      <div class=\"col-xs-12 col-md-8\">\n" +
     "        <p class=\"text-block\">\n" +
-    "          Vb. Ontdek het Fort, Het geheim van het kasteel ontrafeld, Fietsen langs kapelletjes,… Geef een\n" +
-    "           <strong>sprekende titel</strong> in (dus niet ‘Open Monumentendag’), begin met een\n" +
-    "           <strong>hoofdletter</strong> en hou het <strong>kort & bondig</strong>.\n" +
-    "           Een uitgebreide beschrijving vul je verder in stap 5 in.\n" +
+    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort & bondig</strong>. Een uitgebreide beschrijving vul je verder in stap 5 in.\n" +
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -15055,20 +15112,22 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "  <a name=\"dubbeldetectie\"></a>\n" +
     "  <section class=\"dubbeldetectie\" ng-show=\"eventFormData.name.nl !== ''\">\n" +
+    "    \n" +
+    "    <div class=\"panel panel-info\" ng-show=\"resultViewer.totalItems > 0\">\n" +
+    "      <div class=\"panel-body bg-info text-info\">\n" +
+    "        <p class=\"h2\" style=\"margin-top: 0;\">Vermijd dubbel werk</p>\n" +
+    "        <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>\n" +
     "\n" +
-    "    <div class=\"alert alert-info\" ng-show=\"resultViewer.totalItems > 0\">\n" +
-    "      <p class=\"h2\" style=\"margin-top: 0;\">Vermijd dubbel werk</p>\n" +
-    "      <p>We vonden gelijkaardige items. Controleer deze eerder ingevoerde items.</p>\n" +
-    "\n" +
-    "      <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'event'\">\n" +
-    "        <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Event'}\">\n" +
-    "          <udb-event-suggestion></udb-event-suggestion>\n" +
+    "        <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'event'\">\n" +
+    "          <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Event'}\">\n" +
+    "            <udb-event-suggestion></udb-event-suggestion>\n" +
+    "          </div>\n" +
     "        </div>\n" +
-    "      </div>\n" +
     "\n" +
-    "      <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'place'\">\n" +
-    "        <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Place'}\">\n" +
-    "          <udb-place-suggestion></udb-place-suggestion>\n" +
+    "        <div class=\"row clearfix\" ng-if=\"eventFormData.getType() === 'place'\">\n" +
+    "          <div ng-repeat=\"event in resultViewer.events | filter:{'@type': 'Place'}\">\n" +
+    "            <udb-place-suggestion></udb-place-suggestion>\n" +
+    "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -16027,6 +16086,11 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        </tr>\n" +
     "    </table>\n" +
     "</div>\n"
+  );
+
+
+  $templateCache.put('templates/event-link.directive.html',
+    "<a ng-href=\"{{ event.url }}\" ng-bind=\"::event.name\"></a>\n"
   );
 
 

@@ -1,5 +1,4 @@
 <div>
-
   <div class="alert alert-default no-new no-data" ng-show="userContent.length === 0">
     <p class="text-center">Je hebt nog geen items toegevoegd.
       <br/><a href="/udb3/event/add">Een activiteit of monument toevoegen?</a>
@@ -10,7 +9,9 @@
 
     <div class="clearfix">
       <p class="invoer-title"><span class="block-header">Laatst toegevoegd</span>
-        <span class="pull-right"><a class="btn btn-primary " href="/udb3/event/add"><i class="fa fa-plus-circle"></i> Toevoegen</a></span>
+        <span class="pull-right">
+          <a class="btn btn-primary " href="/udb3/event/add"><i class="fa fa-plus-circle"></i> Toevoegen</a>
+        </span>
       </p>
     </div>
 
@@ -20,35 +21,41 @@
 
         <tr ng-repeat="userContentItem in userContent">
           <td>
-            <strong><a href="{{ userContentItem.exampleUrl }}">{{userContentItem.details.name}}</a></strong><br/>
-            <small><ng-switch on="userContentItem.details.calendarType">
-                 <span ng-switch-when="single">
-                    {{ userContentItem.details.type.label }} - {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }}
-                 </span>
-                 <span ng-switch-when="multiple">
-                    {{ userContentItem.details.type.label }} - Van {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }} tot {{ userContentItem.details.endDate | date: 'dd/MM/yyyy' }}
-                 </span>
-                 <span ng-switch-when="periodic">
-                    {{ userContentItem.details.type.label }} - Van {{ userContentItem.details.startDate | date: 'dd/MM/yyyy' }} tot {{ userContentItem.details.endDate | date: 'dd/MM/yyyy' }}
-                 </span>
-                 <span ng-switch-when="permanent">
-                    {{ userContentItem.details.type.label }} - Permanent
-                 </span>
-               </ng-switch>
+            <strong>
+              <a ng-href="{{ ::userContentItem.exampleUrl }}" ng-bind="::userContentItem.details.name"></a>
+            </strong>
+            <br/>
+            <small ng-switch="userContentItem.details.calendarType">
+              <span ng-switch-when="single">
+                <span ng-bind="::userContentItem.details.type.label"></span>
+                <span> - </span>
+                <span ng-bind="::userContentItem.details.startDate | date: 'dd/MM/yyyy'"></span>
+              </span>
+              <span ng-switch-when="permanent">
+                <span ng-bind="::userContentItem.details.type.label"></span> - Permanent
+              </span>
+              <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->
+              <span ng-switch-default>
+                <span ng-bind="::userContentItem.details.type.label"></span>
+                <span> - Van </span>
+                <span ng-bind="::userContentItem.details.startDate | date: 'dd/MM/yyyy'"></span>
+                <span> tot </span>
+                <span ng-bind="::userContentItem.details.endDate | date: 'dd/MM/yyyy'"></span>
+              </span>
             </small>
           </td>
 
           <td>
             <div class="pull-right btn-group" uib-dropdown>
-              <a class="btn btn-default" href="{{ userContentItem.editUrl }}">Bewerken</a>
+              <a class="btn btn-default" ng-href="{{ userContentItem.editUrl }}">Bewerken</a>
               <button type="button" class="btn btn-default" uib-dropdown-toggle><span class="caret"></span></button>
-              <ul class="dropdown-menu" role="menu">
-                <li>
-                  <a href="{{ userContentItem.exampleUrl }}">Voorbeeld</a>
+              <ul uib-dropdown-menu role="menu">
+                <li role="menuitem">
+                  <a ng-href="{{ userContentItem.exampleUrl }}">Voorbeeld</a>
                 </li>
                 <li class="divider"></li>
-                <li>
-                  <a href="{{ userContentItem.exampleUrl }}" data-toggle="modal" data-target="#remove-confirm-modal" ng-click="openDeleteConfirmModal(userContentItem)">Verwijderen</a>
+                <li role="menuitem">
+                  <a href="" ng-click="openDeleteConfirmModal(userContentItem)">Verwijderen</a>
                 </li>
               </ul>
             </div>
@@ -59,5 +66,4 @@
 
     </div>
   </div>
-
 </div>
