@@ -2758,18 +2758,6 @@ body {
   margin-left: 0.85em;
   margin-right: 0.25em;
 }
-.offer-form .highlight {
-  background-color: #EEE;
-}
-.offer-form .highlight:after {
-  color: #006c7a;
-  content: "OMD";
-  display: block;
-  font-size: 11px;
-  font-weight: bold;
-  line-height: 18px;
-  text-transform: uppercase;
-}
 .offer-form .image-upload {
   background-color: #ffffff;
   padding: 1em;
@@ -2987,6 +2975,21 @@ body {
 }
 .image-copyright-agreements {
   font-size: 0.85em;
+}
+.datepicker-days .highlight {
+  background-color: #EEE;
+}
+.datepicker-days .omd.active:after {
+  color: #EEE;
+}
+.datepicker-days .omd:after {
+  color: #006c7a;
+  content: "OMD";
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 18px;
+  text-transform: uppercase;
 }
 .muted td {
   background-color: #EDEDED;

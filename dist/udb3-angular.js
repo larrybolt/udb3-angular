@@ -1973,9 +1973,20 @@ CityAutocomplete.$inject = ["$q", "$http", "appConfig", "UdbPlace", "jsonLDLangF
           format: 'd MM yyyy',
           language: 'nl-BE',
           beforeShowDay: function (date) {
-            var dateFormat = date.getUTCFullYear() + '-' + date.getUTCMonth() + '-' + date.getUTCDate();
-            if (attrs.highlightDate && dateFormat === attrs.highlightDate) {
-              return {classes: 'highlight'};
+            if (!attrs.highlightDate) {
+              return;
+            }
+
+            // init Date with ISO string
+            var highlightDate = new Date(attrs.highlightDate);
+            if (highlightDate.toLocaleDateString() === date.toLocaleDateString()) {
+              var highlightClasses = 'highlight';
+
+              if (attrs.highlightExtraClass) {
+                highlightClasses += ' ' + attrs.highlightExtraClass;
+              }
+
+              return {classes: highlightClasses};
             }
           }
         };
@@ -6922,7 +6933,7 @@ angular
   .controller('EventFormReservationModalController', EventFormReservationModalController);
 
 /* @ngInject */
-function EventFormReservationModalController($scope, $uibModalInstance, EventFormData, eventCrud) {
+function EventFormReservationModalController($scope, $uibModalInstance, EventFormData, eventCrud, appConfig) {
 
   // Scope vars.
   $scope.eventFormData = EventFormData;
@@ -6930,6 +6941,7 @@ function EventFormReservationModalController($scope, $uibModalInstance, EventFor
   $scope.showEndDateRequired = false;
   $scope.saving = false;
   $scope.errorMessage = '';
+  $scope.calendarHighlight = appConfig.calendarHighlight;
 
   // Scope functions.
   $scope.cancel = cancel;
@@ -6997,7 +7009,7 @@ function EventFormReservationModalController($scope, $uibModalInstance, EventFor
   }
 
 }
-EventFormReservationModalController.$inject = ["$scope", "$uibModalInstance", "EventFormData", "eventCrud"];
+EventFormReservationModalController.$inject = ["$scope", "$uibModalInstance", "EventFormData", "eventCrud", "appConfig"];
 
 // Source: src/event_form/components/save-time-tracker/save-time-tracker.directive.js
 /**
@@ -8228,12 +8240,13 @@ angular
   .controller('EventFormStep2Controller', EventFormStep2Controller);
 
 /* @ngInject */
-function EventFormStep2Controller($scope, $rootScope, EventFormData) {
+function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) {
   var controller = this;
 
   // Scope vars.
   // main storage for event form.
   $scope.eventFormData = EventFormData;
+  $scope.calendarHighlight = appConfig.calendarHighlight;
 
   $scope.calendarLabels = [
     {'label': 'Eén of meerdere dagen', 'id' : 'single', 'eventOnly' : true},
@@ -8434,7 +8447,7 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData) {
     controller.periodicRangeError = false;
   };
 }
-EventFormStep2Controller.$inject = ["$scope", "$rootScope", "EventFormData"];
+EventFormStep2Controller.$inject = ["$scope", "$rootScope", "EventFormData", "appConfig"];
 
 // Source: src/event_form/steps/event-form-step3.controller.js
 /**
@@ -13893,7 +13906,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      <div class=\"form-group\">\n" +
     "        <p class=\"module-title\">Vanaf</p>\n" +
     "        <div udb-datepicker\n" +
-    "             highlight-date=\"2015-8-12\"\n" +
+    "             highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "             highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "             ng-change=\"EventFormStep2.periodicEventTimingChanged()\"\n" +
     "             ng-model=\"eventFormData.startDate\"></div>\n" +
     "      </div>\n" +
@@ -13905,7 +13919,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      <div class=\"form-group\">\n" +
     "        <p class=\"module-title\">Tot en met</p>\n" +
     "        <div udb-datepicker\n" +
-    "             highlight-date=\"2015-8-12\"\n" +
+    "             highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "             highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "             ng-change=\"EventFormStep2.periodicEventTimingChanged()\"\n" +
     "             ng-model=\"eventFormData.endDate\"></div>\n" +
     "      </div>\n" +
@@ -13929,7 +13944,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "      <div udb-datepicker\n" +
     "           ng-change=\"EventFormStep2.eventTimingChanged()\"\n" +
-    "           highlight-date=\"2015-8-12\"\n" +
+    "           highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "           highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "           ng-model=\"timestamp.date\"></div>\n" +
     "\n" +
     "      <div class=\"row\">\n" +
@@ -14553,7 +14569,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        <div class=\"add-date\">\n" +
     "          <label>Reserveren van</label>\n" +
     "          <div udb-datepicker\n" +
-    "               highlight-date=\"2015-8-12\"\n" +
+    "               highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "               highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "               ng-model=\"eventFormData.bookingInfo.availabilityStarts\"></div>\n" +
     "          <span class=\"help-block\" ng-show=\"showStartDateRequired\">Gelieve een start datum te kiezen</span>\n" +
     "        </div>\n" +
@@ -14562,7 +14579,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        <div class=\"add-date\">\n" +
     "          <label>Tot</label>\n" +
     "          <div udb-datepicker\n" +
-    "               highlight-date=\"2015-8-12\"\n" +
+    "               highlight-date=\"{{calendarHighlight.date}}\"\n" +
+    "               highlight-extra-class=\"{{calendarHighlight.extraClass}}\"\n" +
     "               ng-model=\"eventFormData.bookingInfo.availabilityEnds\"></div>\n" +
     "          <span class=\"help-block\" ng-show=\"showEndDateRequired\">Gelieve een eind datum te kiezen</span>\n" +
     "        </div>\n" +

@@ -4,7 +4,8 @@
       <div class="form-group">
         <p class="module-title">Vanaf</p>
         <div udb-datepicker
-             highlight-date="2015-8-12"
+             highlight-date="{{calendarHighlight.date}}"
+             highlight-extra-class="{{calendarHighlight.extraClass}}"
              ng-change="EventFormStep2.periodicEventTimingChanged()"
              ng-model="eventFormData.startDate"></div>
       </div>
@@ -16,7 +17,8 @@
       <div class="form-group">
         <p class="module-title">Tot en met</p>
         <div udb-datepicker
-             highlight-date="2015-8-12"
+             highlight-date="{{calendarHighlight.date}}"
+             highlight-extra-class="{{calendarHighlight.extraClass}}"
              ng-change="EventFormStep2.periodicEventTimingChanged()"
              ng-model="eventFormData.endDate"></div>
       </div>

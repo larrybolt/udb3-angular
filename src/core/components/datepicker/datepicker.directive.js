@@ -37,9 +37,20 @@
           format: 'd MM yyyy',
           language: 'nl-BE',
           beforeShowDay: function (date) {
-            var dateFormat = date.getUTCFullYear() + '-' + date.getUTCMonth() + '-' + date.getUTCDate();
-            if (attrs.highlightDate && dateFormat === attrs.highlightDate) {
-              return {classes: 'highlight'};
+            if (!attrs.highlightDate) {
+              return;
+            }
+
+            // init Date with ISO string
+            var highlightDate = new Date(attrs.highlightDate);
+            if (highlightDate.toLocaleDateString() === date.toLocaleDateString()) {
+              var highlightClasses = 'highlight';
+
+              if (attrs.highlightExtraClass) {
+                highlightClasses += ' ' + attrs.highlightExtraClass;
+              }
+
+              return {classes: highlightClasses};
             }
           }
         };
