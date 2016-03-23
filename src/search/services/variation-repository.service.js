@@ -12,19 +12,19 @@ angular
   .service('variationRepository', VariationRepository);
 
 /* @ngInject */
-function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
+function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, UdbPlace) {
 
   var requestChain = $q.when();
   var interruptRequestChain = false;
   var personalVariationCache = $cacheFactory('personalVariationCache');
 
-  this.getPersonalVariation = function (event) {
+  this.getPersonalVariation = function (offer) {
     var deferredVariation =  $q.defer(),
-        personalVariation = personalVariationCache.get(event.id);
+        personalVariation = personalVariationCache.get(offer.url);
 
     if (personalVariation) {
       if (personalVariation === 'no-personal-variation') {
-        deferredVariation.reject('there is no personal variation for event with id: ' + event.id);
+        deferredVariation.reject('there is no personal variation for offer with url: ' + offer.url);
       } else {
         deferredVariation.resolve(personalVariation);
       }
@@ -34,7 +34,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
       userPromise
         .then(function(user) {
           requestChain = requestChain.then(
-            requestVariation(user.id, 'personal', event.apiUrl, deferredVariation)
+            requestVariation(user.id, 'personal', offer.apiUrl, deferredVariation)
           );
         });
     }
@@ -42,43 +42,48 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope) {
     return deferredVariation.promise;
   };
 
-  function requestVariation(userId, purpose, eventUrl, deferredVariation) {
+  function requestVariation(userId, purpose, offerUrl, deferredVariation) {
     return function () {
-      var eventId = eventUrl.split('/').pop();
+      var offerId = offerUrl.split('/').pop();
 
       if (interruptRequestChain) {
-        deferredVariation.reject('navigating away, interrupting request for variation for event with id: ' + eventId);
+        deferredVariation.reject('navigating away, interrupting request for variation for offer with id: ' + offerId);
         return deferredVariation;
       }
 
-      var personalVariationRequest = udbApi.getEventVariations(userId, purpose, eventUrl, deferredVariation);
+      var personalVariationRequest = udbApi.getOfferVariations(userId, purpose, offerUrl, deferredVariation);
 
       personalVariationRequest.success(function (variations) {
         var jsonPersonalVariation = _.first(variations.member);
         if (jsonPersonalVariation) {
-          var variation = new UdbEvent(jsonPersonalVariation);
-          personalVariationCache.put(eventId, variation);
+          var variation;
+          if (jsonPersonalVariation['@context'] === '/api/1.0/event.jsonld') {
+            variation = new UdbEvent(jsonPersonalVariation);
+          } else if (jsonPersonalVariation['@context'] === '/api/1.0/place.jsonld') {
+            variation = new UdbPlace(jsonPersonalVariation);
+          }
+          personalVariationCache.put(offerId, variation);
           deferredVariation.resolve(variation);
         } else {
-          personalVariationCache.put(eventId, 'no-personal-variation');
-          deferredVariation.reject('there is no personal variation for event with id: ' + eventId);
+          personalVariationCache.put(offerId, 'no-personal-variation');
+          deferredVariation.reject('there is no personal variation for event with id: ' + offerId);
         }
       });
 
       personalVariationRequest.error(function () {
-        deferredVariation.reject('no variations found for event with id: ' + eventId);
+        deferredVariation.reject('no variations found for event with id: ' + offerId);
       });
 
       return personalVariationRequest.then();
     };
   }
 
-  this.save = function (eventId, variation) {
-    personalVariationCache.put(eventId, variation);
+  this.save = function (offerId, variation) {
+    personalVariationCache.put(offerId, variation);
   };
 
-  this.remove = function (eventId) {
-    personalVariationCache.remove(eventId);
+  this.remove = function (offerId) {
+    personalVariationCache.remove(offerId);
   };
 
   $rootScope.$on('$locationChangeStart', function() {

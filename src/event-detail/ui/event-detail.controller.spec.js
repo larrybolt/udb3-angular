@@ -1,23 +1,21 @@
 'use strict';
 
-describe('Controller: Event', function() {
+describe('Controller: Event Detail', function() {
   var $scope,
       eventController,
-      jsonLDLangFilter,
-      eventTranslator,
-      offerLabeller,
-      offerEditor,
-      EventTranslationState,
+      eventId,
       udbApi,
+      $location,
+      jsonLDLangFilter,
+      variationRepository,
+      offerEditor,
       UdbEvent,
       $q,
-      variationRepository,
-      $window,
       exampleEventJson = {
         "@id": "http://culudb-silex.dev:8080/event/1111be8c-a412-488d-9ecc-8fdf9e52edbc",
         "@context": "/api/1.0/event.jsonld",
         "name": {"nl": "70 mijl in vogelvlucht"},
-        "description": {"nl": "Een korte beschrijving voor dit evenement"},
+        "description": {"nl": "Toto is geen zeekoe"},
         "available": "2015-06-05T00:00:00+02:00",
         "image": "//media.uitdatabank.be/20150605/0ffd9034-033f-4619-b053-4ef3dd1956e0.png",
         "calendarSummary": "vrij 19/06/15 om 19:00 ",
@@ -131,97 +129,110 @@ describe('Controller: Event', function() {
         "seeAlso": ["http://www.facebook.com/events/1590439757875265"]
       };
 
-  var deferredEvent, deferredVariation;
+  var deferredEvent, deferredVariation, deferredPermission, deferredUpdate,
+      deferredHistory;
 
   beforeEach(module('udb.search'));
   beforeEach(module('udb.templates'));
 
   beforeEach(inject(function($injector, $rootScope, $controller, _$q_) {
     $scope = $rootScope.$new();
+    eventId = '1111be8c-a412-488d-9ecc-8fdf9e52edbc';
     udbApi = $injector.get('udbApi');
+    $location = $injector.get('$location');
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
-    eventTranslator = $injector.get('eventTranslator');
-    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
-    offerEditor = $injector.get('offerEditor');
-    EventTranslationState = $injector.get('EventTranslationState');
-    UdbEvent = $injector.get('UdbEvent');
     variationRepository = $injector.get('variationRepository');
+    offerEditor = $injector.get('offerEditor');
+    UdbEvent = $injector.get('UdbEvent');
     $q = _$q_;
-    $window = $injector.get('$window');
 
-    $scope.event = {};
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
-    spyOn(udbApi, 'getEventByLDId').and.returnValue(deferredEvent.promise);
+    deferredPermission = $q.defer();
+
+    spyOn(udbApi, 'hasPermission').and.returnValue(deferredPermission.promise);
+    deferredPermission.resolve({ 'data': { 'hasPermission': true } });
+
+    spyOn(udbApi, 'getEventById').and.returnValue(deferredEvent.promise);
+    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+
     spyOn(variationRepository, 'getPersonalVariation').and.returnValue(deferredVariation.promise);
 
+    deferredUpdate = $q.defer();
+    spyOn(offerEditor, 'editDescription').and.returnValue(deferredUpdate.promise);
+
+    deferredHistory = $q.defer();
+    spyOn(udbApi, 'getEventHistoryById').and.returnValue(deferredHistory.promise);
+    deferredHistory.reject();
+
     eventController = $controller(
-      'EventController', {
+      'EventDetailController', {
+        $scope: $scope,
+        eventId: eventId,
         udbApi: udbApi,
+        $location: $location,
         jsonLDLangFilter: jsonLDLangFilter,
-        eventTranslator: eventTranslator,
-        offerLabeller: offerLabeller,
-        offerEditor: offerEditor,
-        EventTranslationState: EventTranslationState,
-        $scope: $scope
+        variationRepository: variationRepository,
+        offerEditor: offerEditor
       }
     );
   }));
 
-  it('should trigger an API label action when adding a label', function () {
-    var label = 'some other label';
-    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+  it('should fetch the event information', function () {
+    deferredVariation.reject('there is no personal variation for offer');
     $scope.$digest();
 
-    eventController.labelAdded(label);
-    expect(offerLabeller.label).toHaveBeenCalled();
+    expect($scope.eventId).toEqual(eventId);
+    expect(udbApi.hasPermission).toHaveBeenCalledWith(
+        '1111be8c-a412-488d-9ecc-8fdf9e52edbc'
+    );
+    expect(udbApi.getEventById).toHaveBeenCalledWith(
+        '1111be8c-a412-488d-9ecc-8fdf9e52edbc'
+    );
+    expect(udbApi.getEventHistoryById).toHaveBeenCalledWith(
+      '1111be8c-a412-488d-9ecc-8fdf9e52edbc'
+    );
+    expect($scope.eventIsEditable).toEqual(true);
   });
 
-  it('should prevent any duplicate labels and warn the user when trying to add one', function () {
-    var label = 'Some Label';
-    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+  it('should loads the event description from the variation', function () {
+    var variation = new UdbEvent(exampleEventJson);
+    variation.description['nl'] = 'haak is een zeekoe';
+    deferredVariation.resolve(variation);
     $scope.$digest();
 
-    spyOn($window, 'alert');
-
-    eventController.labelAdded(label);
-
-    var expectedLabels = ['some label'];
-    expect($scope.event.labels).toEqual(expectedLabels);
-    expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
-    expect(offerLabeller.label).not.toHaveBeenCalled();
+    expect($scope.event.description).toEqual('haak is een zeekoe');
   });
 
-  describe('variations: ', function () {
-    beforeEach(function () {
-      deferredEvent.resolve(new UdbEvent(exampleEventJson));
-    });
+  it('should update the description', function () {
+    deferredVariation.reject('there is no personal variation for offer');
 
-    it('displays the original event description when no personal variation is found', function () {
-      deferredVariation.reject();
-      $scope.$digest();
-      expect($scope.event.description).toEqual('Een korte beschrijving voor dit evenement');
-    });
+    $scope.$digest();
 
-    it('displays a custom description when a personal variation of an event is available', function () {
-      var variation = new UdbEvent(exampleEventJson);
-      variation.description.nl = 'Een variatie van de originele beschrijving';
-      deferredVariation.resolve(variation);
-      $scope.$digest();
-      expect($scope.event.description).toEqual('Een variatie van de originele beschrijving');
-    });
+    $scope.updateDescription('updated description');
+    deferredUpdate.resolve();
 
-    it('reverts back to the original event description when deleting the personal description', function() {
-      var variation = new UdbEvent(exampleEventJson);
-      variation.description.nl = 'Een variatie van de originele beschrijving';
-      deferredVariation.resolve(variation);
-      $scope.$digest();
-      var deferredDeletion = $q.defer();
-      spyOn(offerEditor, 'deleteVariation').and.returnValue(deferredDeletion.promise);
-      eventController.updateDescription('');
+    expect(offerEditor.editDescription).toHaveBeenCalledWith(
+      new UdbEvent(exampleEventJson),
+      'updated description'
+    );
+  });
 
-      deferredDeletion.resolve();
-      $scope.$digest();
-      expect($scope.event.description).toEqual('Een korte beschrijving voor dit evenement');
-    });
+  it('should replace the description with the cached one when the variation is deleted', function () {
+    var variation = new UdbEvent(exampleEventJson);
+    variation.description['nl'] = 'haak is een zeekoe';
+    deferredVariation.resolve(variation);
+    $scope.$digest();
+
+    expect($scope.event.description).toEqual('haak is een zeekoe');
+
+    $scope.updateDescription('');
+    deferredUpdate.resolve(false);
+    $scope.$digest();
+
+    expect(offerEditor.editDescription).toHaveBeenCalledWith(
+      new UdbEvent(exampleEventJson),
+      ''
+    );
+    expect($scope.event.description).toEqual('Toto is geen zeekoe');
   });
 });
