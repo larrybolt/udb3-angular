@@ -17,7 +17,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
   /**
    * Edit the description of an offer. We never edit the original offer but use a variation instead.
    *
-   * @param {UdbEvent} offer                 The original offer
+   * @param {UdbEvent|UdbPlace} offer        The original offer
    * @param {string}   description           The new description text
    * @param {string}   [purpose=personal]    The purpose of the variation that will be edited
    */
