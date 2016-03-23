@@ -15079,10 +15079,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      </div>\n" +
     "      <div class=\"col-xs-12 col-md-8\">\n" +
     "        <p class=\"text-block\">\n" +
-    "          Vb. Ontdek het Fort, Het geheim van het kasteel ontrafeld, Fietsen langs kapelletjes,… Geef een\n" +
-    "           <strong>sprekende titel</strong> in (dus niet ‘Open Monumentendag’), begin met een\n" +
-    "           <strong>hoofdletter</strong> en hou het <strong>kort & bondig</strong>.\n" +
-    "           Een uitgebreide beschrijving vul je verder in stap 5 in.\n" +
+    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort & bondig</strong>. Een uitgebreide beschrijving vul je verder in stap 5 in.\n" +
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
