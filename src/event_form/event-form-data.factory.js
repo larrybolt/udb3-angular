@@ -268,7 +268,7 @@ function EventFormDataFactory() {
     addOpeningHour: function(dayOfWeek, opens, closes) {
 
       this.openingHours.push({
-        'daysOfWeek' : dayOfWeek,
+        'dayOfWeek' : dayOfWeek,
         'opens' : opens,
         'closes' : closes,
         'label' : ''
