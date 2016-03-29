@@ -18,7 +18,8 @@ function PlaceDetail(
   udbApi,
   $location,
   jsonLDLangFilter,
-  variationRepository
+  variationRepository,
+  offerEditor
 ) {
   var activeTabId = 'data';
 
@@ -42,23 +43,36 @@ function PlaceDetail(
   ];
 
   // Check if user has permissions.
-  udbApi.hasPlacePermission(placeId).then(function(result) {
+  udbApi.hasPlacePermission($scope.placeId).then(function(result) {
     $scope.hasEditPermissions = result.data.hasPermission;
   });
 
   var placeLoaded = udbApi.getPlaceById($scope.placeId);
   var language = 'nl';
+  var cachedPlace;
 
   placeLoaded.then(
       function (place) {
+        cachedPlace = place;
+
         /*var placeHistoryLoaded = udbApi.getEventHistoryById($scope.placeId);
 
         placeHistoryLoaded.then(function(placeHistory) {
           $scope.placeHistory = placeHistory;
         });*/
+
+        var personalVariationLoaded = variationRepository.getPersonalVariation(place);
+
         $scope.place = jsonLDLangFilter(place, language);
         $scope.placeIdIsInvalid = false;
 
+        personalVariationLoaded
+          .then(function (variation) {
+            $scope.place.description = variation.description[language];
+          })
+          .finally(function () {
+            $scope.placeIsEditable = true;
+          });
       },
       function (reason) {
         $scope.placeIdIsInvalid = true;
@@ -91,6 +105,20 @@ function PlaceDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/place/' + placeId + '/edit');
+    $location.path('/place/' + $scope.placeId + '/edit');
+  };
+
+  $scope.updateDescription = function(description) {
+    if ($scope.place.description !== description) {
+      var updatePromise = offerEditor.editDescription(cachedPlace, description);
+
+      updatePromise.finally(function () {
+        if (!description) {
+          $scope.place.description = cachedPlace.description[language];
+        }
+      });
+
+      return updatePromise;
+    }
   };
 }

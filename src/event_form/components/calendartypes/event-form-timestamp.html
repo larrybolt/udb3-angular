@@ -5,7 +5,8 @@
 
       <div udb-datepicker
            ng-change="EventFormStep2.eventTimingChanged()"
-           highlight-date="2015-8-12"
+           highlight-date="{{calendarHighlight.date}}"
+           highlight-extra-class="{{calendarHighlight.extraClass}}"
            ng-model="timestamp.date"></div>
 
       <div class="row">

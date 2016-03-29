@@ -315,19 +315,6 @@
     margin-right: 0.25em;
   }
 
-  .highlight {
-    background-color: #EEE;
-  }
-
-  .highlight:after {
-    color: #006c7a;
-    content: "OMD";
-    display: block;
-    font-size: 11px;
-    font-weight: bold;
-    line-height: 18px;
-    text-transform: uppercase;
-  }
   .image-upload {
     background-color: @white;
     padding: 1em;
@@ -587,4 +574,22 @@
 
 .image-copyright-agreements {
   font-size: 0.85em;
+}
+
+.datepicker-days .highlight {
+  background-color: #EEE;
+}
+
+.datepicker-days .omd.active:after {
+  color: #EEE;
+}
+
+.datepicker-days .omd:after {
+  color: #006c7a;
+  content: "OMD";
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 18px;
+  text-transform: uppercase;
 }

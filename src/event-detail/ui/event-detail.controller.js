@@ -18,7 +18,7 @@ function EventDetail(
   udbApi,
   jsonLDLangFilter,
   variationRepository,
-  eventEditor,
+  offerEditor,
   $location
 ) {
   var activeTabId = 'data';
@@ -115,7 +115,7 @@ function EventDetail(
 
   $scope.updateDescription = function(description) {
     if ($scope.event.description !== description) {
-      var updatePromise = eventEditor.editDescription(cachedEvent, description);
+      var updatePromise = offerEditor.editDescription(cachedEvent, description);
 
       updatePromise.finally(function () {
         if (!description) {
