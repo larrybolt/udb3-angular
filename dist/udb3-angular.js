@@ -4213,6 +4213,15 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     dash.pagedItemViewer = new SearchResultViewer(50, 1);
     dash.openDeleteConfirmModal = openDeleteConfirmModal;
     dash.updateItemViewer = updateItemViewer;
+    dash.username = '';
+
+    udbApi
+      .getMe()
+      .then(greetUser);
+
+    function greetUser(user) {
+      dash.username = user.nick;
+    }
 
     function setItemViewerData(response) {
       dash.pagedItemViewer.setResults(response.data);
@@ -13540,7 +13549,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
 
   $templateCache.put('templates/dashboard.html',
-    "<h1 class=\"title\" id=\"page-title\">Welkom, username</h1>\n" +
+    "<h1 class=\"title\" id=\"page-title\">\n" +
+    "  Welkom, <span ng-bind=\"dash.username\"></span>\n" +
+    "</h1>\n" +
     "<div class=\"text-center\" ng-show=\"dash.pagedItemViewer.loading\">\n" +
     "  <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
     "</div>\n" +

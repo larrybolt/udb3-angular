@@ -20,7 +20,16 @@
     dash.pagedItemViewer = new SearchResultViewer(50, 1);
     dash.openDeleteConfirmModal = openDeleteConfirmModal;
     dash.updateItemViewer = updateItemViewer;
+    dash.username = '';
 
+    udbApi
+      .getMe()
+      .then(greetUser);
+
+    function greetUser(user) {
+      dash.username = user.nick;
+    }
+	
     function setItemViewerData(response) {
       dash.pagedItemViewer.setResults(response.data);
     }
