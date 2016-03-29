@@ -29,7 +29,7 @@
     function greetUser(user) {
       dash.username = user.nick;
     }
-	
+
     function setItemViewerData(response) {
       dash.pagedItemViewer.setResults(response.data);
     }
