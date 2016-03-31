@@ -8864,7 +8864,6 @@ function EventFormStep4Controller(
   $scope.duplicatesSearched = false;
   $scope.saving = false;
   $scope.error = false;
-  $scope.udb3DashboardUrl = appConfig.udb3BaseUrl;
 
   $scope.validateEvent = validateEvent;
   $scope.saveEvent = saveEvent;
@@ -15198,7 +15197,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    </h3>\n" +
     "    <ul class=\"list-inline\" ng-show=\"duplicatesSearched && resultViewer.totalItems > 0\">\n" +
     "      <li>\n" +
-    "        <a class=\"btn btn-default\" ng-href=\"{{ udb3DashboardUrl }}\">Nee, keer terug naar dashboard</a>\n" +
+    "        <a class=\"btn btn-default\" href=\"dashboard\">Nee, keer terug naar dashboard</a>\n" +
     "      </li>\n" +
     "      <li>\n" +
     "        <a class=\"btn btn-primary dubbeldetectie-doorgaan\" ng-click=\"saveEvent()\">\n" +

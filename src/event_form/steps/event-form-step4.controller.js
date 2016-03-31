@@ -37,7 +37,6 @@ function EventFormStep4Controller(
   $scope.duplicatesSearched = false;
   $scope.saving = false;
   $scope.error = false;
-  $scope.udb3DashboardUrl = appConfig.udb3BaseUrl;
 
   $scope.validateEvent = validateEvent;
   $scope.saveEvent = saveEvent;
