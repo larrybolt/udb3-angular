@@ -19,7 +19,9 @@ function PlaceDetail(
   $location,
   jsonLDLangFilter,
   variationRepository,
-  offerEditor
+  offerEditor,
+  eventCrud,
+  $uibModal
 ) {
   var activeTabId = 'data';
 
@@ -41,6 +43,9 @@ function PlaceDetail(
       header: 'Publicatie'
     },
   ];
+  $scope.openDeleteConfirmModal = function () {
+    openPlaceDeleteConfirmModal($scope.place);
+  };
 
   // Check if user has permissions.
   udbApi.hasPlacePermission($scope.placeId).then(function(result) {
@@ -121,4 +126,35 @@ function PlaceDetail(
       return updatePromise;
     }
   };
+
+  function goToDashboard() {
+    $location.path('/dashboard');
+  }
+
+  function openPlaceDeleteConfirmModal(item) {
+
+    function displayModal(place, events) {
+      var modalInstance = $uibModal.open({
+        templateUrl: 'templates/place-delete-confirm-modal.html',
+        controller: 'PlaceDeleteConfirmModalCtrl',
+        resolve: {
+          place: function () {
+            return place;
+          },
+          events: function () {
+            return event;
+          }
+        }
+      });
+
+      modalInstance.result.then(goToDashboard);
+    }
+
+    // Check if this place has planned events.
+    eventCrud
+      .findEventsForLocation(item.id)
+      .then(function(jsonResponse) {
+        displayModal(item, jsonResponse.data.events);
+      });
+  }
 }

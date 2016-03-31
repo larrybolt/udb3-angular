@@ -6086,7 +6086,8 @@ function EventDetail(
   jsonLDLangFilter,
   variationRepository,
   offerEditor,
-  $location
+  $location,
+  $uibModal
 ) {
   var activeTabId = 'data';
 
@@ -6108,6 +6109,9 @@ function EventDetail(
       header: 'Publicatie'
     }
   ];
+  $scope.openDeleteConfirmModal = function () {
+    openEventDeleteConfirmModal($scope.event);
+  };
 
   // Check if user has permissions.
   udbApi.hasPermission(eventId).then(function(result) {
@@ -6201,8 +6205,26 @@ function EventDetail(
   $scope.openEditPage = function() {
     $location.path('/event/' + eventId + '/edit');
   };
+
+  function goToDashboard() {
+    $location.path('/dashboard');
+  }
+
+  function openEventDeleteConfirmModal(item) {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'templates/event-delete-confirm-modal.html',
+      controller: 'EventDeleteConfirmModalCtrl',
+      resolve: {
+        item: function () {
+          return item;
+        }
+      }
+    });
+
+    modalInstance.result.then(goToDashboard);
+  }
 }
-EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location"];
+EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal"];
 
 // Source: src/event_form/components/calendartypes/event-form-period.directive.js
 /**
@@ -10466,7 +10488,9 @@ function PlaceDetail(
   $location,
   jsonLDLangFilter,
   variationRepository,
-  offerEditor
+  offerEditor,
+  eventCrud,
+  $uibModal
 ) {
   var activeTabId = 'data';
 
@@ -10488,6 +10512,9 @@ function PlaceDetail(
       header: 'Publicatie'
     },
   ];
+  $scope.openDeleteConfirmModal = function () {
+    openPlaceDeleteConfirmModal($scope.place);
+  };
 
   // Check if user has permissions.
   udbApi.hasPlacePermission($scope.placeId).then(function(result) {
@@ -10568,8 +10595,39 @@ function PlaceDetail(
       return updatePromise;
     }
   };
+
+  function goToDashboard() {
+    $location.path('/dashboard');
+  }
+
+  function openPlaceDeleteConfirmModal(item) {
+
+    function displayModal(place, events) {
+      var modalInstance = $uibModal.open({
+        templateUrl: 'templates/place-delete-confirm-modal.html',
+        controller: 'PlaceDeleteConfirmModalCtrl',
+        resolve: {
+          place: function () {
+            return place;
+          },
+          events: function () {
+            return event;
+          }
+        }
+      });
+
+      modalInstance.result.then(goToDashboard);
+    }
+
+    // Check if this place has planned events.
+    eventCrud
+      .findEventsForLocation(item.id)
+      .then(function(jsonResponse) {
+        displayModal(item, jsonResponse.data.events);
+      });
+  }
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal"];
 
 // Source: src/saved-searches/components/delete-search-modal.controller.js
 /**
@@ -13476,7 +13534,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "<td>\n" +
     "  <div class=\"pull-right btn-group\" uib-dropdown>\n" +
-    "    <a class=\"btn btn-default\" ng-href=\"{{ ::event.url + '/edit' }}\">Bewerken</a>\n" +
+    "    <a class=\"btn btn-default\" ng-href=\"{{ event.url + '/edit' }}\">Bewerken</a>\n" +
     "    <button type=\"button\" class=\"btn btn-default\" uib-dropdown-toggle><span class=\"caret\"></span></button>\n" +
     "    <ul uib-dropdown-menu role=\"menu\">\n" +
     "      <li role=\"menuitem\">\n" +
