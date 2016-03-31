@@ -13560,7 +13560,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "  <div class=\"panel panel-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
     "    <div class=\"panel-body text-center\">\n" +
     "      <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
-    "        <br/><a href=\"/event\">Een activiteit of monument toevoegen?</a>\n" +
+    "        <br/><a href=\"event\">Een activiteit of monument toevoegen?</a>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "  </div>\n" +
@@ -13570,7 +13570,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"clearfix\">\n" +
     "      <p class=\"invoer-title\"><span class=\"block-header\">Recent</span>\n" +
     "        <span class=\"pull-right\">\n" +
-    "          <a class=\"btn btn-primary \" href=\"/event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
+    "          <a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
     "        </span>\n" +
     "      </p>\n" +
     "    </div>\n" +
@@ -16135,7 +16135,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                <p>\n" +
     "                  <i class=\"fa fa-bookmark\"></i>\n" +
     "                  <span ng-bind=\"::savedSearch.name\"></span></p>\n" +
-    "                <p><a ng-href=\"/search?query={{::savedSearch.query}}\" class=\"small\">Resultaten bekijken</a></p>\n" +
+    "                <p><a ng-href=\"search?query={{::savedSearch.query}}\" class=\"small\">Resultaten bekijken</a></p>\n" +
     "            </td>\n" +
     "            <td class=\"saved-search-query\">\n" +
     "                <textarea ui-codemirror=\"{ onLoad : codemirrorLoaded }\" ng-model=\"::savedSearch.query\" class=\"query form-control\" rows=\"3\"\n" +
@@ -16416,7 +16416,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "          </a>\n" +
     "        </li>\n" +
     "        <li class=\"divider\"></li>\n" +
-    "        <li><a href=\"/saved-searches\">Beheren</a></li>\n" +
+    "        <li><a href=\"saved-searches\">Beheren</a></li>\n" +
     "      </ul>\n" +
     "    </span>\n" +
     "    <i ng-show=\"sb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
