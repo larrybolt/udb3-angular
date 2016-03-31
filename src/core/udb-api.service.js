@@ -36,7 +36,8 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     withCredentials: true,
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    params: {}
   };
   var eventCache = $cacheFactory('eventCache');
 
@@ -629,5 +630,17 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     });
 
     return deferredVariation.promise;
+  };
+
+  this.getDashboardItems = function(page) {
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    if (page > 1) {
+      requestConfig.params.page = page;
+    }
+
+    return $http.get(
+        appConfig.baseUrl + 'dashboard/items',
+        requestConfig
+    );
   };
 }

@@ -11,6 +11,8 @@ describe('Controller: Place Detail', function() {
       offerEditor,
       UdbPlace,
       $q,
+      $uibModal,
+      eventCrud,
       examplePlaceEventJson = {
         '@id': "http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702",
         '@context': "/api/1.0/place.jsonld",
@@ -69,6 +71,8 @@ describe('Controller: Place Detail', function() {
     offerEditor = $injector.get('offerEditor');
     UdbPlace = $injector.get('UdbPlace');
     $q = _$q_;
+    $uibModal = jasmine.createSpyObj('$uibModal', ['open']);
+    eventCrud = jasmine.createSpyObj('eventCrud', ['findEventsForLocation']);
 
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     deferredPermission = $q.defer();
@@ -92,7 +96,9 @@ describe('Controller: Place Detail', function() {
         $location: $location,
         jsonLDLangFilter: jsonLDLangFilter,
         variationRepository: variationRepository,
-        offerEditor: offerEditor
+        offerEditor: offerEditor,
+        $uibModal: $uibModal,
+        eventCrud: eventCrud
       }
     );
   }));
@@ -151,5 +157,43 @@ describe('Controller: Place Detail', function() {
       ''
     );
     expect($scope.place.description).toEqual('Toto is geen zeekoe');
+  });
+  
+  it('should open a confirmation modal showing all the events that are located at the place before deleting it', function () {
+    // run a digest so the scope updates with the current place
+    $scope.$digest();
+    var eventsUsingPlace = [
+      'event-one',
+      'event-two'
+    ]
+    var actualOptions;
+    var modalOptions = {
+      templateUrl: 'templates/place-delete-confirm-modal.html',
+      controller: 'PlaceDeleteConfirmModalCtrl',
+      resolve: {
+        place: jasmine.any(Function),
+        events: jasmine.any(Function)
+      }
+    };
+    eventCrud.findEventsForLocation.and.returnValue($q.resolve({
+      data: {
+        events: eventsUsingPlace
+      }
+    }));
+    $uibModal.open.and.callFake(function(options){
+      actualOptions = options;
+
+      return {
+        result: $q.resolve()
+      };
+    });
+
+    $scope.deletePlace();
+    $scope.$digest();
+
+    expect($uibModal.open).toHaveBeenCalledWith(modalOptions);
+    expect(actualOptions.resolve.place()).toEqual($scope.place);
+    expect(actualOptions.resolve.events()).toEqual(eventsUsingPlace);
+    expect(eventCrud.findEventsForLocation).toHaveBeenCalled();
   });
 });

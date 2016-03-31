@@ -19,7 +19,8 @@ function EventDetail(
   jsonLDLangFilter,
   variationRepository,
   offerEditor,
-  $location
+  $location,
+  $uibModal
 ) {
   var activeTabId = 'data';
 
@@ -41,6 +42,9 @@ function EventDetail(
       header: 'Publicatie'
     }
   ];
+  $scope.deleteEvent = function () {
+    openEventDeleteConfirmModal($scope.event);
+  };
 
   // Check if user has permissions.
   udbApi.hasPermission(eventId).then(function(result) {
@@ -134,4 +138,22 @@ function EventDetail(
   $scope.openEditPage = function() {
     $location.path('/event/' + eventId + '/edit');
   };
+
+  function goToDashboard() {
+    $location.path('/dashboard');
+  }
+
+  function openEventDeleteConfirmModal(item) {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'templates/event-delete-confirm-modal.html',
+      controller: 'EventDeleteConfirmModalCtrl',
+      resolve: {
+        item: function () {
+          return item;
+        }
+      }
+    });
+
+    modalInstance.result.then(goToDashboard);
+  }
 }

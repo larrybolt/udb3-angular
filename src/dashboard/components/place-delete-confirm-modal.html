@@ -2,11 +2,11 @@
     <div class="row">
 
       <div class="col-xs-12" ng-if="!hasEvents">
-        <p>Ben je zeker dat je "<span ng-bind="::item.name"></span>" wil verwijderen?</p>
+        <p>Ben je zeker dat je "<span ng-bind="::place.name"></span>" wil verwijderen?</p>
       </div>
 
       <div class="col-xs-12" ng-if="hasEvents">
-        <p>De locatie "<span ng-bind="::item.name"></span>" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>
+        <p>De locatie "<span ng-bind="::place.name"></span>" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>
 
         <ul>
           <li ng-repeat="event in events" udb-event-link ng-hide="fetching"></li>

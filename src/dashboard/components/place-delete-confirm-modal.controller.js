@@ -17,11 +17,11 @@ function PlaceDeleteConfirmModalController(
   $scope,
   $uibModalInstance,
   eventCrud,
-  item,
+  place,
   events,
   appConfig
 ) {
-  $scope.item = item;
+  $scope.place = place;
   $scope.saving = false;
   $scope.events = events ? events : [];
   $scope.hasEvents = $scope.events.length > 0;
@@ -41,10 +41,10 @@ function PlaceDeleteConfirmModalController(
 
     $scope.saving = true;
     $scope.error = false;
-    var promise = eventCrud.removePlace(item);
+    var promise = eventCrud.removePlace(place);
     promise.then(function(jsonResponse) {
       $scope.saving = false;
-      $uibModalInstance.close(item);
+      $uibModalInstance.close(place);
     }, function() {
       $scope.saving = false;
       $scope.error = true;

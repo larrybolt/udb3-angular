@@ -10,72 +10,75 @@
    */
   angular
     .module('udb.dashboard')
-    .controller('DashboardCtrl', DashboardController);
+    .controller('DashboardController', DashboardController);
 
   /* @ngInject */
-  function DashboardController($scope, $uibModal, udb3Content, eventCrud, UdbEvent, UdbPlace, jsonLDLangFilter) {
+  function DashboardController($scope, $uibModal, udbApi, eventCrud, jsonLDLangFilter, SearchResultViewer) {
 
-    // Scope variables.
-    $scope.loaded = false;
-    $scope.userContent = null;
-    $scope.noContent = true;
+    var dash = this;
 
-    // Scope functions.
-    $scope.getUdb3ContentForCurrentUser = getUdb3ContentForCurrentUser;
-    $scope.openDeleteConfirmModal = openDeleteConfirmModal;
+    dash.pagedItemViewer = new SearchResultViewer(50, 1);
+    dash.openDeleteConfirmModal = openDeleteConfirmModal;
+    dash.updateItemViewer = updateItemViewer;
+    dash.username = '';
 
-    // Load the udb3 content for the current user.
-    getUdb3ContentForCurrentUser();
+    udbApi
+      .getMe()
+      .then(greetUser);
 
-    /**
-     * function to get udb3 content for the current user.
-     */
-    function getUdb3ContentForCurrentUser() {
+    function greetUser(user) {
+      dash.username = user.nick;
+    }
 
-      $scope.userContent = [];
+    function setItemViewerData(response) {
+      dash.pagedItemViewer.setResults(response.data);
+    }
 
-      var promise = udb3Content.getUdb3ContentForCurrentUser();
-      return promise.then(function (content) {
+    function updateItemViewer() {
+      udbApi
+        .getDashboardItems(dash.pagedItemViewer.currentPage)
+        .then(setItemViewerData);
+    }
+    updateItemViewer();
 
-        if (content.data.content && content.data.content.length > 0) {
-
-          // Loop through content to prepare data for html.
-          for (var key in content.data.content) {
-
-            var type = content.data.content[key].type;
-            var item = {
-              type : type
-            };
-            if (type === 'event') {
-              item.details = new UdbEvent();
-              item.details.parseJson(content.data.content[key]);
-              item.details = jsonLDLangFilter(item.details, 'nl');
-            }
-            else if (content.data.content[key].type === 'place') {
-              item.details = new UdbPlace();
-              item.details.parseJson(content.data.content[key]);
-              item.details = jsonLDLangFilter(item.details, 'nl');
-            }
-
-            if (!item.details) {
-              continue;
-            }
-
-            // set urls
-            item.editUrl = '/udb3/' + type + '/' + item.details.id + '/edit';
-            item.exampleUrl = '/udb3/' + type + '/' + item.details.id;
-
-            $scope.userContent[key] = item;
+    function openEventDeleteConfirmModal(item) {
+      var modalInstance = $uibModal.open({
+        templateUrl: 'templates/event-delete-confirm-modal.html',
+        controller: 'EventDeleteConfirmModalCtrl',
+        resolve: {
+          item: function () {
+            return item;
           }
-
-          $scope.loaded = true;
-
         }
-        else {
-          $scope.loaded = true;
-        }
-
       });
+      modalInstance.result.then(updateItemViewer);
+    }
+
+    function openPlaceDeleteConfirmModal(item) {
+
+      function displayModal(place, events) {
+        var modalInstance = $uibModal.open({
+          templateUrl: 'templates/place-delete-confirm-modal.html',
+          controller: 'PlaceDeleteConfirmModalCtrl',
+          resolve: {
+            place: function () {
+              return place;
+            },
+            events: function () {
+              return events;
+            }
+          }
+        });
+
+        modalInstance.result.then(updateItemViewer);
+      }
+
+      // Check if this place has planned events.
+      eventCrud
+        .findEventsForLocation(item.id)
+        .then(function(jsonResponse) {
+          displayModal(item, jsonResponse.data.events);
+        });
     }
 
     /**
@@ -84,64 +87,14 @@
      * @param {Object} item
      */
     function openDeleteConfirmModal(item) {
+      var itemType = item['@id'].indexOf('event') === -1 ? 'place' : 'event';
 
-      var modalInstance = null;
-
-      if (item.type === 'event') {
-
-        modalInstance = $uibModal.open({
-          templateUrl: 'templates/event-delete-confirm-modal.html',
-          controller: 'EventDeleteConfirmModalCtrl',
-          resolve: {
-            item: function () {
-              return item.details;
-            }
-          }
-        });
-        modalInstance.result.then(function (item) {
-          removeItem(item);
-        });
-
+      if (itemType === 'event') {
+        openEventDeleteConfirmModal(item);
       }
       else {
-
-        // Check if this place has planned events.
-        var promise = eventCrud.findEventsForLocation(item.details.id);
-        promise.then(function(jsonResponse) {
-
-          modalInstance = $uibModal.open({
-            templateUrl: 'templates/place-delete-confirm-modal.html',
-            controller: 'PlaceDeleteConfirmModalCtrl',
-            resolve: {
-              item: function () {
-                return item.details;
-              },
-              events: function () {
-                return jsonResponse.data.events;
-              }
-            }
-          });
-          modalInstance.result.then(function (item) {
-            removeItem(item);
-          });
-
-        });
-
+        openPlaceDeleteConfirmModal(item);
       }
-
-    }
-
-    /**
-     * Open the confirmation modal to delete an event/place.
-     */
-    function removeItem(item) {
-      var i = 0;
-      for (; i < $scope.userContent.length; i++) {
-        if ($scope.userContent[i].details.id === item.id) {
-          break;
-        }
-      }
-      $scope.userContent.splice(i, 1);
     }
 
   }

@@ -11,6 +11,7 @@ describe('Controller: Event Detail', function() {
       offerEditor,
       UdbEvent,
       $q,
+      $uibModal,
       exampleEventJson = {
         "@id": "http://culudb-silex.dev:8080/event/1111be8c-a412-488d-9ecc-8fdf9e52edbc",
         "@context": "/api/1.0/event.jsonld",
@@ -145,6 +146,7 @@ describe('Controller: Event Detail', function() {
     offerEditor = $injector.get('offerEditor');
     UdbEvent = $injector.get('UdbEvent');
     $q = _$q_;
+    $uibModal = jasmine.createSpyObj('$uibModal', ['open']);
 
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     deferredPermission = $q.defer();
@@ -172,7 +174,8 @@ describe('Controller: Event Detail', function() {
         $location: $location,
         jsonLDLangFilter: jsonLDLangFilter,
         variationRepository: variationRepository,
-        offerEditor: offerEditor
+        offerEditor: offerEditor,
+        $uibModal: $uibModal
       }
     );
   }));
@@ -234,5 +237,31 @@ describe('Controller: Event Detail', function() {
       ''
     );
     expect($scope.event.description).toEqual('Toto is geen zeekoe');
+  });
+
+  it('should open a confirmation modal before deleting an event', function () {
+    // run a digest so the scope updates with the current event
+    $scope.$digest();
+    var actualOptions;
+    var modalOptions = {
+      templateUrl: 'templates/event-delete-confirm-modal.html',
+      controller: 'EventDeleteConfirmModalCtrl',
+      resolve: {
+        item: jasmine.any(Function),
+      }
+    };
+    $uibModal.open.and.callFake(function(options){
+      actualOptions = options;
+
+      return {
+        result: $q.resolve()
+      };
+    });
+
+    $scope.deleteEvent();
+    $scope.$digest();
+
+    expect($uibModal.open).toHaveBeenCalledWith(modalOptions);
+    expect(actualOptions.resolve.item()).toEqual($scope.event);
   });
 });
