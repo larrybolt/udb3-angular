@@ -42,7 +42,7 @@ function EventDetail(
       header: 'Publicatie'
     }
   ];
-  $scope.openDeleteConfirmModal = function () {
+  $scope.deleteEvent = function () {
     openEventDeleteConfirmModal($scope.event);
   };
 

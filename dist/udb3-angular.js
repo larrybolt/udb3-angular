@@ -4258,7 +4258,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
               return place;
             },
             events: function () {
-              return event;
+              return events;
             }
           }
         });
@@ -6109,7 +6109,7 @@ function EventDetail(
       header: 'Publicatie'
     }
   ];
-  $scope.openDeleteConfirmModal = function () {
+  $scope.deleteEvent = function () {
     openEventDeleteConfirmModal($scope.event);
   };
 
@@ -10493,6 +10493,7 @@ function PlaceDetail(
   $uibModal
 ) {
   var activeTabId = 'data';
+  var controller = this;
 
   $scope.placeId = placeId;
   $scope.placeIdIsInvalid = false;
@@ -10512,7 +10513,7 @@ function PlaceDetail(
       header: 'Publicatie'
     },
   ];
-  $scope.openDeleteConfirmModal = function () {
+  $scope.deletePlace = function () {
     openPlaceDeleteConfirmModal($scope.place);
   };
 
@@ -10611,7 +10612,7 @@ function PlaceDetail(
             return place;
           },
           events: function () {
-            return event;
+            return events;
           }
         }
       });
@@ -13881,7 +13882,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "              <span class=\"sr-only\">Toggle Dropdown</span>\n" +
     "            </button>\n" +
     "            <ul class=\"dropdown-menu\" role=\"menu\">\n" +
-    "              <li><a href=\"#\" ng-click=\"openDeleteConfirmModal()\">Verwijderen</a>\n" +
+    "              <li><a href=\"#\" ng-click=\"deleteEvent()\">Verwijderen</a>\n" +
     "              </li>\n" +
     "            </ul>\n" +
     "          </div>\n" +

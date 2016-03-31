@@ -65,7 +65,7 @@
               return place;
             },
             events: function () {
-              return event;
+              return events;
             }
           }
         });

@@ -24,6 +24,7 @@ function PlaceDetail(
   $uibModal
 ) {
   var activeTabId = 'data';
+  var controller = this;
 
   $scope.placeId = placeId;
   $scope.placeIdIsInvalid = false;
@@ -43,7 +44,7 @@ function PlaceDetail(
       header: 'Publicatie'
     },
   ];
-  $scope.openDeleteConfirmModal = function () {
+  $scope.deletePlace = function () {
     openPlaceDeleteConfirmModal($scope.place);
   };
 
@@ -142,7 +143,7 @@ function PlaceDetail(
             return place;
           },
           events: function () {
-            return event;
+            return events;
           }
         }
       });
