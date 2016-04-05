@@ -31,12 +31,11 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
   EventCrudJob.prototype.constructor = EventCrudJob;
 
   EventCrudJob.prototype.finish = function () {
+    BaseJob.prototype.finish.call(this);
+
     if (this.state !== JobStates.FAILED) {
-      this.state = JobStates.FINISHED;
-      this.finished = new Date();
       this.task.resolve(this.item.id);
     }
-    this.progress = 100;
   };
 
   EventCrudJob.prototype.fail = function () {
@@ -95,9 +94,6 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
 
       case 'updateMajorInfo':
         return 'Hoofdinformatie aanpassen: "' +  this.item.name.nl + '".';
-
-      case 'deleteOffer':
-        return 'Item verwijderen: "' +  this.item.name + '".';
 
     }
 

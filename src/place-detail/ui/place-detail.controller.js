@@ -138,7 +138,7 @@ function PlaceDetail(
   controller.goToDashboardOnJobCompletion = function(job) {
     job.task.promise
       .then(goToDashboard);
-  }
+  };
 
   function openPlaceDeleteConfirmModal(item) {
 
@@ -162,7 +162,7 @@ function PlaceDetail(
 
     // Check if this place has planned events.
     eventCrud
-      .findEventsForLocation(item.id)
+      .findEventsAtPlace(item)
       .then(function(jsonResponse) {
         displayModal(item, jsonResponse.data.events);
       });

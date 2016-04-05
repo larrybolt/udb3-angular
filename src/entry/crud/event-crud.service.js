@@ -11,7 +11,14 @@ angular
   .service('eventCrud', EventCrud);
 
 /* @ngInject */
-function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
+function EventCrud(
+  jobLogger,
+  udbApi,
+  EventCrudJob,
+  DeleteOfferJob,
+  $rootScope ,
+  $q
+) {
 
   var service = this;
 
@@ -64,7 +71,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     var deferredJob = $q.defer();
 
     function logAndResolveJob(jobData) {
-      var job = new EventCrudJob(jobData.commandId, offer, 'deleteOffer');
+      var job = new DeleteOfferJob(jobData.commandId, offer);
       offer.showDeleted = true;
       jobLogger.addJob(job);
       deferredJob.resolve(job);

@@ -150,7 +150,7 @@ function EventDetail(
   controller.goToDashboardOnJobCompletion = function(job) {
     job.task.promise
       .then(goToDashboard);
-  }
+  };
 
   function openEventDeleteConfirmModal(item) {
     var modalInstance = $uibModal.open({

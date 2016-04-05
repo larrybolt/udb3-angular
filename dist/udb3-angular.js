@@ -4455,12 +4455,11 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
   EventCrudJob.prototype.constructor = EventCrudJob;
 
   EventCrudJob.prototype.finish = function () {
+    BaseJob.prototype.finish.call(this);
+
     if (this.state !== JobStates.FAILED) {
-      this.state = JobStates.FINISHED;
-      this.finished = new Date();
       this.task.resolve(this.item.id);
     }
-    this.progress = 100;
   };
 
   EventCrudJob.prototype.fail = function () {
@@ -4520,9 +4519,6 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
       case 'updateMajorInfo':
         return 'Hoofdinformatie aanpassen: "' +  this.item.name.nl + '".';
 
-      case 'deleteOffer':
-        return 'Item verwijderen: "' +  this.item.name + '".';
-
     }
 
   };
@@ -4543,7 +4539,14 @@ angular
   .service('eventCrud', EventCrud);
 
 /* @ngInject */
-function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
+function EventCrud(
+  jobLogger,
+  udbApi,
+  EventCrudJob,
+  DeleteOfferJob,
+  $rootScope ,
+  $q
+) {
 
   var service = this;
 
@@ -4596,7 +4599,7 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
     var deferredJob = $q.defer();
 
     function logAndResolveJob(jobData) {
-      var job = new EventCrudJob(jobData.commandId, offer, 'deleteOffer');
+      var job = new DeleteOfferJob(jobData.commandId, offer);
       offer.showDeleted = true;
       jobLogger.addJob(job);
       deferredJob.resolve(job);
@@ -4910,7 +4913,59 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
   $rootScope.$on('eventTimingChanged', updateMajorInfo);
   $rootScope.$on('eventTitleChanged', updateMajorInfo);
 }
-EventCrud.$inject = ["jobLogger", "udbApi", "EventCrudJob", "$rootScope", "$q"];
+EventCrud.$inject = ["jobLogger", "udbApi", "EventCrudJob", "DeleteOfferJob", "$rootScope", "$q"];
+
+// Source: src/entry/delete/delete-offer-job.factory.js
+/**
+ * @ngdoc service
+ * @name udb.entry.DeleteOfferJob
+ * @description
+ * This is the factory that creates jobs to delete events and places.
+ */
+angular
+  .module('udb.entry')
+  .factory('DeleteOfferJob', DeleteOfferJobFactory);
+
+/* @ngInject */
+function DeleteOfferJobFactory(BaseJob, $q, JobStates) {
+
+  /**
+   * @class DeleteOfferJob
+   * @constructor
+   * @param {string} commandId
+   * @param {UdbEvent|UdbPlace} item
+   */
+  var DeleteOfferJob = function (commandId, item) {
+    BaseJob.call(this, commandId);
+
+    this.item = item;
+    this.task = $q.defer();
+  };
+
+  DeleteOfferJob.prototype = Object.create(BaseJob.prototype);
+  DeleteOfferJob.prototype.constructor = DeleteOfferJob;
+
+  DeleteOfferJob.prototype.finish = function () {
+    BaseJob.prototype.finish.call(this);
+
+    if (this.state !== JobStates.FAILED) {
+      this.task.resolve();
+    }
+  };
+
+  DeleteOfferJob.prototype.fail = function () {
+    BaseJob.prototype.fail.call(this);
+
+    this.task.reject();
+  };
+
+  DeleteOfferJob.prototype.getDescription = function() {
+    return 'Item verwijderen: "' +  this.item.name + '".';
+  };
+
+  return (DeleteOfferJob);
+}
+DeleteOfferJobFactory.$inject = ["BaseJob", "$q", "JobStates"];
 
 // Source: src/entry/editing/offer-editor.service.js
 /**
@@ -6090,6 +6145,7 @@ function EventDetail(
   $uibModal
 ) {
   var activeTabId = 'data';
+  var controller = this;
 
   $scope.eventId = eventId;
   $scope.eventIdIsInvalid = false;
@@ -6213,10 +6269,10 @@ function EventDetail(
   /**
    * @param {EventCrudJob} job
    */
-  function goToDashboardOnJobCompletion(job) {
+  controller.goToDashboardOnJobCompletion = function(job) {
     job.task.promise
       .then(goToDashboard);
-  }
+  };
 
   function openEventDeleteConfirmModal(item) {
     var modalInstance = $uibModal.open({
@@ -6230,7 +6286,7 @@ function EventDetail(
     });
 
     modalInstance.result
-      .then(goToDashboardOnJobCompletion);
+      .then(controller.goToDashboardOnJobCompletion);
   }
 }
 EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal"];
@@ -10613,10 +10669,10 @@ function PlaceDetail(
   /**
    * @param {EventCrudJob} job
    */
-  function goToDashboardOnJobCompletion(job) {
+  controller.goToDashboardOnJobCompletion = function(job) {
     job.task.promise
       .then(goToDashboard);
-  }
+  };
 
   function openPlaceDeleteConfirmModal(item) {
 
@@ -10635,12 +10691,12 @@ function PlaceDetail(
       });
 
       modalInstance.result
-        .then(goToDashboardOnJobCompletion);
+        .then(controller.goToDashboardOnJobCompletion);
     }
 
     // Check if this place has planned events.
     eventCrud
-      .findEventsForLocation(item.id)
+      .findEventsAtPlace(item)
       .then(function(jsonResponse) {
         displayModal(item, jsonResponse.data.events);
       });

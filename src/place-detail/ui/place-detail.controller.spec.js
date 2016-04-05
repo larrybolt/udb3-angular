@@ -72,7 +72,7 @@ describe('Controller: Place Detail', function() {
     UdbPlace = $injector.get('UdbPlace');
     $q = _$q_;
     $uibModal = jasmine.createSpyObj('$uibModal', ['open']);
-    eventCrud = jasmine.createSpyObj('eventCrud', ['findEventsForLocation']);
+    eventCrud = jasmine.createSpyObj('eventCrud', ['findEventsAtPlace']);
 
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     deferredPermission = $q.defer();
@@ -175,7 +175,7 @@ describe('Controller: Place Detail', function() {
         events: jasmine.any(Function)
       }
     };
-    eventCrud.findEventsForLocation.and.returnValue($q.resolve({
+    eventCrud.findEventsAtPlace.and.returnValue($q.resolve({
       data: {
         events: eventsUsingPlace
       }
@@ -194,7 +194,7 @@ describe('Controller: Place Detail', function() {
     expect($uibModal.open).toHaveBeenCalledWith(modalOptions);
     expect(actualOptions.resolve.place()).toEqual($scope.place);
     expect(actualOptions.resolve.events()).toEqual(eventsUsingPlace);
-    expect(eventCrud.findEventsForLocation).toHaveBeenCalled();
+    expect(eventCrud.findEventsAtPlace).toHaveBeenCalled();
   });
 
   it('should redirect to the dashboard after successfully deleting a Place', function () {
