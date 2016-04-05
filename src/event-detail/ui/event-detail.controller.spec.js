@@ -140,7 +140,7 @@ describe('Controller: Event Detail', function() {
     $scope = $rootScope.$new();
     eventId = '1111be8c-a412-488d-9ecc-8fdf9e52edbc';
     udbApi = $injector.get('udbApi');
-    $location = $injector.get('$location');
+    $location = jasmine.createSpyObj('$location', ['path']);
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
     variationRepository = $injector.get('variationRepository');
     offerEditor = $injector.get('offerEditor');
@@ -254,7 +254,7 @@ describe('Controller: Event Detail', function() {
       actualOptions = options;
 
       return {
-        result: $q.resolve()
+        result: $q.defer().promise
       };
     });
 
@@ -263,5 +263,18 @@ describe('Controller: Event Detail', function() {
 
     expect($uibModal.open).toHaveBeenCalledWith(modalOptions);
     expect(actualOptions.resolve.item()).toEqual($scope.event);
+  });
+
+  it('should redirect to the dashboard after successfully deleting an Event', function () {
+    var job = {
+      task: {
+        promise: $q.resolve()
+      }
+    };
+
+    eventController.goToDashboardOnJobCompletion(job);
+    $scope.$digest();
+
+    expect($location.path).toHaveBeenCalledWith('/dashboard');
   });
 });

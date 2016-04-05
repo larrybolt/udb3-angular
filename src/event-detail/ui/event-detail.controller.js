@@ -23,6 +23,7 @@ function EventDetail(
   $uibModal
 ) {
   var activeTabId = 'data';
+  var controller = this;
 
   $scope.eventId = eventId;
   $scope.eventIdIsInvalid = false;
@@ -143,6 +144,14 @@ function EventDetail(
     $location.path('/dashboard');
   }
 
+  /**
+   * @param {EventCrudJob} job
+   */
+  controller.goToDashboardOnJobCompletion = function(job) {
+    job.task.promise
+      .then(goToDashboard);
+  }
+
   function openEventDeleteConfirmModal(item) {
     var modalInstance = $uibModal.open({
       templateUrl: 'templates/event-delete-confirm-modal.html',
@@ -154,6 +163,7 @@ function EventDetail(
       }
     });
 
-    modalInstance.result.then(goToDashboard);
+    modalInstance.result
+      .then(controller.goToDashboardOnJobCompletion);
   }
 }

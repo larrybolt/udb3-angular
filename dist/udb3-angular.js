@@ -6210,6 +6210,14 @@ function EventDetail(
     $location.path('/dashboard');
   }
 
+  /**
+   * @param {EventCrudJob} job
+   */
+  function goToDashboardOnJobCompletion(job) {
+    job.task.promise
+      .then(goToDashboard);
+  }
+
   function openEventDeleteConfirmModal(item) {
     var modalInstance = $uibModal.open({
       templateUrl: 'templates/event-delete-confirm-modal.html',
@@ -6221,7 +6229,8 @@ function EventDetail(
       }
     });
 
-    modalInstance.result.then(goToDashboard);
+    modalInstance.result
+      .then(goToDashboardOnJobCompletion);
   }
 }
 EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal"];
@@ -10601,6 +10610,14 @@ function PlaceDetail(
     $location.path('/dashboard');
   }
 
+  /**
+   * @param {EventCrudJob} job
+   */
+  function goToDashboardOnJobCompletion(job) {
+    job.task.promise
+      .then(goToDashboard);
+  }
+
   function openPlaceDeleteConfirmModal(item) {
 
     function displayModal(place, events) {
@@ -10617,7 +10634,8 @@ function PlaceDetail(
         }
       });
 
-      modalInstance.result.then(goToDashboard);
+      modalInstance.result
+        .then(goToDashboardOnJobCompletion);
     }
 
     // Check if this place has planned events.
@@ -16028,7 +16046,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "              <span class=\"sr-only\">Toggle Dropdown</span>\n" +
     "            </button>\n" +
     "            <ul class=\"dropdown-menu\" role=\"menu\">\n" +
-    "              <li><a href=\"#\" ng-click=\"openDeleteConfirmModal()\">Verwijderen</a>\n" +
+    "              <li><a href=\"#\" ng-click=\"deletePlace()\">Verwijderen</a>\n" +
     "              </li>\n" +
     "            </ul>\n" +
     "          </div>\n" +

@@ -65,7 +65,7 @@ describe('Controller: Place Detail', function() {
     $scope = $rootScope.$new();
     placeId = '03458606-eb3f-462d-97f3-548710286702';
     udbApi = $injector.get('udbApi');
-    $location = $injector.get('$location');
+    $location = jasmine.createSpyObj('$location', ['path']);
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
     variationRepository = $injector.get('variationRepository');
     offerEditor = $injector.get('offerEditor');
@@ -158,7 +158,7 @@ describe('Controller: Place Detail', function() {
     );
     expect($scope.place.description).toEqual('Toto is geen zeekoe');
   });
-  
+
   it('should open a confirmation modal showing all the events that are located at the place before deleting it', function () {
     // run a digest so the scope updates with the current place
     $scope.$digest();
@@ -184,7 +184,7 @@ describe('Controller: Place Detail', function() {
       actualOptions = options;
 
       return {
-        result: $q.resolve()
+        result: $q.defer().promise
       };
     });
 
@@ -195,5 +195,18 @@ describe('Controller: Place Detail', function() {
     expect(actualOptions.resolve.place()).toEqual($scope.place);
     expect(actualOptions.resolve.events()).toEqual(eventsUsingPlace);
     expect(eventCrud.findEventsForLocation).toHaveBeenCalled();
+  });
+
+  it('should redirect to the dashboard after successfully deleting a Place', function () {
+    var job = {
+      task: {
+        promise: $q.resolve()
+      }
+    };
+
+    placeController.goToDashboardOnJobCompletion(job);
+    $scope.$digest();
+
+    expect($location.path).toHaveBeenCalledWith('/dashboard');
   });
 });
