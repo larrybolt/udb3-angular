@@ -51,10 +51,10 @@
           }
         }
       });
-      modalInstance.result.then(updateItemViewer);
+      modalInstance.result.then(updateItemViewerOnJobFeedback);
     }
 
-    function openPlaceDeleteConfirmModal(item) {
+    function openPlaceDeleteConfirmModal(place) {
 
       function displayModal(place, events) {
         var modalInstance = $uibModal.open({
@@ -70,15 +70,28 @@
           }
         });
 
-        modalInstance.result.then(updateItemViewer);
+        modalInstance.result.then(updateItemViewerOnJobFeedback);
+      }
+
+      function showModalWithEvents(eventsJsonResponse) {
+        displayModal(place, eventsJsonResponse.data.events);
       }
 
       // Check if this place has planned events.
       eventCrud
-        .findEventsForLocation(item.id)
-        .then(function(jsonResponse) {
-          displayModal(item, jsonResponse.data.events);
-        });
+        .findEventsAtPlace(place)
+        .then(showModalWithEvents);
+    }
+
+    /**
+     * @param {EventCrudJob} job
+     */
+    function updateItemViewerOnJobFeedback(job) {
+      function unlockItem() {
+        job.item.showDeleted = false;
+      }
+
+      job.task.promise.then(updateItemViewer, unlockItem);
     }
 
     /**

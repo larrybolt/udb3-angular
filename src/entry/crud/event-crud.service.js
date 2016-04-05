@@ -36,25 +36,13 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
   };
 
   /**
-   * Remove an event.
-   */
-  service.removeEvent = function (item) {
-    var jobPromise = udbApi.removeEvent(item.id);
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'removeEvent');
-      jobLogger.addJob(job);
-    });
-    return jobPromise;
-  };
-
-  /**
-   * Finds events for given location/place id.
+   * Find all the events that take place here.
    *
-   * @param {int} id
+   * @param {UdbPlace} place
    *   Place Id to find events for
    */
-  service.findEventsForLocation = function(id) {
-    var jobPromise = udbApi.findEventsForLocation(id);
+  service.findEventsAtPlace = function(place) {
+    var jobPromise = udbApi.findEventsAtPlace(place);
     return jobPromise;
   };
 
@@ -66,15 +54,28 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
   };
 
   /**
-   * Remove a place.
+   * Delete an offer.
+   *
+   * @param {UdbPlace|UdbEvent} offer
+   *
+   * @return {Promise.<EventCrudJob>}
    */
-  this.removePlace = function (item) {
-    var jobPromise = udbApi.removePlace(item.id);
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'removePlace');
+  service.deleteOffer = function (offer) {
+    var deferredJob = $q.defer();
+
+    function logAndResolveJob(jobData) {
+      var job = new EventCrudJob(jobData.commandId, offer, 'deleteOffer');
+      offer.showDeleted = true;
       jobLogger.addJob(job);
-    });
-    return jobPromise;
+      deferredJob.resolve(job);
+    }
+
+    udbApi
+      .deleteOffer(offer)
+      .success(logAndResolveJob)
+      .error(deferredJob.reject);
+
+    return deferredJob.promise;
   };
 
   /**

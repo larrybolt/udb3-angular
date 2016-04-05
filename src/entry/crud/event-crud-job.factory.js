@@ -39,6 +39,11 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     this.progress = 100;
   };
 
+  EventCrudJob.prototype.fail = function () {
+    BaseJob.prototype.fail.call(this);
+    this.task.reject();
+  };
+
   EventCrudJob.prototype.getDescription = function() {
 
     switch (this.action) {
@@ -91,11 +96,8 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
       case 'updateMajorInfo':
         return 'Hoofdinformatie aanpassen: "' +  this.item.name.nl + '".';
 
-      case 'removeEvent':
-        return 'Event verwijderen: "' +  this.item.name.nl + '".';
-
-      case 'removePlace':
-        return 'Locatie verwijderen: "' +  this.item.name + '".';
+      case 'deleteOffer':
+        return 'Item verwijderen: "' +  this.item.name + '".';
 
     }
 

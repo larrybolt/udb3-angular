@@ -2857,9 +2857,9 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.removeEvent = function (id, event) {
+  this.deleteOffer = function (offer) {
     return $http['delete'](
-      appConfig.baseApiUrl + 'event/' + id + '/delete',
+      offer.apiUrl,
       defaultApiConfig
     );
   };
@@ -2869,13 +2869,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       appConfig.baseApiUrl + 'place',
       event,
       defaultApiConfig
-    );
-  };
-
-  this.removePlace = function (id, event) {
-    return $http['delete'](
-        appConfig.baseApiUrl + 'place/' + id + '/delete',
-        defaultApiConfig
     );
   };
 
@@ -2904,15 +2897,15 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * find events for a given location id
-   * @param {type} id
+   * Find all the events that take place there.
+
+   * @param {UdbPlace} place
+
    * @returns {array}
    */
-  this.findEventsForLocation = function(id) {
-    return $http.get(appConfig.baseUrl + 'place/' + id + '/events',
-      {
-        'id': id
-      },
+  this.findEventsAtPlace = function(place) {
+    return $http.get(
+      place.apiUrl + '/events',
       defaultApiConfig
     );
   };
@@ -4101,22 +4094,21 @@ function EventDeleteConfirmModalController($scope, $uibModalInstance, eventCrud,
   $scope.deleteEvent = deleteEvent;
 
   /**
-   * Remove the event in db.
+   * Delete the event.
    */
   function deleteEvent() {
-
     $scope.error = false;
     $scope.saving = true;
 
-    var promise = eventCrud.removeEvent(item);
-    promise.then(function(jsonResponse) {
-      $scope.saving = false;
-      $uibModalInstance.close(item);
-    }, function() {
+    function showError() {
       $scope.saving = false;
       $scope.error = true;
-    });
+    }
 
+    eventCrud
+      .deleteOffer(item)
+      .then($uibModalInstance.close)
+      .catch(showError);
   }
 
   /**
@@ -4159,27 +4151,19 @@ function PlaceDeleteConfirmModalController(
   $scope.cancelRemoval = cancelRemoval;
   $scope.deletePlace = deletePlace;
 
-  /**
-   * Remove the event in db.
-   */
   function deletePlace() {
-
-    // Extra check in case delete place is tried with events.
-    if (events) {
-      $uibModalInstance.dismiss();
-    }
-
     $scope.saving = true;
     $scope.error = false;
-    var promise = eventCrud.removePlace(place);
-    promise.then(function(jsonResponse) {
-      $scope.saving = false;
-      $uibModalInstance.close(place);
-    }, function() {
+
+    function showError() {
       $scope.saving = false;
       $scope.error = true;
-    });
+    }
 
+    eventCrud
+      .deleteOffer(place)
+      .then($uibModalInstance.close)
+      .catch(showError);
   }
 
   /**
@@ -4244,10 +4228,10 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
           }
         }
       });
-      modalInstance.result.then(updateItemViewer);
+      modalInstance.result.then(updateItemViewerOnJobFeedback);
     }
 
-    function openPlaceDeleteConfirmModal(item) {
+    function openPlaceDeleteConfirmModal(place) {
 
       function displayModal(place, events) {
         var modalInstance = $uibModal.open({
@@ -4263,15 +4247,28 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
           }
         });
 
-        modalInstance.result.then(updateItemViewer);
+        modalInstance.result.then(updateItemViewerOnJobFeedback);
+      }
+
+      function showModalWithEvents(eventsJsonResponse) {
+        displayModal(place, eventsJsonResponse.data.events);
       }
 
       // Check if this place has planned events.
       eventCrud
-        .findEventsForLocation(item.id)
-        .then(function(jsonResponse) {
-          displayModal(item, jsonResponse.data.events);
-        });
+        .findEventsAtPlace(place)
+        .then(showModalWithEvents);
+    }
+
+    /**
+     * @param {EventCrudJob} job
+     */
+    function updateItemViewerOnJobFeedback(job) {
+      function unlockItem() {
+        job.item.showDeleted = false;
+      }
+
+      job.task.promise.then(updateItemViewer, unlockItem);
     }
 
     /**
@@ -4466,6 +4463,11 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     this.progress = 100;
   };
 
+  EventCrudJob.prototype.fail = function () {
+    BaseJob.prototype.fail.call(this);
+    this.task.reject();
+  };
+
   EventCrudJob.prototype.getDescription = function() {
 
     switch (this.action) {
@@ -4518,11 +4520,8 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
       case 'updateMajorInfo':
         return 'Hoofdinformatie aanpassen: "' +  this.item.name.nl + '".';
 
-      case 'removeEvent':
-        return 'Event verwijderen: "' +  this.item.name.nl + '".';
-
-      case 'removePlace':
-        return 'Locatie verwijderen: "' +  this.item.name + '".';
+      case 'deleteOffer':
+        return 'Item verwijderen: "' +  this.item.name + '".';
 
     }
 
@@ -4569,25 +4568,13 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
   };
 
   /**
-   * Remove an event.
-   */
-  service.removeEvent = function (item) {
-    var jobPromise = udbApi.removeEvent(item.id);
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'removeEvent');
-      jobLogger.addJob(job);
-    });
-    return jobPromise;
-  };
-
-  /**
-   * Finds events for given location/place id.
+   * Find all the events that take place here.
    *
-   * @param {int} id
+   * @param {UdbPlace} place
    *   Place Id to find events for
    */
-  service.findEventsForLocation = function(id) {
-    var jobPromise = udbApi.findEventsForLocation(id);
+  service.findEventsAtPlace = function(place) {
+    var jobPromise = udbApi.findEventsAtPlace(place);
     return jobPromise;
   };
 
@@ -4599,15 +4586,28 @@ function EventCrud(jobLogger, udbApi, EventCrudJob, $rootScope , $q) {
   };
 
   /**
-   * Remove a place.
+   * Delete an offer.
+   *
+   * @param {UdbPlace|UdbEvent} offer
+   *
+   * @return {Promise.<EventCrudJob>}
    */
-  this.removePlace = function (item) {
-    var jobPromise = udbApi.removePlace(item.id);
-    jobPromise.success(function (jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'removePlace');
+  service.deleteOffer = function (offer) {
+    var deferredJob = $q.defer();
+
+    function logAndResolveJob(jobData) {
+      var job = new EventCrudJob(jobData.commandId, offer, 'deleteOffer');
+      offer.showDeleted = true;
       jobLogger.addJob(job);
-    });
-    return jobPromise;
+      deferredJob.resolve(job);
+    }
+
+    udbApi
+      .deleteOffer(offer)
+      .success(logAndResolveJob)
+      .error(deferredJob.reject);
+
+    return deferredJob.promise;
   };
 
   /**
@@ -13567,9 +13567,13 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    </div>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
-    "  <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\" ng-click=\"cancelRemoval()\">Annuleren</button>\n" +
-    "  <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\" ng-click=\"deleteEvent()\">Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i></button>\n" +
-    "</div>"
+    "  <button type=\"button\" class=\"btn btn-default\" ng-click=\"cancelRemoval()\">\n" +
+    "    Annuleren\n" +
+    "  </button>\n" +
+    "  <button type=\"button\" class=\"btn btn-primary\" ng-click=\"deleteEvent()\">\n" +
+    "    Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i>\n" +
+    "  </button>\n" +
+    "</div>\n"
   );
 
 
@@ -13597,9 +13601,10 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    </div>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
-    "  <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\" ng-show=\"hasEvents\" ng-click=\"cancelRemoval()\">Sluiten</button>\n" +
-    "  <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\" ng-hide=\"hasEvents\" ng-click=\"cancelRemoval()\">Annuleren</button>\n" +
-    "  <button type=\"button\" class=\"btn btn-primary\" ng-if=\"!hasEvents\" ng-click=\"deletePlace()\">\n" +
+    "  <button type=\"button\" class=\"btn btn-default\" ng-click=\"cancelRemoval()\">\n" +
+    "    Annuleren\n" +
+    "  </button>\n" +
+    "  <button type=\"button\" class=\"btn btn-primary\" ng-disabled=\"hasEvents\" ng-click=\"deletePlace()\">\n" +
     "    Verwijderen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i>\n" +
     "  </button>\n" +
     "</div>\n"
@@ -13636,11 +13641,15 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    <div class=\"panel panel-default\">\n" +
     "      <table class=\"table\">\n" +
     "        <tbody>\n" +
-    "          <tr udb-dashboard-event-item ng-if=\"event['@type'] === 'Event'\"\n" +
-    "            ng-repeat-start=\"event in dash.pagedItemViewer.events\">\n" +
+    "          <tr udb-dashboard-event-item\n" +
+    "              ng-if=\"event['@type'] === 'Event'\"\n" +
+    "              class=\"dashboard-item\" ng-class=\"{'deleting': event.showDeleted}\"\n" +
+    "              ng-repeat-start=\"event in dash.pagedItemViewer.events\">\n" +
     "          </tr>\n" +
-    "          <tr udb-dashboard-place-item ng-if=\"event['@type'] === 'Place'\"\n" +
-    "            ng-repeat-end>\n" +
+    "          <tr udb-dashboard-place-item\n" +
+    "              ng-if=\"event['@type'] === 'Place'\"\n" +
+    "              class=\"dashboard-item\" ng-class=\"{'deleting': event.showDeleted}\"\n" +
+    "              ng-repeat-end>\n" +
     "          </tr>\n" +
     "        </tbody>\n" +
     "      </table>\n" +

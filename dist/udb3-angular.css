@@ -14,6 +14,10 @@ textarea.resize-vertical {
     transform: rotate(360deg);
   }
 }
+.dashboard-item.deleting {
+  opacity: 0.2;
+  pointer-events: none;
+}
 /*!
  *  Font Awesome 4.2.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
