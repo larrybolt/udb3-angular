@@ -392,9 +392,9 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.removeEvent = function (id, event) {
+  this.deleteOffer = function (offer) {
     return $http['delete'](
-      appConfig.baseApiUrl + 'event/' + id + '/delete',
+      offer.apiUrl,
       defaultApiConfig
     );
   };
@@ -404,13 +404,6 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       appConfig.baseApiUrl + 'place',
       event,
       defaultApiConfig
-    );
-  };
-
-  this.removePlace = function (id, event) {
-    return $http['delete'](
-        appConfig.baseApiUrl + 'place/' + id + '/delete',
-        defaultApiConfig
     );
   };
 
@@ -439,15 +432,15 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * find events for a given location id
-   * @param {type} id
+   * Find all the events that take place there.
+
+   * @param {UdbPlace} place
+
    * @returns {array}
    */
-  this.findEventsForLocation = function(id) {
-    return $http.get(appConfig.baseUrl + 'place/' + id + '/events',
-      {
-        'id': id
-      },
+  this.findEventsAtPlace = function(place) {
+    return $http.get(
+      place.apiUrl + '/events',
       defaultApiConfig
     );
   };

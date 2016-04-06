@@ -23,22 +23,21 @@ function EventDeleteConfirmModalController($scope, $uibModalInstance, eventCrud,
   $scope.deleteEvent = deleteEvent;
 
   /**
-   * Remove the event in db.
+   * Delete the event.
    */
   function deleteEvent() {
-
     $scope.error = false;
     $scope.saving = true;
 
-    var promise = eventCrud.removeEvent(item);
-    promise.then(function(jsonResponse) {
-      $scope.saving = false;
-      $uibModalInstance.close(item);
-    }, function() {
+    function showError() {
       $scope.saving = false;
       $scope.error = true;
-    });
+    }
 
+    eventCrud
+      .deleteOffer(item)
+      .then($uibModalInstance.close)
+      .catch(showError);
   }
 
   /**
