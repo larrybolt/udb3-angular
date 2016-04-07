@@ -132,6 +132,14 @@ function PlaceDetail(
     $location.path('/dashboard');
   }
 
+  /**
+   * @param {EventCrudJob} job
+   */
+  controller.goToDashboardOnJobCompletion = function(job) {
+    job.task.promise
+      .then(goToDashboard);
+  };
+
   function openPlaceDeleteConfirmModal(item) {
 
     function displayModal(place, events) {
@@ -148,12 +156,13 @@ function PlaceDetail(
         }
       });
 
-      modalInstance.result.then(goToDashboard);
+      modalInstance.result
+        .then(controller.goToDashboardOnJobCompletion);
     }
 
     // Check if this place has planned events.
     eventCrud
-      .findEventsForLocation(item.id)
+      .findEventsAtPlace(item)
       .then(function(jsonResponse) {
         displayModal(item, jsonResponse.data.events);
       });

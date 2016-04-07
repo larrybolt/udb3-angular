@@ -29,27 +29,19 @@ function PlaceDeleteConfirmModalController(
   $scope.cancelRemoval = cancelRemoval;
   $scope.deletePlace = deletePlace;
 
-  /**
-   * Remove the event in db.
-   */
   function deletePlace() {
-
-    // Extra check in case delete place is tried with events.
-    if (events) {
-      $uibModalInstance.dismiss();
-    }
-
     $scope.saving = true;
     $scope.error = false;
-    var promise = eventCrud.removePlace(place);
-    promise.then(function(jsonResponse) {
-      $scope.saving = false;
-      $uibModalInstance.close(place);
-    }, function() {
+
+    function showError() {
       $scope.saving = false;
       $scope.error = true;
-    });
+    }
 
+    eventCrud
+      .deleteOffer(place)
+      .then($uibModalInstance.close)
+      .catch(showError);
   }
 
   /**
