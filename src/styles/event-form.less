@@ -1,9 +1,13 @@
 .offer-form {
-  @border-color: #ddd;
+  @border-color: @udb-gray-light;
+
+  .alert {
+    margin-top: 10px;
+  }
 
   #or-label {
     font-style: italic;
-    color: #777;
+    color: @udb-gray-dark;
     position: relative;
     background-color: @body-bg;
     text-align: center;
@@ -64,7 +68,7 @@
     background-color: @white;
   }
   .add-date-teaser {
-    color: #777;
+    color: @udb-gray-dark;
   }
 
   .datepicker-cpo {
@@ -141,7 +145,7 @@
   }
   .datepicker_icon:after {
     font-family: "FontAwesome";
-    color: #777;
+    color: @udb-gray-dark;
     content: "\f073";
     position: absolute;
     right: 6px;
@@ -153,7 +157,7 @@
     position: relative;
   }
   .day-prefix {
-    color: #777;
+    color: @udb-gray-dark;
     margin-bottom: 0;
     font-style: italic;
     text-align: center;
@@ -204,7 +208,7 @@
     margin-right: 6px;
   }
   .btn-nvt {
-    color: #777;
+    color: @udb-gray-dark;
   }
   .extra-titel,
   .extra-beschrijving,
@@ -260,17 +264,28 @@
   .state-nvt .nvt {
     display: block;
   }
+
+  // Images
   .image-upload {
+    background-color: @white;
     border: 2px dotted @border-color;
     display: block;
+    padding: 10px;
     width: 100%;
   }
   .image-upload-list {
     display: none;
-
+    margin-bottom: 10px;
+    h4 {
+      margin-top: 0;
+    }
+    .media {
+      border-bottom: 1px solid @border-color;
+      padding: 10px;
+    }
   }
   .image-upload-icon:before {
-    color: #777;
+    color: @udb-gray-dark;
     text-align: center;
     font-family: "FontAwesome";
     content: "\f03e";
@@ -278,7 +293,7 @@
   }
   .image-upload-none {
     text-align: center;
-    color: #777;
+    color: @udb-gray-dark;
   }
   .tip {
     color: #626262;
@@ -310,21 +325,12 @@
     color: #333;
   }
   .extra-task .fa {
-    color: #777;
+    color: @udb-gray-dark;
     margin-left: 0.85em;
     margin-right: 0.25em;
   }
-
-  .image-upload {
-    background-color: @white;
-    padding: 1em;
-  }
-  .image-upload-list {
-    margin-bottom: 1em;
-  }
-  .image-upload-list .media {
-    border-bottom: 1px solid @border-color;
-    padding: 10px;
+  .media-body {
+    line-height: 1.3em;
   }
   .media-actions {
     margin-top: 10px;
@@ -334,21 +340,16 @@
     border-top: 1px solid @border-color;
     padding-top: 1em;
   }
-
   .reservatie-info {
     margin: 0.5em 0 1em 1.5em;
-
   }
   .extra-tickets-email .checkbox {
     margin-bottom: 1em;
-
   }
   .reservatie-periode-toevoegen {
     margin-bottom: 1em;
     display: block;
-
   }
-
   .btn-reservatie {
     margin-bottom: 1em;
   }
@@ -365,7 +366,6 @@
     font-style: normal;
     line-height: 30px;
     font-size: 17px;
-
   }
   .recently-added td {
     -webkit-transition: background-color 500ms linear;
@@ -381,11 +381,9 @@
   }
   .module-title {
     line-height: 1.42857;
-    font-size: 15px;
     font-weight: bold;
     border-bottom: 2px solid @border-color;
     padding: 5px;
-
   }
   .multiselect-container {
     position: absolute;
@@ -450,24 +448,19 @@
   .checkbox small {
     color: @gray;
   }
-
   .block-divider {
     border-bottom: 1px solid @border-color;
     padding: 0.5em 0;
   }
-
   .show-only-places {
     display: none;
   }
-
   .only-places .show-only-places {
     display: initial;
   }
-
   .only-places .hide-only-places {
     display: none;
   }
-
   .btn-tile {
     display: inline-block;
     text-align: left;
@@ -477,24 +470,19 @@
     padding: 1em;
     width: 100%;
     position: relative;
-
     .preview-corner {
       display: none;
     }
-
     .preview-icon {
       display: none;
-
     }
 
     &:hover {
       background-color: @link-color;
       color: @white;
-
       .title {
         text-decoration: underline;
       }
-
       .preview-corner {
         display: block;
         position: absolute;
@@ -506,7 +494,6 @@
         border-width: 0 0 50px 50px;
         border-color: transparent transparent #FFF transparent;
       }
-
       .preview-icon {
         display: block;
         position: absolute;
@@ -523,7 +510,6 @@
       background-size: cover;
       position: relative;
       background-position: center center;
-
       &:before {
         position: absolute;
         top: 0;
@@ -537,9 +523,7 @@
         content: " ";
         z-index: 0
       }
-
     }
-
     .title {
       color: @white;
       position: relative;
@@ -548,23 +532,18 @@
       font-size: 30px;
       font-weight: 700;
     }
-
     .list-inline {
       color: @white;
       position: relative;
     }
-
     table {
       margin-bottom: 0;
     }
-
   }
-
   .media.main-image {
     background-color: aliceblue;
-    border-color: black;
+    border-color: darken(aliceblue, 15%);
   }
-
   .main-image {
     .select-main-image {
       display: none;
@@ -577,11 +556,11 @@
 }
 
 .datepicker-days .highlight {
-  background-color: #EEE;
+  background-color: @udb-gray-light;
 }
 
 .datepicker-days .omd.active:after {
-  color: #EEE;
+  color: @udb-gray-light;
 }
 
 .datepicker-days .omd:after {

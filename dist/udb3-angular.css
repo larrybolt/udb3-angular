@@ -2460,9 +2460,12 @@ body {
     padding: 3px 20px 3px 40px;
   }*/
 }
+.offer-form .alert {
+  margin-top: 10px;
+}
 .offer-form #or-label {
   font-style: italic;
-  color: #777;
+  color: #777777;
   position: relative;
   background-color: #ffffff;
   text-align: center;
@@ -2522,7 +2525,7 @@ body {
   background-color: #ffffff;
 }
 .offer-form .add-date-teaser {
-  color: #777;
+  color: #777777;
 }
 .offer-form .datepicker-cpo {
   margin-bottom: 1em;
@@ -2593,7 +2596,7 @@ body {
 }
 .offer-form .datepicker_icon:after {
   font-family: "FontAwesome";
-  color: #777;
+  color: #777777;
   content: "\f073";
   position: absolute;
   right: 6px;
@@ -2605,7 +2608,7 @@ body {
   position: relative;
 }
 .offer-form .day-prefix {
-  color: #777;
+  color: #777777;
   margin-bottom: 0;
   font-style: italic;
   text-align: center;
@@ -2655,7 +2658,7 @@ body {
   margin-right: 6px;
 }
 .offer-form .btn-nvt {
-  color: #777;
+  color: #777777;
 }
 .offer-form .extra-titel,
 .offer-form .extra-beschrijving,
@@ -2710,15 +2713,25 @@ body {
   display: block;
 }
 .offer-form .image-upload {
+  background-color: #ffffff;
   border: 2px dotted #dddddd;
   display: block;
+  padding: 10px;
   width: 100%;
 }
 .offer-form .image-upload-list {
   display: none;
+  margin-bottom: 10px;
+}
+.offer-form .image-upload-list h4 {
+  margin-top: 0;
+}
+.offer-form .image-upload-list .media {
+  border-bottom: 1px solid #dddddd;
+  padding: 10px;
 }
 .offer-form .image-upload-icon:before {
-  color: #777;
+  color: #777777;
   text-align: center;
   font-family: "FontAwesome";
   content: "\f03e";
@@ -2726,7 +2739,7 @@ body {
 }
 .offer-form .image-upload-none {
   text-align: center;
-  color: #777;
+  color: #777777;
 }
 .offer-form .tip {
   color: #626262;
@@ -2758,20 +2771,12 @@ body {
   color: #333;
 }
 .offer-form .extra-task .fa {
-  color: #777;
+  color: #777777;
   margin-left: 0.85em;
   margin-right: 0.25em;
 }
-.offer-form .image-upload {
-  background-color: #ffffff;
-  padding: 1em;
-}
-.offer-form .image-upload-list {
-  margin-bottom: 1em;
-}
-.offer-form .image-upload-list .media {
-  border-bottom: 1px solid #dddddd;
-  padding: 10px;
+.offer-form .media-body {
+  line-height: 1.3em;
 }
 .offer-form .media-actions {
   margin-top: 10px;
@@ -2820,7 +2825,6 @@ body {
 }
 .offer-form .module-title {
   line-height: 1.42857;
-  font-size: 15px;
   font-weight: bold;
   border-bottom: 2px solid #dddddd;
   padding: 5px;
@@ -2971,7 +2975,7 @@ body {
 }
 .offer-form .media.main-image {
   background-color: aliceblue;
-  border-color: black;
+  border-color: #a3d4ff;
 }
 .offer-form .main-image .select-main-image {
   display: none;
@@ -2980,10 +2984,10 @@ body {
   font-size: 0.85em;
 }
 .datepicker-days .highlight {
-  background-color: #EEE;
+  background-color: #dddddd;
 }
 .datepicker-days .omd.active:after {
-  color: #EEE;
+  color: #dddddd;
 }
 .datepicker-days .omd:after {
   color: #006c7a;

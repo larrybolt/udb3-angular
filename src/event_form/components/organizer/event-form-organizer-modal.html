@@ -45,8 +45,8 @@
                      typeahead-min-length="3"
                      typeahead-template-url="templates/city-suggestion.html">
             </span>
-            <div class="alert alert-danger" ng-show="cityAutoCompleteError">
-              <span class="help-block">Er was een probleem tijdens het ophalen van de steden</span>
+            <div class="alert alert-danger" role="alert" ng-show="cityAutoCompleteError">
+              Er was een probleem tijdens het ophalen van de steden
             </div>
           </div>
           <div id="gemeente-gekozen" ng-if="selectedCity">

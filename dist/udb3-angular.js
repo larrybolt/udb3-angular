@@ -14117,7 +14117,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
 
 
   $templateCache.put('templates/event-form-period.html',
-    "<div id=\"wanneer-periode\" class=\"row\">\n" +
+    "<div id=\"wanneer-periode\">\n" +
     "  <div class=\"col-xs-12 col-sm-4\">\n" +
     "    <section class=\"add-date\">\n" +
     "      <div class=\"form-group\">\n" +
@@ -14149,7 +14149,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      Selecteer een geldige start en eind datum datum.\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "</div>"
+    "</div>\n"
   );
 
 
@@ -14388,7 +14388,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
-    "        <label>Beschrijving</label>\n" +
+    "        <label>Beschrijving <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"description\" required>\n" +
     "        <p class=\"help-block\">\n" +
     "          Schrijf goede beschrijving van je afbeelding wordt gelezen door zoekmachines en gebruikers met een visuele beperking.\n" +
@@ -14396,7 +14396,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
-    "        <label>Copyright</label>\n" +
+    "        <label>Copyright <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"copyright\" required>\n" +
     "        <p class=\"help-block\">\n" +
     "          Vermeld de naam van de rechtenhoudende fotograaf.</p>\n" +
@@ -14584,8 +14584,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                     typeahead-min-length=\"3\"\n" +
     "                     typeahead-template-url=\"templates/city-suggestion.html\">\n" +
     "            </span>\n" +
-    "            <div class=\"alert alert-danger\" ng-show=\"cityAutoCompleteError\">\n" +
-    "              <span class=\"help-block\">Er was een probleem tijdens het ophalen van de steden</span>\n" +
+    "            <div class=\"alert alert-danger\" role=\"alert\" ng-show=\"cityAutoCompleteError\">\n" +
+    "              Er was een probleem tijdens het ophalen van de steden\n" +
     "            </div>\n" +
     "          </div>\n" +
     "          <div id=\"gemeente-gekozen\" ng-if=\"selectedCity\">\n" +
@@ -15178,8 +15178,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                   typeahead-min-length=\"3\"\n" +
     "                   typeahead-template-url=\"templates/city-suggestion.html\"/>\n" +
     "          </span>\n" +
-    "          <div class=\"alert alert-danger\" ng-show=\"cityAutoCompleteError\">\n" +
-    "            <span class=\"help-block\">Er was een probleem tijdens het ophalen van de steden</span>\n" +
+    "          <div class=\"alert alert-danger\" role=\"alert\" ng-show=\"cityAutoCompleteError\">\n" +
+    "            Er was een probleem tijdens het ophalen van de steden\n" +
     "          </div>\n" +
     "        </div>\n" +
     "        <div id=\"gemeente-gekozen\" ng-show=\"selectedCity !== ''\">\n" +
@@ -15218,8 +15218,8 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                </div>\n" +
     "              </div>\n" +
     "            </span>\n" +
-    "            <div class=\"alert alert-danger\" ng-show=\"locationAutoCompleteError\">\n" +
-    "              <span class=\"help-block\">Er was een probleem tijdens het ophalen van de locaties</span>\n" +
+    "            <div class=\"alert alert-danger\" role=\"alert\" ng-show=\"locationAutoCompleteError\">\n" +
+    "              Er was een probleem tijdens het ophalen van de locaties\n" +
     "            </div>\n" +
     "          </div>\n" +
     "\n" +
@@ -15373,7 +15373,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "    </h2>\n" +
     "\n" +
     "    <div class=\"row\">\n" +
-    "      <div class=\"col-sm-8\">\n" +
+    "      <div class=\"col-sm-7\">\n" +
     "\n" +
     "        <div class=\"row extra-titnieel\">\n" +
     "          <div class=\"extra-task state-complete\">\n" +
@@ -15529,10 +15529,14 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                             typeahead-min-length=\"3\"\n" +
     "                             typeahead-template-url=\"templates/organizer-typeahead-template.html\"/>\n" +
     "                      <div class=\"dropdown-menu-no-results text-center\" ng-show=\"emptyOrganizerAutocomplete\">\n" +
-    "                        <span>Organisator niet gevonden?</span>\n" +
-    "                        <button type='button' class='btn btn-primary' ng-click=\"openOrganizerModal()\">\n" +
-    "                          Nieuwe organisator toevoegen\n" +
-    "                        </button>\n" +
+    "                        <div class=\"panel panel-default text-center\">\n" +
+    "                          <div class=\"panel-body\">\n" +
+    "                            <p>Organisator niet gevonden?</p>\n" +
+    "                            <button type='button' class='btn btn-primary' ng-click=\"openOrganizerModal()\">\n" +
+    "                              Nieuwe organisator toevoegen\n" +
+    "                            </button>\n" +
+    "                          </div>\n" +
+    "                        </div>\n" +
     "                      </div>\n" +
     "                    </span>\n" +
     "                  </div>\n" +
@@ -15855,7 +15859,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "\n" +
     "      </div>\n" +
     "\n" +
-    "      <div class=\"col-sm-4\">\n" +
+    "      <div class=\"col-sm-5\">\n" +
     "\n" +
     "        <div class=\"image-upload\" ng-class=\"eventFormData.mediaObjects.length ? 'state-complete' : 'state-incomplete'\">\n" +
     "          <div class=\"image-upload-none state incomplete\">\n" +
@@ -15880,7 +15884,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                  <div class=\"media-actions\">\n" +
     "                      <a class=\"btn btn-xs btn-primary\" ng-click=\"editImage(image)\">Wijzigen</a>\n" +
     "                      <a class=\"btn btn-xs btn-danger\" ng-click=\"removeImage(image)\">Verwijderen</a>\n" +
-    "                      <a class=\"btn btn-xs btn-default select-main-image\" ng-click=\"selectMainImage(image)\">Hoofdafbeelding</a>\n" +
+    "                      <a class=\"btn btn-xs btn-default select-main-image\" ng-click=\"selectMainImage(image)\">Maak hoofdafbeelding</a>\n" +
     "                  </div>\n" +
     "\n" +
     "                </div>\n" +

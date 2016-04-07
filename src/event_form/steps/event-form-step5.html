@@ -9,7 +9,7 @@
     </h2>
 
     <div class="row">
-      <div class="col-sm-8">
+      <div class="col-sm-7">
 
         <div class="row extra-titnieel">
           <div class="extra-task state-complete">
@@ -165,10 +165,14 @@
                              typeahead-min-length="3"
                              typeahead-template-url="templates/organizer-typeahead-template.html"/>
                       <div class="dropdown-menu-no-results text-center" ng-show="emptyOrganizerAutocomplete">
-                        <span>Organisator niet gevonden?</span>
-                        <button type='button' class='btn btn-primary' ng-click="openOrganizerModal()">
-                          Nieuwe organisator toevoegen
-                        </button>
+                        <div class="panel panel-default text-center">
+                          <div class="panel-body">
+                            <p>Organisator niet gevonden?</p>
+                            <button type='button' class='btn btn-primary' ng-click="openOrganizerModal()">
+                              Nieuwe organisator toevoegen
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </span>
                   </div>
@@ -491,7 +495,7 @@
 
       </div>
 
-      <div class="col-sm-4">
+      <div class="col-sm-5">
 
         <div class="image-upload" ng-class="eventFormData.mediaObjects.length ? 'state-complete' : 'state-incomplete'">
           <div class="image-upload-none state incomplete">
@@ -516,7 +520,7 @@
                   <div class="media-actions">
                       <a class="btn btn-xs btn-primary" ng-click="editImage(image)">Wijzigen</a>
                       <a class="btn btn-xs btn-danger" ng-click="removeImage(image)">Verwijderen</a>
-                      <a class="btn btn-xs btn-default select-main-image" ng-click="selectMainImage(image)">Hoofdafbeelding</a>
+                      <a class="btn btn-xs btn-default select-main-image" ng-click="selectMainImage(image)">Maak hoofdafbeelding</a>
                   </div>
 
                 </div>
