@@ -8943,9 +8943,9 @@ function EventFormStep4Controller(
   // main storage for event form.
   $scope.eventFormData = EventFormData;
 
-  $scope.titleInputOptions = {
-    updateOn: 'change blur'
-  };
+  $scope.titleInputOptions = EventFormData.id === '' ?
+    {updateOn: 'default'} :
+    {updateOn: 'change blur'};
 
   $scope.infoMissing = false;
   $scope.duplicatesSearched = false;
@@ -15300,8 +15300,10 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
-    "    <p ng-show=\"eventFormData.id === '' && eventFormData.name.nl !== ''\">\n" +
-    "      <a class=\"btn btn-primary titel-doorgaan\" ng-click=\"validateEvent(true)\">\n" +
+    "    <p ng-show=\"eventFormData.id === ''\">\n" +
+    "      <a class=\"btn btn-primary titel-doorgaan\"\n" +
+    "          ng-click=\"validateEvent(true)\"\n" +
+    "          ng-class=\"{'disabled': eventFormData.name.nl === ''}\">\n" +
     "        Doorgaan <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"saving\"></i>\n" +
     "      </a>\n" +
     "    </p>\n" +

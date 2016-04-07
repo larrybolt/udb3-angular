@@ -29,9 +29,9 @@ function EventFormStep4Controller(
   // main storage for event form.
   $scope.eventFormData = EventFormData;
 
-  $scope.titleInputOptions = {
-    updateOn: 'change blur'
-  };
+  $scope.titleInputOptions = EventFormData.id === '' ?
+    {updateOn: 'default'} :
+    {updateOn: 'change blur'};
 
   $scope.infoMissing = false;
   $scope.duplicatesSearched = false;
