@@ -3117,7 +3117,7 @@ angular
   .factory('UdbEvent', UdbEventFactory);
 
 /* @ngInject */
-function UdbEventFactory(EventTranslationState, UdbPlace) {
+function UdbEventFactory(EventTranslationState, UdbPlace, moment) {
 
   var EventPricing = {
     FREE: 'free',
@@ -3256,6 +3256,13 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
       this.endDate = jsonEvent.endDate;
       this.subEvent = jsonEvent.subEvent || [];
       this.openingHours = jsonEvent.openingHours || [];
+      if (this.calendarType === 'multiple' && moment(jsonEvent.startDate).diff(jsonEvent.endDate, 'days') === 0) {
+        // Same day, but multiple openingshours
+        this.calendarType = 'single';
+
+        // event.openingsHours is already in use?
+        this.openingHours = this.subEvent;
+      }
       this.mediaObject = jsonEvent.mediaObject || [];
       this.typicalAgeRange = jsonEvent.typicalAgeRange || '';
       this.bookingInfo = jsonEvent.bookingInfo || {};
@@ -3406,7 +3413,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
 
   return (UdbEvent);
 }
-UdbEventFactory.$inject = ["EventTranslationState", "UdbPlace"];
+UdbEventFactory.$inject = ["EventTranslationState", "UdbPlace", "moment"];
 
 // Source: src/core/udb-openinghours.factory.js
 /**
@@ -14014,6 +14021,14 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "                <ng-switch on=\"event.calendarType\">\n" +
     "                  <span ng-switch-when=\"single\">\n" +
     "                     {{ event.startDate | date: 'dd/MM/yyyy' }}\n" +
+    "                    {{event._openingHours.length}}\n" +
+    "                    <span ng-if=\"event.openingHours.length==1\">\n" +
+    "                      van {{ event.openingHours[0].startDate | date: 'HH:mm' }}\n" +
+    "                      tot {{ event.openingHours[0].endDate | date: 'HH:mm' }}\n" +
+    "                    </span>\n" +
+    "                    <span ng-if=\"event.openingHours.length>1\">\n" +
+    "                      meerdere tijdstippen\n" +
+    "                    </span>\n" +
     "                  </span>\n" +
     "                  <span ng-switch-when=\"multiple\">\n" +
     "                     Van {{ event.startDate | date: 'dd/MM/yyyy' }} tot {{ event.endDate | date: 'dd/MM/yyyy' }}\n" +

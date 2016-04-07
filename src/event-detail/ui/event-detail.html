@@ -84,6 +84,14 @@
                 <ng-switch on="event.calendarType">
                   <span ng-switch-when="single">
                      {{ event.startDate | date: 'dd/MM/yyyy' }}
+                    {{event._openingHours.length}}
+                    <span ng-if="event.openingHours.length==1">
+                      van {{ event.openingHours[0].startDate | date: 'HH:mm' }}
+                      tot {{ event.openingHours[0].endDate | date: 'HH:mm' }}
+                    </span>
+                    <span ng-if="event.openingHours.length>1">
+                      meerdere tijdstippen
+                    </span>
                   </span>
                   <span ng-switch-when="multiple">
                      Van {{ event.startDate | date: 'dd/MM/yyyy' }} tot {{ event.endDate | date: 'dd/MM/yyyy' }}
