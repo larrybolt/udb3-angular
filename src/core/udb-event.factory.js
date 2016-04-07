@@ -157,6 +157,11 @@ function UdbEventFactory(EventTranslationState, UdbPlace, moment) {
 
         // event.openingsHours is already in use?
         this.openingHours = this.subEvent;
+      } else if (this.calendarType === 'single' && this.startDate !== this.endDate) {
+        this.openingHours = [{
+          startDate: this.startDate,
+          endDate: this.endDate
+        }];
       }
       this.mediaObject = jsonEvent.mediaObject || [];
       this.typicalAgeRange = jsonEvent.typicalAgeRange || '';

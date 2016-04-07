@@ -84,7 +84,6 @@
                 <ng-switch on="event.calendarType">
                   <span ng-switch-when="single">
                      {{ event.startDate | date: 'dd/MM/yyyy' }}
-                    {{event._openingHours.length}}
                     <span ng-if="event.openingHours.length==1">
                       van {{ event.openingHours[0].startDate | date: 'HH:mm' }}
                       tot {{ event.openingHours[0].endDate | date: 'HH:mm' }}
