@@ -12,7 +12,7 @@ angular
   .factory('UdbEvent', UdbEventFactory);
 
 /* @ngInject */
-function UdbEventFactory(EventTranslationState, UdbPlace, moment) {
+function UdbEventFactory(EventTranslationState, UdbPlace) {
 
   var EventPricing = {
     FREE: 'free',
@@ -151,18 +151,6 @@ function UdbEventFactory(EventTranslationState, UdbPlace, moment) {
       this.endDate = jsonEvent.endDate;
       this.subEvent = jsonEvent.subEvent || [];
       this.openingHours = jsonEvent.openingHours || [];
-      if (this.calendarType === 'multiple' && moment(jsonEvent.startDate).diff(jsonEvent.endDate, 'days') === 0) {
-        // Same day, but multiple openingshours
-        this.calendarType = 'single';
-
-        // event.openingsHours is already in use?
-        this.openingHours = this.subEvent;
-      } else if (this.calendarType === 'single' && this.startDate !== this.endDate) {
-        this.openingHours = [{
-          startDate: this.startDate,
-          endDate: this.endDate
-        }];
-      }
       this.mediaObject = jsonEvent.mediaObject || [];
       this.typicalAgeRange = jsonEvent.typicalAgeRange || '';
       this.bookingInfo = jsonEvent.bookingInfo || {};
