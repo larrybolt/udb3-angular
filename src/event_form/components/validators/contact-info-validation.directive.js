@@ -35,7 +35,7 @@ function UdbContactInfoValidationDirective() {
 
         if (ngModel.$modelValue.type === 'email' && !EMAIL_REGEXP.test(ngModel.$modelValue.value)) {
           EMAIL_REGEXP.test(ngModel.$modelValue.value);
-          scope.infoErrorMessage = 'Gelieve een geldig email adres in te vullen';
+          scope.infoErrorMessage = 'Gelieve een geldig e-mailadres adres in te vullen';
           ngModel.$setValidity('contactinfo', false);
 
         }

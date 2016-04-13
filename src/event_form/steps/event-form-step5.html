@@ -140,7 +140,7 @@
             <div class="col-sm-8">
               <section class="state incomplete">
                 <a class="btn btn-default to-filling" ng-click="organizerCssClass = 'state-filling'">
-                  Organisator toevoegen
+                    Organisatie toevoegen
                 </a>
               </section>
               <section class="state complete">
@@ -167,7 +167,7 @@
                       <div class="dropdown-menu-no-results text-center" ng-show="emptyOrganizerAutocomplete">
                         <div class="panel panel-default text-center">
                           <div class="panel-body">
-                            <p>Organisator niet gevonden?</p>
+                            <p>Organisatie niet gevonden?</p>
                             <button type='button' class='btn btn-primary' ng-click="openOrganizerModal()">
                               Nieuwe organisator toevoegen
                             </button>
@@ -384,7 +384,7 @@
             <div class="extra-task">
               <div class="col-sm-8 col-sm-offset-3" ng-hide="eventFormData.bookingInfo.availabilityStarts">
                 <a class="reservatie-periode-toevoegen" href="#" ng-click="openBookingPeriodModal()">
-                  Reservatie-periode toevoegen
+                    Reservatieperiode toevoegen
                 </a>
               </div>
               <div class="col-sm-8 col-sm-offset-3" ng-show="eventFormData.bookingInfo.availabilityStarts">
@@ -394,7 +394,7 @@
                   <span> tot </span>
                   <span ng-bind="eventFormData.bookingInfo.availabilityEnds | date:'dd-MM-yyyy'"></span>
                   <a class="reservatie-periode-toevoegen" href="#" ng-click="openBookingPeriodModal()">
-                    Reservatie-periode wijzigen
+                      Reservatieperiode wijzigen
                   </a>
                 </span>
               </div>
