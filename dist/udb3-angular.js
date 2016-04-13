@@ -1935,6 +1935,41 @@ function CityAutocomplete($q, $http, appConfig, UdbPlace, jsonLDLangFilter) {
 }
 CityAutocomplete.$inject = ["$q", "$http", "appConfig", "UdbPlace", "jsonLDLangFilter"];
 
+// Source: src/core/components/calendar-summary/calendar-summary.controller.js
+angular
+  .module('udb.core')
+  .controller('CalendarSummaryController', calendarSummaryController);
+
+function calendarSummaryController($scope) {
+  $scope.getOpeningHoursCount = function(offer) {
+    if (offer.calendarType === 'single' && offer.startDate !== offer.endDate) {
+      offer.openingHours = [{
+        startDate: offer.startDate,
+        endDate: offer.endDate
+      }];
+    }
+    return offer.openingHours.length;
+  };
+}
+calendarSummaryController.$inject = ["$scope"];
+
+// Source: src/core/components/calendar-summary/calendar-summary.directive.js
+angular
+  .module('udb.core')
+  .directive('udbCalendarSummary', udbCalendarSummary);
+
+function udbCalendarSummary() {
+  return {
+    restrict: 'E',
+    scope: {
+      offer: '=',
+      showOpeningHours: '='
+    },
+    templateUrl: 'templates/calendar-summary.directive.html',
+    controller: 'CalendarSummaryController'
+  };
+}
+
 // Source: src/core/components/datepicker/datepicker.directive.js
 (function () {
 /**
@@ -13569,7 +13604,42 @@ function searchDirective() {
 
 // Source: .tmp/udb3-angular.templates.js
 angular.module('udb.core').run(['$templateCache', function($templateCache) {
-$templateCache.put('templates/unexpected-error-modal.html',
+$templateCache.put('templates/calendar-summary.directive.html',
+    "<span ng-if=\"offer.calendarType\" ng-switch=\"offer.calendarType\">\n" +
+    "\n" +
+    "  <span ng-switch-when=\"single\">\n" +
+    "    <span ng-bind=\"::offer.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "\n" +
+    "    <span ng-if=\"showOpeningHours\">\n" +
+    "      <span ng-if=\"getOpeningHoursCount(offer) == 1\">\n" +
+    "        van <span ng-bind=\"::offer.openingHours[0].startDate | date: 'HH:mm'\"></span>\n" +
+    "        tot <span ng-bind=\"::offer.openingHours[0].endDate | date: 'HH:mm'\"></span>\n" +
+    "      </span>\n" +
+    "      <span ng-if=\"getOpeningHoursCount(offer) > 1\">\n" +
+    "        meerdere tijdstippen\n" +
+    "      </span>\n" +
+    "    </span>\n" +
+    "  </span>\n" +
+    "\n" +
+    "  <span ng-switch-when=\"multiple\">\n" +
+    "     Van <span ng-bind=\"::offer.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "     tot <span ng-bind=\"::offer.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "  </span>\n" +
+    "\n" +
+    "  <span ng-switch-when=\"periodic\">\n" +
+    "     Van <span ng-bind=\"::offer.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "     tot <span ng-bind=\"::offer.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
+    "  </span>\n" +
+    "\n" +
+    "  <span ng-switch-when=\"permanent\">\n" +
+    "     Permanent\n" +
+    "  </span>\n" +
+    "\n" +
+    "</span>"
+  );
+
+
+  $templateCache.put('templates/unexpected-error-modal.html',
     "<div class=\"modal-body\">\n" +
     "  <p ng-bind=\"errorMessage\"></p>\n" +
     "</div>\n" +
@@ -13588,21 +13658,9 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "  <br/>\n" +
     "  <small>\n" +
     "    <span class=\"dashboard-item-type\" ng-bind=\"::event.type.label\"></span>\n" +
-    "    <span  ng-if=\"event.calendarType\" ng-switch=\"event.calendarType\">\n" +
+    "    <span ng-if=\"event.calendarType\">\n" +
     "      <span> - </span>\n" +
-    "      <span class=\"dashboard-item-calendar\" ng-switch-when=\"single\">\n" +
-    "        <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "      </span>\n" +
-    "      <span class=\"dashboard-item-calendar\" ng-switch-when=\"permanent\">\n" +
-    "        Permanent\n" +
-    "      </span>\n" +
-    "      <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->\n" +
-    "      <span class=\"dashboard-item-calendar\" ng-switch-default>\n" +
-    "        <span>Van </span>\n" +
-    "        <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "        <span> tot </span>\n" +
-    "        <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "      </span>\n" +
+    "      <udb-calendar-summary offer=\"event\" show-opening-hours=\"true\"></udb-calendar-summary>\n" +
     "    </span>\n" +
     "  </small>\n" +
     "</td>\n" +
@@ -14011,20 +14069,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "            <tr>\n" +
     "              <td><strong>Wanneer</strong></td>\n" +
     "              <td>\n" +
-    "                <ng-switch on=\"event.calendarType\">\n" +
-    "                  <span ng-switch-when=\"single\">\n" +
-    "                     {{ event.startDate | date: 'dd/MM/yyyy' }}\n" +
-    "                  </span>\n" +
-    "                  <span ng-switch-when=\"multiple\">\n" +
-    "                     Van {{ event.startDate | date: 'dd/MM/yyyy' }} tot {{ event.endDate | date: 'dd/MM/yyyy' }}\n" +
-    "                  </span>\n" +
-    "                  <span ng-switch-when=\"periodic\">\n" +
-    "                     Van {{ event.startDate | date: 'dd/MM/yyyy' }} tot {{ event.endDate | date: 'dd/MM/yyyy' }}\n" +
-    "                  </span>\n" +
-    "                  <span ng-switch-when=\"permanent\">\n" +
-    "                     Permanent\n" +
-    "                  </span>\n" +
-    "                </ng-switch>\n" +
+    "                <udb-calendar-summary offer=\"event\" show-opening-hours=\"true\"></udb-calendar-summary>\n" +
     "              </td>\n" +
     "            </tr>\n" +
     "            <tr ng-class=\"{muted: !event.organizer}\">\n" +
@@ -14847,22 +14892,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "          <i class=\"fa fa-calendar hidden-md hidden-lg\"></i>\n" +
     "        </td>\n" +
     "        <td class=\"cf-when scroll scroll-150\">\n" +
-    "          <ng-switch on=\"::event.calendarType\">\n" +
-    "            <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                <span ng-switch-when=\"multiple\">\n" +
-    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                  <span> tot </span>\n" +
-    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                </span>\n" +
-    "                <span ng-switch-when=\"periodic\">\n" +
-    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                  <span> tot </span>\n" +
-    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                </span>\n" +
-    "                <span ng-switch-when=\"permanent\">\n" +
-    "                   Permanent\n" +
-    "                </span>\n" +
-    "          </ng-switch>\n" +
+    "          <udb-calendar-summary offer=\"event\"></udb-calendar-summary>\n" +
     "        </td>\n" +
     "      </tr>\n" +
     "      <tr>\n" +
@@ -14962,22 +14992,7 @@ $templateCache.put('templates/unexpected-error-modal.html',
     "          <i class=\"fa fa-calendar hidden-md hidden-lg\"></i>\n" +
     "        </td>\n" +
     "        <td class=\"cf-when scroll scroll-150\">\n" +
-    "          <ng-switch on=\"::event.calendarType\">\n" +
-    "            <span ng-switch-when=\"single\" ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                <span ng-switch-when=\"multiple\">\n" +
-    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                  <span> tot </span>\n" +
-    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                </span>\n" +
-    "                <span ng-switch-when=\"periodic\">\n" +
-    "                  Van <span ng-bind=\"::event.startDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                  <span> tot </span>\n" +
-    "                  <span ng-bind=\"::event.endDate | date: 'dd/MM/yyyy'\"></span>\n" +
-    "                </span>\n" +
-    "                <span ng-switch-when=\"permanent\">\n" +
-    "                   Permanent\n" +
-    "                </span>\n" +
-    "          </ng-switch>\n" +
+    "          <udb-calendar-summary offer=\"event\"></udb-calendar-summary>\n" +
     "        </td>\n" +
     "      </tr>\n" +
     "      </tbody>\n" +

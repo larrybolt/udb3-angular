@@ -5,21 +5,9 @@
   <br/>
   <small>
     <span class="dashboard-item-type" ng-bind="::event.type.label"></span>
-    <span  ng-if="event.calendarType" ng-switch="event.calendarType">
+    <span ng-if="event.calendarType">
       <span> - </span>
-      <span class="dashboard-item-calendar" ng-switch-when="single">
-        <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
-      </span>
-      <span class="dashboard-item-calendar" ng-switch-when="permanent">
-        Permanent
-      </span>
-      <!-- The remaining two calendar types are 'multiple' and 'periodic', they have the same view. -->
-      <span class="dashboard-item-calendar" ng-switch-default>
-        <span>Van </span>
-        <span ng-bind="::event.startDate | date: 'dd/MM/yyyy'"></span>
-        <span> tot </span>
-        <span ng-bind="::event.endDate | date: 'dd/MM/yyyy'"></span>
-      </span>
+      <udb-calendar-summary offer="event" show-opening-hours="true"></udb-calendar-summary>
     </span>
   </small>
 </td>

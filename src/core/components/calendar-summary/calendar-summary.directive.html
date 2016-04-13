@@ -1,0 +1,31 @@
+<span ng-if="offer.calendarType" ng-switch="offer.calendarType">
+
+  <span ng-switch-when="single">
+    <span ng-bind="::offer.startDate | date: 'dd/MM/yyyy'"></span>
+
+    <span ng-if="showOpeningHours">
+      <span ng-if="getOpeningHoursCount(offer) == 1">
+        van <span ng-bind="::offer.openingHours[0].startDate | date: 'HH:mm'"></span>
+        tot <span ng-bind="::offer.openingHours[0].endDate | date: 'HH:mm'"></span>
+      </span>
+      <span ng-if="getOpeningHoursCount(offer) > 1">
+        meerdere tijdstippen
+      </span>
+    </span>
+  </span>
+
+  <span ng-switch-when="multiple">
+     Van <span ng-bind="::offer.startDate | date: 'dd/MM/yyyy'"></span>
+     tot <span ng-bind="::offer.endDate | date: 'dd/MM/yyyy'"></span>
+  </span>
+
+  <span ng-switch-when="periodic">
+     Van <span ng-bind="::offer.startDate | date: 'dd/MM/yyyy'"></span>
+     tot <span ng-bind="::offer.endDate | date: 'dd/MM/yyyy'"></span>
+  </span>
+
+  <span ng-switch-when="permanent">
+     Permanent
+  </span>
+
+</span>

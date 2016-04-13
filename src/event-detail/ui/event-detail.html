@@ -81,20 +81,7 @@
             <tr>
               <td><strong>Wanneer</strong></td>
               <td>
-                <ng-switch on="event.calendarType">
-                  <span ng-switch-when="single">
-                     {{ event.startDate | date: 'dd/MM/yyyy' }}
-                  </span>
-                  <span ng-switch-when="multiple">
-                     Van {{ event.startDate | date: 'dd/MM/yyyy' }} tot {{ event.endDate | date: 'dd/MM/yyyy' }}
-                  </span>
-                  <span ng-switch-when="periodic">
-                     Van {{ event.startDate | date: 'dd/MM/yyyy' }} tot {{ event.endDate | date: 'dd/MM/yyyy' }}
-                  </span>
-                  <span ng-switch-when="permanent">
-                     Permanent
-                  </span>
-                </ng-switch>
+                <udb-calendar-summary offer="event" show-opening-hours="true"></udb-calendar-summary>
               </td>
             </tr>
             <tr ng-class="{muted: !event.organizer}">
