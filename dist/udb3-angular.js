@@ -14215,8 +14215,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        <div class=\"col-xs-6\">\n" +
     "          <label>\n" +
     "            <input type=\"checkbox\"\n" +
+    "                   ng-change=\"EventFormStep2.toggleStartHour(timestamp)\"\n" +
     "                   value=\"\"\n" +
-    "                   ng-change=\"toggleStartHour(timestamp)\"\n" +
     "                   ng-model=\"timestamp.showStartHour\"\n" +
     "                   class=\"beginuur-toevoegen\">\n" +
     "            Beginuur\n" +

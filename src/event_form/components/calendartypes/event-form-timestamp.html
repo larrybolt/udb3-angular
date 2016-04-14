@@ -13,8 +13,8 @@
         <div class="col-xs-6">
           <label>
             <input type="checkbox"
+                   ng-change="EventFormStep2.toggleStartHour(timestamp)"
                    value=""
-                   ng-change="toggleStartHour(timestamp)"
                    ng-model="timestamp.showStartHour"
                    class="beginuur-toevoegen">
             Beginuur
