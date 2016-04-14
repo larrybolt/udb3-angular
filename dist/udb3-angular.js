@@ -8038,7 +8038,8 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
     startHour = startHour === '00:00' ? '' : startHour;
     endHour = endHour === '00:00' ? '' : endHour;
 
-    EventFormData.addTimestamp(startDate.toDate(), startHour, endHour);
+    // reset startDate hours to 0 to avoid date indication problems with udbDatepicker
+    EventFormData.addTimestamp(startDate.hours(0).toDate(), startHour, endHour);
 
   }
 
