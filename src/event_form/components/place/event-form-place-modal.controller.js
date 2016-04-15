@@ -35,7 +35,7 @@
     function getDefaultPlace() {
       return {
         name: '',
-        eventType : '',
+        eventType: '',
         address: {
           addressCountry: 'BE',
           addressLocality: $scope.location.address.addressLocality,

@@ -19,7 +19,8 @@
               id="locatie-toevoegen-types"
               ng-model="newPlace.eventType"
               required
-              ng-options="category.id as category.label for category in categories track by category.id">
+              ng-options="category.id as category.label for category in categories | orderBy:'label' track by category.id">
+          <option value="" selected="selected">Geen selectie</option>
       </select>
       <span class="help-block" ng-show="showValidation && placeForm.eventType.$error.required">
         Categorie is een verplicht veld.

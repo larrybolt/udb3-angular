@@ -6958,7 +6958,7 @@ EventFormOrganizerModalController.$inject = ["$scope", "$uibModalInstance", "udb
     function getDefaultPlace() {
       return {
         name: '',
-        eventType : '',
+        eventType: '',
         address: {
           addressCountry: 'BE',
           addressLocality: $scope.location.address.addressLocality,
@@ -14758,11 +14758,12 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <label>Categorie</label>\n" +
     "      <select class=\"form-control\"\n" +
     "              size=\"4\"\n" +
-    "              name=\"eventType\"\n" +
+    "              name=\"location_event_type\"\n" +
     "              id=\"locatie-toevoegen-types\"\n" +
     "              ng-model=\"newPlace.eventType\"\n" +
     "              required\n" +
-    "              ng-options=\"category.id as category.label for category in categories track by category.id\">\n" +
+    "              ng-options=\"category.id as category.label for category in categories | orderBy:'label' track by category.id\">\n" +
+    "          <option value=\"\" selected=\"selected\">Geen selectie</option>\n" +
     "      </select>\n" +
     "      <span class=\"help-block\" ng-show=\"showValidation && placeForm.eventType.$error.required\">\n" +
     "        Categorie is een verplicht veld.\n" +
@@ -15064,7 +15065,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "           ng-show=\"splitTypes || eventFormData.getType() === 'event'\">\n" +
     "        <label class=\"event-type-choser-label\">Een activiteit of evenement</label>\n" +
     "        <ul class=\"list-inline\" id=\"step1-events\">\n" +
-    "          <li ng-repeat=\"eventType in ::eventTypeLabels\" ng-show=\"eventType.primary === true || showAllEventTypes\">\n" +
+    "          <li ng-repeat=\"eventType in ::eventTypeLabels | orderBy:'label'\" ng-show=\"eventType.primary === true || showAllEventTypes\">\n" +
     "            <button ng-bind=\"::eventType.label\" class=\"btn btn-default\"\n" +
     "                    ng-click=\"setEventType(eventType, true)\"></button>\n" +
     "          </li>\n" +
@@ -15082,7 +15083,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "           ng-show=\"splitTypes || eventFormData.getType() === 'place'\">\n" +
     "        <label class=\"event-type-choser-label\">Een locatie of plaats</label>\n" +
     "        <ul class=\"list-inline\" id=\"step1-places\">\n" +
-    "          <li ng-repeat=\"placeType in ::placeLabels\" ng-show=\"placeType.primary == true || showAllPlaces\">\n" +
+    "          <li ng-repeat=\"placeType in ::placeLabels | orderBy:'label'\" ng-show=\"placeType.primary == true || showAllPlaces\">\n" +
     "            <button ng-bind=\"::placeType.label\" class=\"btn btn-default\"\n" +
     "                    ng-click=\"setEventType(placeType, false)\"></button>\n" +
     "          </li>\n" +
