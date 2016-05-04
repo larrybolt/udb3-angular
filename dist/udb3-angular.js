@@ -8038,7 +8038,8 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
     startHour = startHour === '00:00' ? '' : startHour;
     endHour = endHour === '00:00' ? '' : endHour;
 
-    EventFormData.addTimestamp(startDate.toDate(), startHour, endHour);
+    // reset startDate hours to 0 to avoid date indication problems with udbDatepicker
+    EventFormData.addTimestamp(startDate.hours(0).toDate(), startHour, endHour);
 
   }
 
@@ -14213,8 +14214,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        <div class=\"col-xs-6\">\n" +
     "          <label>\n" +
     "            <input type=\"checkbox\"\n" +
+    "                   ng-change=\"EventFormStep2.toggleStartHour(timestamp)\"\n" +
     "                   value=\"\"\n" +
-    "                   ng-change=\"toggleStartHour(timestamp)\"\n" +
     "                   ng-model=\"timestamp.showStartHour\"\n" +
     "                   class=\"beginuur-toevoegen\">\n" +
     "            Beginuur\n" +
