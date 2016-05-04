@@ -14758,7 +14758,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <label>Categorie</label>\n" +
     "      <select class=\"form-control\"\n" +
     "              size=\"4\"\n" +
-    "              name=\"location_event_type\"\n" +
+    "              name=\"eventType\"\n" +
     "              id=\"locatie-toevoegen-types\"\n" +
     "              ng-model=\"newPlace.eventType\"\n" +
     "              required\n" +
