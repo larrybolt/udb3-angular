@@ -7394,7 +7394,7 @@ function UdbContactInfoValidationDirective() {
 
         if (ngModel.$modelValue.type === 'email' && !EMAIL_REGEXP.test(ngModel.$modelValue.value)) {
           EMAIL_REGEXP.test(ngModel.$modelValue.value);
-          scope.infoErrorMessage = 'Gelieve een geldig email adres in te vullen';
+          scope.infoErrorMessage = 'Gelieve een geldig e-mailadres in te vullen';
           ngModel.$setValidity('contactinfo', false);
 
         }
@@ -14120,39 +14120,38 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      </div>\n" +
     "\n" +
     "      <div class=\"tab-pane\" role=\"tabpanel\" ng-show=\"isTabActive('publication')\">\n" +
-    "        <h2 class=\"block-header\">Publicatie-informatie</h2>\n" +
-    "        <div class=\"panel panel-default\">\n" +
-    "          <table class=\"table\">\n" +
-    "            <colgroup>\n" +
-    "              <col style=\"width:20%\"/>\n" +
-    "              <col style=\"width:80%\"/>\n" +
-    "            </colgroup>\n" +
-    "            <tbody>\n" +
-    "            <tr ng-class=\"{muted: !event.available}\">\n" +
-    "              <td><strong>Publicatiedatum</strong></td>\n" +
-    "              <td>\n" +
-    "                <span ng-if=\"event.available\"\n" +
-    "                      ng-bind=\"event.available | date: 'dd/MM/yyyy'\">\n" +
-    "                </span>\n" +
-    "                <span ng-if=\"!event.available\">\n" +
-    "                    Geen publicatiedatum\n" +
-    "                </span>\n" +
-    "              </td>\n" +
-    "            </tr>\n" +
-    "            <tr>\n" +
-    "              <td><strong>ID</strong></td>\n" +
-    "              <td>\n" +
-    "                <ul>\n" +
-    "                  <li ng-repeat=\"id in eventIds(event)\" ng-switch=\"isUrl(id)\">\n" +
-    "                    <a ng-switch-when=\"true\" ng-href=\"{{id}}\" ng-bind=\"id\"></a>\n" +
-    "                    <span ng-switch-when=\"false\" ng-bind=\"id\"></span>\n" +
-    "                  </li>\n" +
-    "                </ul>\n" +
-    "              </td>\n" +
-    "            </tr>\n" +
-    "            </tbody>\n" +
-    "          </table>\n" +
-    "        </div>\n" +
+    "          <div class=\"panel panel-default\">\n" +
+    "            <table class=\"table\">\n" +
+    "              <colgroup>\n" +
+    "                <col style=\"width:20%\"/>\n" +
+    "                <col style=\"width:80%\"/>\n" +
+    "              </colgroup>\n" +
+    "              <tbody>\n" +
+    "                <tr ng-class=\"{muted: !event.available}\">\n" +
+    "                  <td><strong>Publicatiedatum</strong></td>\n" +
+    "                  <td>\n" +
+    "                    <span ng-if=\"event.available\"\n" +
+    "                          ng-bind=\"event.available | date: 'dd/MM/yyyy'\">\n" +
+    "                    </span>\n" +
+    "                    <span ng-if=\"!event.available\">\n" +
+    "                      Geen publicatiedatum\n" +
+    "                    </span>\n" +
+    "                  </td>\n" +
+    "                </tr>\n" +
+    "                <tr>\n" +
+    "                  <td><strong>ID</strong></td>\n" +
+    "                  <td>\n" +
+    "                    <ul>\n" +
+    "                      <li ng-repeat=\"id in eventIds(event)\" ng-switch=\"isUrl(id)\">\n" +
+    "                        <a ng-switch-when=\"true\" ng-href=\"{{id}}\" ng-bind=\"id\"></a>\n" +
+    "                        <span ng-switch-when=\"false\" ng-bind=\"id\"></span>\n" +
+    "                      </li>\n" +
+    "                    </ul>\n" +
+    "                  </td>\n" +
+    "                </tr>\n" +
+    "              </tbody>\n" +
+    "            </table>\n" +
+    "          </div>\n" +
     "      </div>\n" +
     "\n" +
     "    </div>\n" +
@@ -14191,7 +14190,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "  <div class=\"col-xs-12\">\n" +
     "    <div ng-show=\"EventFormStep2.periodicRangeError\" class=\"alert alert-warning\" role=\"alert\">\n" +
-    "      Selecteer een geldige start en eind datum datum.\n" +
+    "        Selecteer een geldige begin- en einddatum.\n" +
     "    </div>\n" +
     "  </div>\n" +
     "</div>\n"
@@ -14421,7 +14420,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                  ngf-select=\"selectFile($file, $invalidFiles)\"\n" +
     "                  accept=\"image/*\"\n" +
     "                  ngf-max-size=\"{{maxFileSize}}\">\n" +
-    "            Kies Bestand</button>\n" +
+    "            Kies bestand</button>\n" +
     "        </p>\n" +
     "\n" +
     "        <p ng-show=\"selectedFile\">\n" +
@@ -14436,7 +14435,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        <label>Beschrijving <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"description\" required>\n" +
     "        <p class=\"help-block\">\n" +
-    "          Schrijf goede beschrijving van je afbeelding wordt gelezen door zoekmachines en gebruikers met een visuele beperking.\n" +
+    "            Deze tekst helpt zoekmachines en gebruikers met een visuele beperking.\n" +
     "        </p>\n" +
     "      </div>\n" +
     "\n" +
@@ -14585,7 +14584,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "<div class=\"modal-header\">\n" +
     "  <button type=\"button\" class=\"close\" ng-click=\"cancel()\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n" +
-    "  <h4 class=\"modal-title\" ng-hide=\"organizersFound\">Nieuwe organisator toevoegen</h4>\n" +
+    "  <h4 class=\"modal-title\" ng-hide=\"organizersFound\">Nieuwe organisatie toevoegen</h4>\n" +
     "  <h4 class=\"modal-title\" ng-show=\"organizersFound\">Vermijd dubbel werk</h4>\n" +
     "</div>\n" +
     "<div class=\"modal-body\">\n" +
@@ -14686,7 +14685,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "    <div class=\"alert alert-info\">\n" +
     "      <p>\n" +
-    "        Ben je zeker dat je \"<span ng-bind=\"newOrganizer.name\"></span>\" wil toevoegen als organisator? Dubbele invoer\n" +
+    "         Ben je zeker dat je \"<span ng-bind=\"newOrganizer.name\"></span>\" wil toevoegen als organisatie? Dubbele invoer\n" +
     "         van organisaties is niet toegelaten.\n" +
     "      </p>\n" +
     "    </div>\n" +
@@ -15311,7 +15310,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      </div>\n" +
     "      <div class=\"col-xs-12 col-md-8\">\n" +
     "        <p class=\"text-block\">\n" +
-    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort & bondig</strong>. Een uitgebreide beschrijving vul je verder in stap 5 in.\n" +
+    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort en bondig</strong>. Een uitgebreide beschrijving vul je in stap 5 in.\n" +
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -15331,7 +15330,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "  <a name=\"dubbeldetectie\"></a>\n" +
     "  <section class=\"dubbeldetectie\" ng-show=\"eventFormData.name.nl !== ''\">\n" +
-    "    \n" +
+    "\n" +
     "    <div class=\"panel panel-info\" ng-show=\"resultViewer.totalItems > 0\">\n" +
     "      <div class=\"panel-body bg-info text-info\">\n" +
     "        <p class=\"h2\" style=\"margin-top: 0;\">Vermijd dubbel werk</p>\n" +
@@ -15521,7 +15520,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "            <div class=\"col-sm-8\">\n" +
     "              <section class=\"state incomplete\">\n" +
     "                <a class=\"btn btn-default to-filling\" ng-click=\"organizerCssClass = 'state-filling'\">\n" +
-    "                  Organisator toevoegen\n" +
+    "                    Organisatie toevoegen\n" +
     "                </a>\n" +
     "              </section>\n" +
     "              <section class=\"state complete\">\n" +
@@ -15548,7 +15547,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                      <div class=\"dropdown-menu-no-results text-center\" ng-show=\"emptyOrganizerAutocomplete\">\n" +
     "                        <div class=\"panel panel-default text-center\">\n" +
     "                          <div class=\"panel-body\">\n" +
-    "                            <p>Organisator niet gevonden?</p>\n" +
+    "                            <p>Organisatie niet gevonden?</p>\n" +
     "                            <button type='button' class='btn btn-primary' ng-click=\"openOrganizerModal()\">\n" +
     "                              Nieuwe organisator toevoegen\n" +
     "                            </button>\n" +
@@ -15765,7 +15764,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "            <div class=\"extra-task\">\n" +
     "              <div class=\"col-sm-8 col-sm-offset-3\" ng-hide=\"eventFormData.bookingInfo.availabilityStarts\">\n" +
     "                <a class=\"reservatie-periode-toevoegen\" href=\"#\" ng-click=\"openBookingPeriodModal()\">\n" +
-    "                  Reservatie-periode toevoegen\n" +
+    "                    Reservatieperiode toevoegen\n" +
     "                </a>\n" +
     "              </div>\n" +
     "              <div class=\"col-sm-8 col-sm-offset-3\" ng-show=\"eventFormData.bookingInfo.availabilityStarts\">\n" +
@@ -15775,7 +15774,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                  <span> tot </span>\n" +
     "                  <span ng-bind=\"eventFormData.bookingInfo.availabilityEnds | date:'dd-MM-yyyy'\"></span>\n" +
     "                  <a class=\"reservatie-periode-toevoegen\" href=\"#\" ng-click=\"openBookingPeriodModal()\">\n" +
-    "                    Reservatie-periode wijzigen\n" +
+    "                      Reservatieperiode wijzigen\n" +
     "                  </a>\n" +
     "                </span>\n" +
     "              </div>\n" +
