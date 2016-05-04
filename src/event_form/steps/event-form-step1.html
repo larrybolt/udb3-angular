@@ -12,7 +12,7 @@
            ng-show="splitTypes || eventFormData.getType() === 'event'">
         <label class="event-type-choser-label">Een activiteit of evenement</label>
         <ul class="list-inline" id="step1-events">
-          <li ng-repeat="eventType in ::eventTypeLabels" ng-show="eventType.primary === true || showAllEventTypes">
+          <li ng-repeat="eventType in ::eventTypeLabels | orderBy:'label'" ng-show="eventType.primary === true || showAllEventTypes">
             <button ng-bind="::eventType.label" class="btn btn-default"
                     ng-click="setEventType(eventType, true)"></button>
           </li>
@@ -30,7 +30,7 @@
            ng-show="splitTypes || eventFormData.getType() === 'place'">
         <label class="event-type-choser-label">Een locatie of plaats</label>
         <ul class="list-inline" id="step1-places">
-          <li ng-repeat="placeType in ::placeLabels" ng-show="placeType.primary == true || showAllPlaces">
+          <li ng-repeat="placeType in ::placeLabels | orderBy:'label'" ng-show="placeType.primary == true || showAllPlaces">
             <button ng-bind="::placeType.label" class="btn btn-default"
                     ng-click="setEventType(placeType, false)"></button>
           </li>
