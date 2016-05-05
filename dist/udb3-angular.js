@@ -16651,7 +16651,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    <input type=\"text\" class=\"form-control\" ng-model=\"sb.queryString\" ng-change=\"sb.queryChanged()\">\n" +
     "    <span class=\"dropdown saved-search-icon\" uib-dropdown>\n" +
     "      <i class=\"fa fa-bookmark\" class=\"dropdown-toggle\" uib-dropdown-toggle></i>\n" +
-    "      <ul class=\"uib-dropdown-menu\" role=\"menu\">\n" +
+    "      <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\">\n" +
     "        <li role=\"presentation\" class=\"dropdown-header\">Bewaarde zoekopdrachten</li>\n" +
     "        <li ng-repeat=\"savedSearch in sb.savedSearches\">\n" +
     "          <a ng-bind=\"::savedSearch.name\"\n" +
