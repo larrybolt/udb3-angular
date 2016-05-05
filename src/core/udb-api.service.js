@@ -18,6 +18,12 @@
  */
 
 /**
+ * @typedef {Object} OfferIdentifier
+ * @property {string} @id
+ * @property {string} @type
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -256,6 +262,11 @@ function UdbApi(
     });
   };
 
+  /**
+   * @param {OfferIdentifier[]} offers
+   * @param {string} label
+   * @return {Promise}
+   */
   this.labelOffers = function (offers, label) {
     return $http.post(appConfig.baseUrl + 'offers/labels',
       {
@@ -266,6 +277,11 @@ function UdbApi(
     );
   };
 
+  /**
+   * @param {string} query
+   * @param {string} label
+   * @return {Promise}
+   */
   this.labelQuery = function (query, label) {
     return $http.post(appConfig.baseUrl + 'query/labels',
       {
