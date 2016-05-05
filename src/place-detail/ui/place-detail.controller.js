@@ -48,12 +48,15 @@ function PlaceDetail(
     openPlaceDeleteConfirmModal($scope.place);
   };
 
-  // Check if user has permissions.
-  udbApi.hasPlacePermission($scope.placeId).then(function(result) {
-    $scope.hasEditPermissions = result.data.hasPermission;
-  });
+  function allowEditing() {
+    $scope.hasEditPermissions = true;
+  }
 
-  var placeLoaded = udbApi.getPlaceById($scope.placeId);
+  udbApi
+    .hasPermission($scope.placeId)
+    .then(allowEditing);
+
+  var placeLoaded = udbApi.getOffer($scope.placeId);
   var language = 'nl';
   var cachedPlace;
 

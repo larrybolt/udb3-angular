@@ -13,7 +13,7 @@
     .controller('DashboardController', DashboardController);
 
   /* @ngInject */
-  function DashboardController($scope, $uibModal, udbApi, eventCrud, jsonLDLangFilter, SearchResultViewer) {
+  function DashboardController($scope, $uibModal, udbApi, eventCrud, offerLocator, SearchResultViewer) {
 
     var dash = this;
 
@@ -30,14 +30,18 @@
       dash.username = user.nick;
     }
 
-    function setItemViewerData(response) {
-      dash.pagedItemViewer.setResults(response.data);
+    /**
+     * @param {PagedCollection} results
+     */
+    function setItemViewerResults(results) {
+      offerLocator.addPagedCollection(results);
+      dash.pagedItemViewer.setResults(results);
     }
 
     function updateItemViewer() {
       udbApi
         .getDashboardItems(dash.pagedItemViewer.currentPage)
-        .then(setItemViewerData);
+        .then(setItemViewerResults);
     }
     updateItemViewer();
 

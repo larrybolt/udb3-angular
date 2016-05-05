@@ -9,6 +9,15 @@
  */
 
 /**
+ * @typedef {Object} PagedCollection
+ * @property {string} @context
+ * @property {string} @type
+ * @property {int} itemsPerPage
+ * @property {int} totalItems
+ * @property {Object[]} member
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -29,8 +38,17 @@ angular
   .service('udbApi', UdbApi);
 
 /* @ngInject */
-function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
-  $cacheFactory, UdbEvent, UdbPlace, UdbOrganizer) {
+function UdbApi(
+  $q,
+  $http,
+  appConfig,
+  $cookieStore,
+  uitidAuth,
+  $cacheFactory,
+  UdbEvent,
+  UdbPlace,
+  UdbOrganizer
+) {
   var apiUrl = appConfig.baseApiUrl;
   var defaultApiConfig = {
     withCredentials: true,
@@ -39,128 +57,80 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     },
     params: {}
   };
-  var eventCache = $cacheFactory('eventCache');
+  var offerCache = $cacheFactory('offerCache');
 
   this.mainLanguage = 'nl';
 
   /**
-   * Removes an item from the eventCache.
-   * @param {string} id - The uuid of the item.
+   * Removes an item from the offerCache.
+   * @param {string} id - The uuid of the offer.
    */
   this.removeItemFromCache = function (id) {
-    var event = eventCache.get(id);
+    var offer = offerCache.get(id);
 
-    if (event) {
-      eventCache.remove(id);
+    if (offer) {
+      offerCache.remove(id);
     }
   };
 
   /**
    * @param {string} queryString - The query used to find events.
-   * @param {?number} start - From which event offset the result set should start.
-   * @returns {Promise} A promise that signals a successful retrieval of
+   * @param {number} [start] - From which event offset the result set should start.
+   * @returns {Promise.<PagedCollection>} A promise that signals a successful retrieval of
    *  search results or a failure.
    */
   this.findEvents = function (queryString, start) {
-    var deferredEvents = $q.defer(),
-        offset = start || 0,
+    var offset = start || 0,
         searchParams = {
           start: offset
+        },
+        requestOptions = {
+          params: searchParams,
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/ld+json'
+          }
         };
 
     if (queryString.length) {
       searchParams.query = queryString;
     }
 
-    var request = $http.get(apiUrl + 'search', {
-      params: searchParams,
-      withCredentials: true,
+    return $http
+      .get(apiUrl + 'search', requestOptions)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {URL} offerLocation
+   * @return {UdbPlace|UdbEvent}
+   */
+  this.getOffer = function(offerLocation) {
+    var deferredOffer = $q.defer();
+    var jsonLdRequestOptions = {
       headers: {
         'Accept': 'application/ld+json'
       }
-    });
+    };
+    var offer = offerCache.get(offerLocation);
 
-    request
-      .success(function (data) {
-        deferredEvents.resolve(data);
-      })
-      .error(function () {
-        deferredEvents.reject();
-      });
-
-    return deferredEvents.promise;
-  };
-
-  this.getEventById = function (eventId) {
-    var deferredEvent = $q.defer();
-
-    var event = eventCache.get(eventId);
-
-    if (event) {
-      deferredEvent.resolve(event);
-    } else {
-      var eventRequest = $http.get(
-        appConfig.baseUrl + 'event/' + eventId,
-        {
-          headers: {
-            'Accept': 'application/ld+json'
-          }
-        });
-
-      eventRequest.success(function (jsonEvent) {
-        var event = new UdbEvent();
-        event.parseJson(jsonEvent);
-        eventCache.put(eventId, event);
-        deferredEvent.resolve(event);
-      });
-
-      eventRequest.error(function () {
-        deferredEvent.reject();
-      });
+    function cacheAndResolveOffer(jsonOffer) {
+      var offer = new UdbPlace();
+      offer.parseJson(jsonOffer);
+      offerCache.put(offerLocation, offer);
+      deferredOffer.resolve(offer);
     }
 
-    return deferredEvent.promise;
-  };
-
-  this.getEventByLDId = function (eventLDId) {
-    var eventId = eventLDId.split('/').pop();
-    return this.getEventById(eventId);
-  };
-
-  this.getPlaceById = function(placeId) {
-    var deferredEvent = $q.defer();
-
-    var place = eventCache.get(placeId);
-
-    if (place) {
-      deferredEvent.resolve(place);
+    if (offer) {
+      deferredOffer.resolve(offer);
     } else {
-      var placeRequest  = $http.get(
-        appConfig.baseUrl + 'place/' + placeId,
-        {
-          headers: {
-            'Accept': 'application/ld+json'
-          }
-        });
-
-      placeRequest.success(function(jsonPlace) {
-        var place = new UdbPlace();
-        place.parseJson(jsonPlace);
-        eventCache.put(placeId, place);
-        deferredEvent.resolve(place);
-      });
-
-      placeRequest.error(function () {
-        deferredEvent.reject();
-      });
+      $http
+        .get(offerLocation.toString(), jsonLdRequestOptions)
+        .success(cacheAndResolveOffer)
+        .error(deferredOffer.reject);
     }
 
-    return deferredEvent.promise;
-  };
-
-  this.getPlaceByLDId = function (placeLDId) {
-    var placeId = placeLDId.split('/').pop();
-    return this.getPlaceById(placeId);
+    return deferredOffer.promise;
   };
 
   this.getOrganizerByLDId = function(organizerLDId) {
@@ -168,10 +138,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return this.getOrganizerById(organizerId);
   };
 
+  // TODO: Give organizers their own cache instead of using offer?
   this.getOrganizerById = function(organizerId) {
       var deferredOrganizer = $q.defer();
 
-      var organizer = eventCache.get(organizerId);
+      var organizer = offerCache.get(organizerId);
 
       if (organizer) {
         deferredOrganizer.resolve(organizer);
@@ -187,33 +158,28 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
         organizerRequest.success(function(jsonOrganizer) {
           var organizer = new UdbOrganizer();
           organizer.parseJson(jsonOrganizer);
-          eventCache.put(organizerId, organizer);
+          offerCache.put(organizerId, organizer);
           deferredOrganizer.resolve(organizer);
         });
       }
 
       return deferredOrganizer.promise;
     };
-  this.getEventHistoryById = function (eventId) {
-    var eventHistoryLoaded = $q.defer();
 
-    var eventHistoryRequest = $http.get(
-      appConfig.baseUrl + 'event/' + eventId + '/history',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+  /**
+   * @param {URL} eventId
+   * @return {*}
+   */
+  this.getHistory = function (eventId) {
+    var requestOptions = {
+      headers: {
+        'Accept': 'application/json'
+      }
+    };
 
-    eventHistoryRequest.success(function (eventHistory) {
-      eventHistoryLoaded.resolve(eventHistory);
-    });
-
-    eventHistoryRequest.error(function () {
-      eventHistoryLoaded.reject();
-    });
-
-    return eventHistoryLoaded.promise;
+    return $http
+      .get(eventId + '/history', requestOptions)
+      .then(returnUnwrappedData);
   };
 
   /**
@@ -273,25 +239,21 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * @param {string} id
-   *   Id of item to check
-   */
-  this.hasPermission = function(id) {
-    return $http.get(
-      appConfig.baseUrl + 'event/' + id + '/permission',
-      defaultApiConfig
-    );
-  };
+   * Get the editing permission for an offer.
 
-  /**
-   * @param {string} id
-   *   Id of item to check
+   * @param {URL} offerLocation
    */
-  this.hasPlacePermission = function(id) {
+  this.hasPermission = function(offerLocation) {
     return $http.get(
-        appConfig.baseUrl + 'place/' + id + '/permission',
-        defaultApiConfig
-    );
+      offerLocation + '/permission',
+      defaultApiConfig
+    ).then(function (response) {
+      if (response.data.hasPermission) {
+        return $q.resolve();
+      } else {
+        $q.reject();
+      }
+    });
   };
 
   this.labelOffers = function (offers, label) {
@@ -625,15 +587,22 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return deferredVariation.promise;
   };
 
+  function returnUnwrappedData(response) {
+    return $q.resolve(response.data);
+  }
+
+  /**
+   * @param {int} page
+   * @return {Promise.<PagedCollection>}
+   */
   this.getDashboardItems = function(page) {
     var requestConfig = _.cloneDeep(defaultApiConfig);
     if (page > 1) {
       requestConfig.params.page = page;
     }
 
-    return $http.get(
-        appConfig.baseUrl + 'dashboard/items',
-        requestConfig
-    );
+    return $http
+      .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
+      .then(returnUnwrappedData);
   };
 }

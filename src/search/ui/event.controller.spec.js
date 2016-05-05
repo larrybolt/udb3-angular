@@ -151,7 +151,7 @@ describe('Controller: Event', function() {
 
     $scope.event = {};
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
-    spyOn(udbApi, 'getEventByLDId').and.returnValue(deferredEvent.promise);
+    spyOn(udbApi, 'getOffer').and.returnValue(deferredEvent.promise);
     spyOn(variationRepository, 'getPersonalVariation').and.returnValue(deferredVariation.promise);
 
     eventController = $controller(

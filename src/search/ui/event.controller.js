@@ -41,7 +41,7 @@ function EventController(
   function initController() {
     if (!$scope.event.title) {
       controller.fetching = true;
-      var eventPromise = udbApi.getEventByLDId($scope.event['@id']);
+      var eventPromise = udbApi.getOffer($scope.event['@id']);
 
       eventPromise.then(function (eventObject) {
         cachedEvent = eventObject;

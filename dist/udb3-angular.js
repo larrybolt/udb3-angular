@@ -27,6 +27,17 @@ angular
   ])
   .constant('Levenshtein', window.Levenshtein);
 
+/**
+ * @ngdoc module
+ * @name udb.router
+ * @description
+ * The udb routing module
+ */
+angular
+  .module('udb.router', [
+    'udb.core'
+  ]);
+
 angular.module('udb.config', [])
 
 .constant('appConfig', {})
@@ -56,6 +67,7 @@ angular
     'peg',
     'udb.core',
     'udb.config',
+    'udb.router',
     'btford.socket-io',
     'pascalprecht.translate',
     'xeditable'
@@ -2509,6 +2521,15 @@ UnexpectedErrorModalController.$inject = ["$scope", "$uibModalInstance", "errorM
  */
 
 /**
+ * @typedef {Object} PagedCollection
+ * @property {string} @context
+ * @property {string} @type
+ * @property {int} itemsPerPage
+ * @property {int} totalItems
+ * @property {Object[]} member
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -2529,8 +2550,17 @@ angular
   .service('udbApi', UdbApi);
 
 /* @ngInject */
-function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
-  $cacheFactory, UdbEvent, UdbPlace, UdbOrganizer) {
+function UdbApi(
+  $q,
+  $http,
+  appConfig,
+  $cookieStore,
+  uitidAuth,
+  $cacheFactory,
+  UdbEvent,
+  UdbPlace,
+  UdbOrganizer
+) {
   var apiUrl = appConfig.baseApiUrl;
   var defaultApiConfig = {
     withCredentials: true,
@@ -2539,128 +2569,80 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     },
     params: {}
   };
-  var eventCache = $cacheFactory('eventCache');
+  var offerCache = $cacheFactory('offerCache');
 
   this.mainLanguage = 'nl';
 
   /**
-   * Removes an item from the eventCache.
-   * @param {string} id - The uuid of the item.
+   * Removes an item from the offerCache.
+   * @param {string} id - The uuid of the offer.
    */
   this.removeItemFromCache = function (id) {
-    var event = eventCache.get(id);
+    var offer = offerCache.get(id);
 
-    if (event) {
-      eventCache.remove(id);
+    if (offer) {
+      offerCache.remove(id);
     }
   };
 
   /**
    * @param {string} queryString - The query used to find events.
-   * @param {?number} start - From which event offset the result set should start.
-   * @returns {Promise} A promise that signals a successful retrieval of
+   * @param {number} [start] - From which event offset the result set should start.
+   * @returns {Promise.<PagedCollection>} A promise that signals a successful retrieval of
    *  search results or a failure.
    */
   this.findEvents = function (queryString, start) {
-    var deferredEvents = $q.defer(),
-        offset = start || 0,
+    var offset = start || 0,
         searchParams = {
           start: offset
+        },
+        requestOptions = {
+          params: searchParams,
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/ld+json'
+          }
         };
 
     if (queryString.length) {
       searchParams.query = queryString;
     }
 
-    var request = $http.get(apiUrl + 'search', {
-      params: searchParams,
-      withCredentials: true,
+    return $http
+      .get(apiUrl + 'search', requestOptions)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {URL} offerLocation
+   * @return {UdbPlace|UdbEvent}
+   */
+  this.getOffer = function(offerLocation) {
+    var deferredOffer = $q.defer();
+    var jsonLdRequestOptions = {
       headers: {
         'Accept': 'application/ld+json'
       }
-    });
+    };
+    var offer = offerCache.get(offerLocation);
 
-    request
-      .success(function (data) {
-        deferredEvents.resolve(data);
-      })
-      .error(function () {
-        deferredEvents.reject();
-      });
-
-    return deferredEvents.promise;
-  };
-
-  this.getEventById = function (eventId) {
-    var deferredEvent = $q.defer();
-
-    var event = eventCache.get(eventId);
-
-    if (event) {
-      deferredEvent.resolve(event);
-    } else {
-      var eventRequest = $http.get(
-        appConfig.baseUrl + 'event/' + eventId,
-        {
-          headers: {
-            'Accept': 'application/ld+json'
-          }
-        });
-
-      eventRequest.success(function (jsonEvent) {
-        var event = new UdbEvent();
-        event.parseJson(jsonEvent);
-        eventCache.put(eventId, event);
-        deferredEvent.resolve(event);
-      });
-
-      eventRequest.error(function () {
-        deferredEvent.reject();
-      });
+    function cacheAndResolveOffer(jsonOffer) {
+      var offer = new UdbPlace();
+      offer.parseJson(jsonOffer);
+      offerCache.put(offerLocation, offer);
+      deferredOffer.resolve(offer);
     }
 
-    return deferredEvent.promise;
-  };
-
-  this.getEventByLDId = function (eventLDId) {
-    var eventId = eventLDId.split('/').pop();
-    return this.getEventById(eventId);
-  };
-
-  this.getPlaceById = function(placeId) {
-    var deferredEvent = $q.defer();
-
-    var place = eventCache.get(placeId);
-
-    if (place) {
-      deferredEvent.resolve(place);
+    if (offer) {
+      deferredOffer.resolve(offer);
     } else {
-      var placeRequest  = $http.get(
-        appConfig.baseUrl + 'place/' + placeId,
-        {
-          headers: {
-            'Accept': 'application/ld+json'
-          }
-        });
-
-      placeRequest.success(function(jsonPlace) {
-        var place = new UdbPlace();
-        place.parseJson(jsonPlace);
-        eventCache.put(placeId, place);
-        deferredEvent.resolve(place);
-      });
-
-      placeRequest.error(function () {
-        deferredEvent.reject();
-      });
+      $http
+        .get(offerLocation.toString(), jsonLdRequestOptions)
+        .success(cacheAndResolveOffer)
+        .error(deferredOffer.reject);
     }
 
-    return deferredEvent.promise;
-  };
-
-  this.getPlaceByLDId = function (placeLDId) {
-    var placeId = placeLDId.split('/').pop();
-    return this.getPlaceById(placeId);
+    return deferredOffer.promise;
   };
 
   this.getOrganizerByLDId = function(organizerLDId) {
@@ -2668,10 +2650,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return this.getOrganizerById(organizerId);
   };
 
+  // TODO: Give organizers their own cache instead of using offer?
   this.getOrganizerById = function(organizerId) {
       var deferredOrganizer = $q.defer();
 
-      var organizer = eventCache.get(organizerId);
+      var organizer = offerCache.get(organizerId);
 
       if (organizer) {
         deferredOrganizer.resolve(organizer);
@@ -2687,33 +2670,28 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
         organizerRequest.success(function(jsonOrganizer) {
           var organizer = new UdbOrganizer();
           organizer.parseJson(jsonOrganizer);
-          eventCache.put(organizerId, organizer);
+          offerCache.put(organizerId, organizer);
           deferredOrganizer.resolve(organizer);
         });
       }
 
       return deferredOrganizer.promise;
     };
-  this.getEventHistoryById = function (eventId) {
-    var eventHistoryLoaded = $q.defer();
 
-    var eventHistoryRequest = $http.get(
-      appConfig.baseUrl + 'event/' + eventId + '/history',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+  /**
+   * @param {URL} eventId
+   * @return {*}
+   */
+  this.getHistory = function (eventId) {
+    var requestOptions = {
+      headers: {
+        'Accept': 'application/json'
+      }
+    };
 
-    eventHistoryRequest.success(function (eventHistory) {
-      eventHistoryLoaded.resolve(eventHistory);
-    });
-
-    eventHistoryRequest.error(function () {
-      eventHistoryLoaded.reject();
-    });
-
-    return eventHistoryLoaded.promise;
+    return $http
+      .get(eventId + '/history', requestOptions)
+      .then(returnUnwrappedData);
   };
 
   /**
@@ -2773,25 +2751,21 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * @param {string} id
-   *   Id of item to check
-   */
-  this.hasPermission = function(id) {
-    return $http.get(
-      appConfig.baseUrl + 'event/' + id + '/permission',
-      defaultApiConfig
-    );
-  };
+   * Get the editing permission for an offer.
 
-  /**
-   * @param {string} id
-   *   Id of item to check
+   * @param {URL} offerLocation
    */
-  this.hasPlacePermission = function(id) {
+  this.hasPermission = function(offerLocation) {
     return $http.get(
-        appConfig.baseUrl + 'place/' + id + '/permission',
-        defaultApiConfig
-    );
+      offerLocation + '/permission',
+      defaultApiConfig
+    ).then(function (response) {
+      if (response.data.hasPermission) {
+        return $q.resolve();
+      } else {
+        $q.reject();
+      }
+    });
   };
 
   this.labelOffers = function (offers, label) {
@@ -3125,16 +3099,23 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return deferredVariation.promise;
   };
 
+  function returnUnwrappedData(response) {
+    return $q.resolve(response.data);
+  }
+
+  /**
+   * @param {int} page
+   * @return {Promise.<PagedCollection>}
+   */
   this.getDashboardItems = function(page) {
     var requestConfig = _.cloneDeep(defaultApiConfig);
     if (page > 1) {
       requestConfig.params.page = page;
     }
 
-    return $http.get(
-        appConfig.baseUrl + 'dashboard/items',
-        requestConfig
-    );
+    return $http
+      .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
+      .then(returnUnwrappedData);
   };
 }
 UdbApi.$inject = ["$q", "$http", "appConfig", "$cookieStore", "uitidAuth", "$cacheFactory", "UdbEvent", "UdbPlace", "UdbOrganizer"];
@@ -4225,7 +4206,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     .controller('DashboardController', DashboardController);
 
   /* @ngInject */
-  function DashboardController($scope, $uibModal, udbApi, eventCrud, jsonLDLangFilter, SearchResultViewer) {
+  function DashboardController($scope, $uibModal, udbApi, eventCrud, offerLocator, SearchResultViewer) {
 
     var dash = this;
 
@@ -4242,14 +4223,18 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
       dash.username = user.nick;
     }
 
-    function setItemViewerData(response) {
-      dash.pagedItemViewer.setResults(response.data);
+    /**
+     * @param {PagedCollection} results
+     */
+    function setItemViewerResults(results) {
+      offerLocator.addPagedCollection(results);
+      dash.pagedItemViewer.setResults(results);
     }
 
     function updateItemViewer() {
       udbApi
         .getDashboardItems(dash.pagedItemViewer.currentPage)
-        .then(setItemViewerData);
+        .then(setItemViewerResults);
     }
     updateItemViewer();
 
@@ -4323,7 +4308,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     }
 
   }
-  DashboardController.$inject = ["$scope", "$uibModal", "udbApi", "eventCrud", "jsonLDLangFilter", "SearchResultViewer"];
+  DashboardController.$inject = ["$scope", "$uibModal", "udbApi", "eventCrud", "offerLocator", "SearchResultViewer"];
 
 })();
 
@@ -5389,7 +5374,7 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   };
 
   /**
-   * @param {string[]} offers
+   * @param {Object[]} offers
    * @param {string} label
    */
   this.labelOffersById = function (offers, label) {
@@ -6204,25 +6189,31 @@ function EventDetail(
     openEventDeleteConfirmModal($scope.event);
   };
 
-  // Check if user has permissions.
-  udbApi.hasPermission(eventId).then(function(result) {
-    $scope.hasEditPermissions = result.data.hasPermission;
-  });
+  function allowEditing() {
+    $scope.hasEditPermissions = true;
+  }
 
-  var eventLoaded = udbApi.getEventById($scope.eventId);
+  udbApi
+    .hasPermission($scope.eventId)
+    .then(allowEditing);
+
+  var eventLoaded = udbApi.getOffer($scope.eventId);
   var language = 'nl';
   var cachedEvent;
+
+  function showHistory(eventHistory) {
+    $scope.eventHistory = eventHistory;
+  }
 
   eventLoaded.then(
       function (event) {
         cachedEvent = event;
 
-        var eventHistoryLoaded = udbApi.getEventHistoryById($scope.eventId);
         var personalVariationLoaded = variationRepository.getPersonalVariation(event);
 
-        eventHistoryLoaded.then(function(eventHistory) {
-          $scope.eventHistory = eventHistory;
-        });
+        udbApi
+          .getHistory($scope.eventId)
+          .then(showHistory);
 
         $scope.event = jsonLDLangFilter(event, language);
 
@@ -10618,12 +10609,15 @@ function PlaceDetail(
     openPlaceDeleteConfirmModal($scope.place);
   };
 
-  // Check if user has permissions.
-  udbApi.hasPlacePermission($scope.placeId).then(function(result) {
-    $scope.hasEditPermissions = result.data.hasPermission;
-  });
+  function allowEditing() {
+    $scope.hasEditPermissions = true;
+  }
 
-  var placeLoaded = udbApi.getPlaceById($scope.placeId);
+  udbApi
+    .hasPermission($scope.placeId)
+    .then(allowEditing);
+
+  var placeLoaded = udbApi.getOffer($scope.placeId);
   var language = 'nl';
   var cachedPlace;
 
@@ -10739,6 +10733,87 @@ function PlaceDetail(
   }
 }
 PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal"];
+
+// Source: src/router/offer-locator.service.js
+/**
+ * @ngdoc service
+ * @name udbApp.OfferLocator
+ * @description
+ * Index and locate offers by UUID.
+ */
+angular.module('udb.router')
+  .service('offerLocator', OfferLocator);
+
+/* @ngInject */
+function OfferLocator($q, udbApi) {
+  // An associative array with UUIDs pointing to locations.
+  // eg: 0586DF1-89D7-42F6-9804-DAE8878C2617 -> http://du.de/event/0586DF1-89D7-42F6-9804-DAE8878C2617
+  var locations = {};
+
+  // public methods
+  this.get = get;
+  this.add = add;
+  this.addPagedCollection = addPagedCollection;
+
+  /**
+   * @param {string} uuid
+   * @param {URL} location
+   */
+  function add(uuid, location) {
+    locations[uuid] = location;
+  }
+
+  /**
+   * @param {PagedCollection} offerCollection
+   */
+  function addPagedCollection(offerCollection) {
+    _.each(offerCollection.member, function (item) {
+      var offerLocation = item['@id'];
+      var offerUuid = offerLocation.split('/').pop();
+      add(offerUuid, offerLocation);
+    });
+  }
+
+  /**
+   * @param {string} uuid
+   * @return {Promise.<URL>}
+   */
+  function get(uuid) {
+    var knownLocation = locations[uuid];
+
+    if (knownLocation) {
+      return $q.resolve(knownLocation);
+    } else {
+      return findLocation(uuid);
+    }
+  }
+
+  /**
+   * @param {string} uuid
+   * @return {Promise.<URL>}
+   */
+  function findLocation(uuid) {
+    var deferredLocation = $q.defer();
+
+    function cacheAndResolveLocation(pagedSearchResults) {
+      if (pagedSearchResults.totalItems === 1) {
+        var location = pagedSearchResults.member[0]['@id'];
+        add(uuid, location);
+        deferredLocation.resolve(location);
+      } else {
+        deferredLocation.reject('Unable to determine the exact offer for this uuid.');
+      }
+    }
+
+    udbApi
+      .findEvents('cdbid:"' + uuid + '"')
+      .then(cacheAndResolveLocation)
+      .catch(deferredLocation.reject);
+
+    return deferredLocation.promise;
+  }
+}
+OfferLocator.$inject = ["$q", "udbApi"];
 
 // Source: src/saved-searches/components/delete-search-modal.controller.js
 /**
@@ -12709,6 +12784,9 @@ function SearchResultViewerFactory() {
 
       return _.contains(this.selectedOffers, theOffer);
     },
+    /**
+     * @param {PagedCollection} pagedResults
+     */
     setResults: function (pagedResults) {
       var viewer = this;
 
@@ -12917,7 +12995,7 @@ function EventController(
   function initController() {
     if (!$scope.event.title) {
       controller.fetching = true;
-      var eventPromise = udbApi.getEventByLDId($scope.event['@id']);
+      var eventPromise = udbApi.getOffer($scope.event['@id']);
 
       eventPromise.then(function (eventObject) {
         cachedEvent = eventObject;
@@ -13138,7 +13216,7 @@ function PlaceController(
   function initController() {
     if (!$scope.event.title) {
       controller.fetching = true;
-      var placePromise = udbApi.getPlaceByLDId($scope.event['@id']);
+      var placePromise = udbApi.getOffer($scope.event['@id']);
 
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;
@@ -13308,6 +13386,7 @@ function Search(
   $uibModal,
   SearchResultViewer,
   offerLabeller,
+  offerLocator,
   searchHelper,
   $rootScope,
   eventExporter,
@@ -13374,6 +13453,7 @@ function Search(
     $scope.resultViewer.loading = true;
 
     eventPromise.then(function (pagedEvents) {
+      offerLocator.addPagedCollection(pagedEvents);
       $scope.resultViewer.setResults(pagedEvents);
     });
   };
@@ -13579,7 +13659,7 @@ function Search(
 
   init();
 }
-Search.$inject = ["$scope", "udbApi", "LuceneQueryBuilder", "$window", "$location", "$uibModal", "SearchResultViewer", "offerLabeller", "searchHelper", "$rootScope", "eventExporter", "$translate"];
+Search.$inject = ["$scope", "udbApi", "LuceneQueryBuilder", "$window", "$location", "$uibModal", "SearchResultViewer", "offerLabeller", "offerLocator", "searchHelper", "$rootScope", "eventExporter", "$translate"];
 
 // Source: src/search/ui/search.directive.js
 /**

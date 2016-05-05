@@ -39,7 +39,7 @@ function PlaceController(
   function initController() {
     if (!$scope.event.title) {
       controller.fetching = true;
-      var placePromise = udbApi.getPlaceByLDId($scope.event['@id']);
+      var placePromise = udbApi.getOffer($scope.event['@id']);
 
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;

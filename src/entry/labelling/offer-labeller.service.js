@@ -61,7 +61,7 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   };
 
   /**
-   * @param {string[]} offers
+   * @param {Object[]} offers
    * @param {string} label
    */
   this.labelOffersById = function (offers, label) {
