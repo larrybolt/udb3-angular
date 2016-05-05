@@ -292,11 +292,22 @@ function UdbApi(
     );
   };
 
+  /**
+   *
+   * @param {string} query
+   * @param {string} [email]
+   * @param {string} format
+   * @param {string[]} properties
+   * @param {boolean} perDay
+   * @param {URL[]} selection
+   * @param {Object} [customizations]
+   * @return {*}
+   */
   this.exportEvents = function (query, email, format, properties, perDay, selection, customizations) {
 
     var exportData = {
       query: query,
-      selection: selection || [],
+      selection: _.map(selection, Object.prototype.toString) || [],
       order: {},
       include: properties,
       perDay: perDay,
