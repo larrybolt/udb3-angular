@@ -16,7 +16,7 @@ function PlaceController(
   $scope,
   jsonLDLangFilter,
   EventTranslationState,
-  placeTranslator,
+  offerTranslator,
   offerLabeller,
   $window
 ) {
@@ -135,7 +135,7 @@ function PlaceController(
         udbProperty = apiProperty || property;
 
     if (translation && translation !== cachedPlace[property][language]) {
-      var translationPromise = placeTranslator.translateProperty(cachedPlace, udbProperty, language, translation);
+      var translationPromise = offerTranslator.translateProperty(cachedPlace, udbProperty, language, translation);
 
       translationPromise.then(function () {
         cachedPlace.updateTranslationState();

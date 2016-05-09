@@ -321,13 +321,23 @@ function UdbApi(
     return $http.post(appConfig.baseUrl + 'events/export/' + format, exportData, defaultApiConfig);
   };
 
-  this.translateProperty = function (id, type, property, language, translation) {
-
+  /**
+   * @param {URL} offerLocation
+   * @param {string} propertyName
+   *  'title' or 'description'
+   * @param {string} language
+   *  ISO 639-1 language code: https://en.wikipedia.org/wiki/ISO_639-1
+   *  Languages known to be supported: nl, en, fr, de.
+   * @param {string} translation
+   *
+   * @return {Promise}
+   */
+  this.translateProperty = function (offerLocation, propertyName, language, translation) {
     var translationData = {};
-    translationData[property] = translation;
+    translationData[propertyName] = translation;
 
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/' + language + '/' + property,
+      offerLocation + '/' + language + '/' + propertyName,
       translationData,
       defaultApiConfig
     );

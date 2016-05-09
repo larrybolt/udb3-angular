@@ -2833,13 +2833,23 @@ function UdbApi(
     return $http.post(appConfig.baseUrl + 'events/export/' + format, exportData, defaultApiConfig);
   };
 
-  this.translateProperty = function (id, type, property, language, translation) {
-
+  /**
+   * @param {URL} offerLocation
+   * @param {string} propertyName
+   *  'title' or 'description'
+   * @param {string} language
+   *  ISO 639-1 language code: https://en.wikipedia.org/wiki/ISO_639-1
+   *  Languages known to be supported: nl, en, fr, de.
+   * @param {string} translation
+   *
+   * @return {Promise}
+   */
+  this.translateProperty = function (offerLocation, propertyName, language, translation) {
     var translationData = {};
-    translationData[property] = translation;
+    translationData[propertyName] = translation;
 
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/' + language + '/' + property,
+      offerLocation + '/' + language + '/' + propertyName,
       translationData,
       defaultApiConfig
     );
@@ -3778,7 +3788,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this['@id'] = jsonPlace['@id'];
       this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
-        this.apiUrl = jsonPlace['@id'];
+        this.apiUrl = new URL(jsonPlace['@id']);
       }
       this.name = jsonPlace.name || {};
       this.address = jsonPlace.address || this.address;
@@ -5936,47 +5946,47 @@ function udbWorkIndicator ($window, jobLogger) {
 }
 udbWorkIndicator.$inject = ["$window", "jobLogger"];
 
-// Source: src/entry/translation/event-translation-job.factory.js
+// Source: src/entry/translation/offer-translation-job.factory.js
 /**
  * @ngdoc service
- * @name udb.entry.EventTranslationJob
+ * @name udb.entry.OfferTranslationJob
  * @description
- * # Event Label Job
- * This Is the factory that creates an event label job
+ * # Offer Label Job
+ * This Is the factory that creates an offer label job
  */
 angular
   .module('udb.entry')
-  .factory('EventTranslationJob', EventTranslationJobFactory);
+  .factory('OfferTranslationJob', OfferTranslationJobFactory);
 
 /* @ngInject */
-function EventTranslationJobFactory(BaseJob, JobStates) {
+function OfferTranslationJobFactory(BaseJob, JobStates) {
 
   /**
-   * @class EventTranslationJob
+   * @class OfferTranslationJob
    * @constructor
    * @param {string} commandId
-   * @param {UdbEvent} event
+   * @param {UdbEvent|UdbPlace} offer
    * @param {string} property
    * @param {string} language
    * @param {string} translation
    */
-  var EventTranslationJob = function (commandId, event, property, language, translation) {
+  var OfferTranslationJob = function (commandId, offer, property, language, translation) {
     BaseJob.call(this, commandId);
-    this.event = event;
+    this.offer = offer;
     this.property = property;
     this.language = language;
     this.translation = translation;
   };
 
-  EventTranslationJob.prototype = Object.create(BaseJob.prototype);
-  EventTranslationJob.prototype.constructor = EventTranslationJob;
+  OfferTranslationJob.prototype = Object.create(BaseJob.prototype);
+  OfferTranslationJob.prototype.constructor = OfferTranslationJob;
 
-  EventTranslationJob.prototype.getDescription = function () {
+  OfferTranslationJob.prototype.getDescription = function () {
     var job = this,
         description;
 
     if (this.state === JobStates.FAILED) {
-      description = 'Vertalen van evenement mislukt';
+      description = 'Vertalen van aanbod mislukt';
     } else {
       var propertyName;
 
@@ -5997,156 +6007,53 @@ function EventTranslationJobFactory(BaseJob, JobStates) {
     return description;
   };
 
-  return (EventTranslationJob);
+  return (OfferTranslationJob);
 }
-EventTranslationJobFactory.$inject = ["BaseJob", "JobStates"];
+OfferTranslationJobFactory.$inject = ["BaseJob", "JobStates"];
 
-// Source: src/entry/translation/event-translator.service.js
+// Source: src/entry/translation/offer-translator.service.js
 /**
  * @ngdoc service
- * @name udb.entry.eventTranslator
+ * @name udb.entry.offerTranslator
  * @description
- * # eventTranslator
+ * # offerTranslator
  * Service in the udb.entry.
  */
 angular
   .module('udb.entry')
-  .service('eventTranslator', EventTranslator);
+  .service('offerTranslator', OfferTranslator);
 
 /* @ngInject */
-function EventTranslator(jobLogger, udbApi, EventTranslationJob) {
+function OfferTranslator(jobLogger, udbApi, OfferTranslationJob) {
 
   /**
-   * Translates an event property to a given language and adds the job to the logger
+   * Translates an offer property to a given language and adds the job to the logger
    *
-   * @param {UdbEvent}  event        The event that needs translating
-   * @param {string}    property     The name of the property to translate
-   * @param {string}    language     The abbreviation of the translation language
-   * @param {string}    translation  Translation to save
+   * @param {UdbEvent|UdbPlace} offer The offer that needs translating
+   * @param {string}  property  The name of the property to translate
+   * @param {string}  language  The abbreviation of the translation language
+   * @param {string}  translation Translation to save
    */
-  this.translateProperty = function (event, property, language, translation) {
-    var jobPromise = udbApi.translateProperty(event.id, 'event', property, language, translation);
+  this.translateProperty = function (offer, property, language, translation) {
+    function logTranslationJob(response) {
+      var jobData = response.data;
 
-    jobPromise.success(function (jobData) {
-      // TODO get rid of this hack;
-      if (property === 'title') {
-        property = 'name';
-      }
-      event[property][language] = translation;
-      var job = new EventTranslationJob(jobData.commandId, event, property, language, translation);
+      offer[property][language] = translation;
+      var job = new OfferTranslationJob(jobData.commandId, offer, property, language, translation);
       jobLogger.addJob(job);
-    });
-
-    return jobPromise;
-  };
-}
-EventTranslator.$inject = ["jobLogger", "udbApi", "EventTranslationJob"];
-
-// Source: src/entry/translation/place-translation-job.factory.js
-/**
- * @ngdoc service
- * @name udb.entry.PlaceTranslationJob
- * @description
- * # Place Translation Job
- * This Is the factory that creates an place translation job
- */
-angular
-  .module('udb.entry')
-  .factory('PlaceTranslationJob', PlaceTranslationJobFactory);
-
-/* @ngInject */
-function PlaceTranslationJobFactory(BaseJob, JobStates) {
-
-  /**
-   * @class PlaceTranslationJob
-   * @constructor
-   * @param {string} commandId
-   * @param {UdbPlace} place
-   * @param {string} property
-   * @param {string} language
-   * @param {string} translation
-   */
-  var PlaceTranslationJob = function (commandId, place, property, language, translation) {
-    BaseJob.call(this, commandId);
-    this.place = place;
-    this.property = property;
-    this.language = language;
-    this.translation = translation;
-  };
-
-  PlaceTranslationJob.prototype = Object.create(BaseJob.prototype);
-  PlaceTranslationJob.prototype.constructor = PlaceTranslationJob;
-
-  PlaceTranslationJob.prototype.getDescription = function () {
-    var job = this,
-        description;
-
-    if (this.state === JobStates.FAILED) {
-      description = 'Vertalen van evenement mislukt';
-    } else {
-      var propertyName;
-
-      switch (job.property) {
-        case 'name':
-          propertyName = 'titel';
-          break;
-        case 'description':
-          propertyName = 'omschrijving';
-          break;
-        default:
-          propertyName = job.property;
-      }
-
-      description = 'Vertaal ' + propertyName + ' van "' + job.place.name.nl + '"';
     }
 
-    return description;
-  };
+    // TODO get rid of this hack;
+    if (property === 'title') {
+      property = 'name';
+    }
 
-  return (PlaceTranslationJob);
-}
-PlaceTranslationJobFactory.$inject = ["BaseJob", "JobStates"];
-
-// Source: src/entry/translation/place-translator.service.js
-/**
- * @ngdoc service
- * @name udb.entry.placeTranslator
- * @description
- * # placeTranslator
- * Service in the udb.entry.
- */
-angular
-  .module('udb.entry')
-  .service('placeTranslator', PlaceTranslator);
-
-/* @ngInject */
-function PlaceTranslator(jobLogger, udbApi, PlaceTranslationJob) {
-
-  /**
-   * Translates an place property to a given language and adds the job to the logger
-   *
-   * @param {UdbPlace}  place        The place that needs translating
-   * @param {string}    property     The name of the property to translate
-   * @param {string}    language     The abbreviation of the translation language
-   * @param {string}    translation  Translation to save
-   */
-  this.translateProperty = function (place, property, language, translation) {
-    var jobPromise = udbApi.translateProperty(place.id, 'place', property, language, translation);
-
-    jobPromise.success(function (jobData) {
-      // TODO get rid of this hack;
-      if (property === 'title') {
-        property = 'name';
-      }
-      place[property][language] = translation;
-      var job = new PlaceTranslationJob(jobData.commandId, place, property, language, translation);
-      jobLogger.addJob(job);
-    });
-
-    return jobPromise;
+    return udbApi
+      .translateProperty(offer.apiUrl, property, language, translation)
+      .then(logTranslationJob);
   };
 }
-PlaceTranslator.$inject = ["jobLogger", "udbApi", "PlaceTranslationJob"];
+OfferTranslator.$inject = ["jobLogger", "udbApi", "OfferTranslationJob"];
 
 // Source: src/event-detail/event-detail.directive.js
 /**
@@ -12995,7 +12902,7 @@ angular
 function EventController(
   udbApi,
   jsonLDLangFilter,
-  eventTranslator,
+  offerTranslator,
   offerLabeller,
   offerEditor,
   EventTranslationState,
@@ -13135,7 +13042,7 @@ function EventController(
         udbProperty = apiProperty || property;
 
     if (translation && translation !== cachedEvent[property][language]) {
-      var translationPromise = eventTranslator.translateProperty(cachedEvent, udbProperty, language, translation);
+      var translationPromise = offerTranslator.translateProperty(cachedEvent, udbProperty, language, translation);
 
       translationPromise.then(function () {
         cachedEvent.updateTranslationState();
@@ -13178,7 +13085,7 @@ function EventController(
   };
 
 }
-EventController.$inject = ["udbApi", "jsonLDLangFilter", "eventTranslator", "offerLabeller", "offerEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
+EventController.$inject = ["udbApi", "jsonLDLangFilter", "offerTranslator", "offerLabeller", "offerEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
 
 // Source: src/search/ui/event.directive.js
 /**
@@ -13220,7 +13127,7 @@ function PlaceController(
   $scope,
   jsonLDLangFilter,
   EventTranslationState,
-  placeTranslator,
+  offerTranslator,
   offerLabeller,
   $window
 ) {
@@ -13339,7 +13246,7 @@ function PlaceController(
         udbProperty = apiProperty || property;
 
     if (translation && translation !== cachedPlace[property][language]) {
-      var translationPromise = placeTranslator.translateProperty(cachedPlace, udbProperty, language, translation);
+      var translationPromise = offerTranslator.translateProperty(cachedPlace, udbProperty, language, translation);
 
       translationPromise.then(function () {
         cachedPlace.updateTranslationState();
@@ -13366,7 +13273,7 @@ function PlaceController(
     offerLabeller.unlabel(cachedPlace, label);
   };
 }
-PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "placeTranslator", "offerLabeller", "$window"];
+PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window"];
 
 // Source: src/search/ui/place.directive.js
 /**

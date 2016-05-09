@@ -14,7 +14,7 @@ angular
 function EventController(
   udbApi,
   jsonLDLangFilter,
-  eventTranslator,
+  offerTranslator,
   offerLabeller,
   offerEditor,
   EventTranslationState,
@@ -154,7 +154,7 @@ function EventController(
         udbProperty = apiProperty || property;
 
     if (translation && translation !== cachedEvent[property][language]) {
-      var translationPromise = eventTranslator.translateProperty(cachedEvent, udbProperty, language, translation);
+      var translationPromise = offerTranslator.translateProperty(cachedEvent, udbProperty, language, translation);
 
       translationPromise.then(function () {
         cachedEvent.updateTranslationState();

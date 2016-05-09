@@ -7,7 +7,7 @@ describe('Controller: Place', function() {
       UdbPlace,
       jsonLDLangFilter,
       EventTranslationState,
-      placeTranslator,
+      offerTranslator,
       offerLabeller,
       $window,
       $q,
@@ -64,7 +64,7 @@ describe('Controller: Place', function() {
     UdbPlace = $injector.get('UdbPlace');
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
     EventTranslationState = $injector.get('EventTranslationState');
-    placeTranslator = $injector.get('placeTranslator');
+    offerTranslator = $injector.get('offerTranslator');
     offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
     $window = $injector.get('$window');
     $q = _$q_;
@@ -81,7 +81,7 @@ describe('Controller: Place', function() {
         $scope: $scope,
         jsonLDLangFilter: jsonLDLangFilter,
         EventTranslationState: EventTranslationState,
-        placeTranslator: placeTranslator,
+        offerTranslator: offerTranslator,
         offerLabeller: offerLabeller,
         $window: $window
       }
