@@ -346,26 +346,22 @@ function UdbApi(
   /**
    * Update the property for a given id.
    *
-   * @param {string} id
-   *   ID to update
-   * @param {string} type
-   *   Type of entity to update
+   * @param {URL} offerLocation
+   *   The location of the offer to update
    * @param {string} property
    *   Property to update
    * @param {string} value
    *   Value to save
    */
-  this.updateProperty = function(id, type, property, value) {
-
+  this.updateProperty = function(offerLocation, property, value) {
     var updateData = {};
     updateData[property] = value;
 
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/' + property,
+      offerLocation +  '/' + property,
       updateData,
       defaultApiConfig
     );
-
   };
 
   this.labelOffer = function (offer, label) {
