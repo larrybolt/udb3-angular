@@ -364,17 +364,29 @@ function UdbApi(
     );
   };
 
-  this.labelOffer = function (offer, label) {
+  /**
+   * @param {URL} offerLocation
+   * @param {string} label
+   *
+   * @return {Promise}
+   */
+  this.labelOffer = function (offerLocation, label) {
     return $http.post(
-      offer.apiUrl + '/labels',
+      offerLocation + '/labels',
       {'label': label},
       defaultApiConfig
     );
   };
 
-  this.unlabelOffer = function (offer, label) {
-    return $http['delete'](
-      offer.apiUrl + '/labels/' + label,
+  /**
+   * @param {URL} offerLocation
+   * @param {string} label
+   *
+   * @return {Promise}
+   */
+  this.unlabelOffer = function (offerLocation, label) {
+    return $http.delete(
+      offerLocation + '/labels/' + label,
       defaultApiConfig
     );
   };
