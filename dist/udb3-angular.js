@@ -3002,23 +3002,26 @@ function UdbApi(
 
   /**
    * Delete the typical age range for an offer.
+   * @param {URL} offerLocation
    */
-  this.deleteTypicalAgeRange = function(id, type) {
+  this.deleteTypicalAgeRange = function(offerLocation) {
 
-    return $http['delete'](
-      appConfig.baseApiUrl + type + '/' + id + '/typicalAgeRange',
+    return $http.delete(
+      offerLocation + '/typicalAgeRange',
       defaultApiConfig
     );
   };
 
   /**
    * Delete the organizer for an offer.
+   * @param {URL} offerLocation
+   * @param {string} organizerId
    */
-  this.deleteOfferOrganizer = function(id, type, organizerId) {
+  this.deleteOfferOrganizer = function(offerLocation, organizerId) {
 
-    return $http['delete'](
-        appConfig.baseUrl + type + '/' + id + '/organizer/' + organizerId,
-        defaultApiConfig
+    return $http.delete(
+      offerLocation + '/organizer/' + organizerId,
+      defaultApiConfig
     );
   };
 
@@ -4739,7 +4742,7 @@ function EventCrud(
    */
   service.deleteTypicalAgeRange = function(item) {
     return udbApi
-      .deleteTypicalAgeRange(item.id, item.getType())
+      .deleteTypicalAgeRange(item.apiUrl)
       .then(jobCreatorFactory(item, 'updateTypicalAgeRange'));
   };
 
@@ -4763,7 +4766,7 @@ function EventCrud(
    */
   service.deleteOfferOrganizer = function(item) {
     return udbApi
-      .deleteOfferOrganizer(item.id, item.getType(), item.organizer.id)
+      .deleteOfferOrganizer(item.apiUrl, item.organizer.id)
       .then(jobCreatorFactory(item, 'deleteOrganizer'));
   };
 

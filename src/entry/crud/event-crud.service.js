@@ -129,7 +129,7 @@ function EventCrud(
    */
   service.deleteTypicalAgeRange = function(item) {
     return udbApi
-      .deleteTypicalAgeRange(item.id, item.getType())
+      .deleteTypicalAgeRange(item.apiUrl)
       .then(jobCreatorFactory(item, 'updateTypicalAgeRange'));
   };
 
@@ -153,7 +153,7 @@ function EventCrud(
    */
   service.deleteOfferOrganizer = function(item) {
     return udbApi
-      .deleteOfferOrganizer(item.id, item.getType(), item.organizer.id)
+      .deleteOfferOrganizer(item.apiUrl, item.organizer.id)
       .then(jobCreatorFactory(item, 'deleteOrganizer'));
   };
 
