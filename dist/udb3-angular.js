@@ -2762,7 +2762,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
     if (activeUser) {
       deferredUser.resolve(activeUser);
-    } else {
+    } else if (uitidAuth.getToken()) {
       // set the freshest, newest token
       defaultApiConfig.headers.Authorization = 'Bearer ' + uitidAuth.getToken();
 
