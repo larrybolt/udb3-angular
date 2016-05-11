@@ -263,8 +263,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     if (activeUser) {
       deferredUser.resolve(activeUser);
     } else {
+      // set the freshest, newest token
+      defaultApiConfig.headers.Authorization = 'Bearer ' + uitidAuth.getToken();
+
       $http
-        .get(appConfig.baseUrl + 'uitid/user', defaultApiConfig)
+        .get(appConfig.baseUrl + 'user', defaultApiConfig)
         .success(storeAndResolveUser)
         .error(deferredUser.reject);
     }
