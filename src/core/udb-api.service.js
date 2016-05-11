@@ -414,12 +414,17 @@ function UdbApi(
     );
   };
 
-  this.createVariation = function (offer, description, purpose) {
+  /**
+   * @param {URL} offerLocation
+   * @param {string} description
+   * @param {string} purpose
+   */
+  this.createVariation = function (offerLocation, description, purpose) {
     var activeUser = uitidAuth.getUser(),
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': offer.apiUrl,
+          'same_as': offerLocation,
           'description': description
         };
 
@@ -430,6 +435,10 @@ function UdbApi(
     );
   };
 
+  /**
+   * @param {string} variationId
+   * @param {string} description
+   */
   this.editDescription = function (variationId, description) {
     return $http.patch(
       appConfig.baseUrl + 'variations/' + variationId,
@@ -496,8 +505,11 @@ function UdbApi(
     );
   };
 
+  /**
+   * @param {string} variationId
+   */
   this.deleteVariation = function (variationId) {
-    return $http['delete'](
+    return $http.delete(
       appConfig.baseUrl + 'variations/' + variationId,
       defaultApiConfig
     );

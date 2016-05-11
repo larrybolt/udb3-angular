@@ -2926,12 +2926,17 @@ function UdbApi(
     );
   };
 
-  this.createVariation = function (offer, description, purpose) {
+  /**
+   * @param {URL} offerLocation
+   * @param {string} description
+   * @param {string} purpose
+   */
+  this.createVariation = function (offerLocation, description, purpose) {
     var activeUser = uitidAuth.getUser(),
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': offer.apiUrl,
+          'same_as': offerLocation,
           'description': description
         };
 
@@ -2942,6 +2947,10 @@ function UdbApi(
     );
   };
 
+  /**
+   * @param {string} variationId
+   * @param {string} description
+   */
   this.editDescription = function (variationId, description) {
     return $http.patch(
       appConfig.baseUrl + 'variations/' + variationId,
@@ -3008,8 +3017,11 @@ function UdbApi(
     );
   };
 
+  /**
+   * @param {string} variationId
+   */
   this.deleteVariation = function (variationId) {
-    return $http['delete'](
+    return $http.delete(
       appConfig.baseUrl + 'variations/' + variationId,
       defaultApiConfig
     );
@@ -5009,21 +5021,25 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
     var variationPromise = variationRepository.getPersonalVariation(offer);
 
     var removeDescription = function (variation) {
-      var deletePromise = editor.deleteVariation(offer, variation.id);
-      deletePromise.then(function () {
-        deferredUpdate.resolve(false);
-      }, rejectUpdate);
+      editor
+        .deleteVariation(offer, variation.id)
+        .then(revertToOriginal, rejectUpdate);
     };
 
-    var rejectUpdate = function (reason) {
-      deferredUpdate.reject(reason);
-    };
+    function rejectUpdate(errorResponse) {
+      deferredUpdate.reject(errorResponse.data);
+    }
+
+    function revertToOriginal() {
+      deferredUpdate.resolve(false);
+    }
 
     var createVariation = function () {
       purpose = purpose || 'personal';
-      var creationRequest = udbApi.createVariation(offer, description, purpose);
-      creationRequest.success(handleCreationJob);
-      creationRequest.error(rejectUpdate);
+
+      udbApi
+        .createVariation(offer.apiUrl, description, purpose)
+        .then(handleCreationJob, rejectUpdate);
     };
 
     var handleCreationJob = function (jobData) {
@@ -5049,10 +5065,6 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
       });
 
       editRequest.error(rejectUpdate);
-    };
-
-    var revertToOriginal = function () {
-      deferredUpdate.resolve(false);
     };
 
     if (description) {
