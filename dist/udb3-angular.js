@@ -2571,7 +2571,8 @@ function UdbApi(
   var defaultApiConfig = {
     withCredentials: true,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + uitidAuth.getToken()
     },
     params: {}
   };
@@ -4109,6 +4110,9 @@ function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
     return $cookieStore.get('user');
   };
 
+  this.getToken = function () {
+    return 'foo';
+  };
 }
 UitidAuth.$inject = ["$window", "$location", "$http", "appConfig", "$cookieStore"];
 
