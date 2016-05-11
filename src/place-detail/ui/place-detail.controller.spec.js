@@ -164,7 +164,7 @@ describe('Controller: Place Detail', function() {
     var eventsUsingPlace = [
       'event-one',
       'event-two'
-    ]
+    ];
     var actualOptions;
     var modalOptions = {
       templateUrl: 'templates/place-delete-confirm-modal.html',
@@ -174,11 +174,7 @@ describe('Controller: Place Detail', function() {
         events: jasmine.any(Function)
       }
     };
-    eventCrud.findEventsAtPlace.and.returnValue($q.resolve({
-      data: {
-        events: eventsUsingPlace
-      }
-    }));
+    eventCrud.findEventsAtPlace.and.returnValue($q.resolve(eventsUsingPlace));
     $uibModal.open.and.callFake(function(options){
       actualOptions = options;
 

@@ -77,13 +77,13 @@
         modalInstance.result.then(updateItemViewerOnJobFeedback);
       }
 
-      function showModalWithEvents(eventsJsonResponse) {
-        displayModal(place, eventsJsonResponse.data.events);
+      function showModalWithEvents(events) {
+        displayModal(place, events);
       }
 
       // Check if this place has planned events.
       eventCrud
-        .findEventsAtPlace(place)
+        .findEventsAtPlace(place.apiUrl)
         .then(showModalWithEvents);
     }
 

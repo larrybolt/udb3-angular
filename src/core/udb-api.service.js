@@ -448,17 +448,20 @@ function UdbApi(
   };
 
   /**
-   * Find all the events that take place there.
-
-   * @param {UdbPlace} place
-
-   * @returns {array}
+   * @param {URL} placeLocation
+   * @returns {OfferIdentifier[]}
    */
-  this.findEventsAtPlace = function(place) {
-    return $http.get(
-      place.apiUrl + '/events',
-      defaultApiConfig
-    );
+  this.findEventsAtPlace = function(placeLocation) {
+    function unwrapEvents(wrappedEvents) {
+      return $q.resolve(wrappedEvents.events);
+    }
+
+    return $http
+      .get(placeLocation + '/events', defaultApiConfig)
+      .then(function (response) {
+        return returnUnwrappedData(response)
+          .then(unwrapEvents);
+      });
   };
 
   /**

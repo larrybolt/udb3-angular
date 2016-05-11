@@ -165,9 +165,9 @@ function PlaceDetail(
 
     // Check if this place has planned events.
     eventCrud
-      .findEventsAtPlace(item)
-      .then(function(jsonResponse) {
-        displayModal(item, jsonResponse.data.events);
+      .findEventsAtPlace(item.apiUrl)
+      .then(function(events) {
+        displayModal(item, events);
       });
   }
 }

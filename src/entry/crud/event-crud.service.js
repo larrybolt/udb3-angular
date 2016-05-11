@@ -46,11 +46,11 @@ function EventCrud(
    * Find all the events that take place here.
    *
    * @param {UdbPlace} place
-   *   Place Id to find events for
+   *
+   * @return {Promise.<OfferIdentifier[]>}
    */
   service.findEventsAtPlace = function(place) {
-    var jobPromise = udbApi.findEventsAtPlace(place);
-    return jobPromise;
+    return udbApi.findEventsAtPlace(place.apiUrl);
   };
 
   /**
