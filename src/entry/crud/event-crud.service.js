@@ -88,7 +88,7 @@ function EventCrud(
    */
   service.updateMajorInfo = function(eventFormData) {
     udbApi
-      .updateMajorInfo(eventFormData.id, eventFormData.getType(), eventFormData)
+      .updateMajorInfo(eventFormData)
       .then(jobCreatorFactory(eventFormData, 'updateItem'));
   };
 
@@ -310,7 +310,7 @@ function EventCrud(
   };
 
   /**
-   * @param {Object} event
+   * @param {Object} event Angular event object
    * @param {EventFormData} eventFormData
    */
   function updateMajorInfo(event, eventFormData) {

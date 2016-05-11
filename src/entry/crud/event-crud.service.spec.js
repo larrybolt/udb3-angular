@@ -35,7 +35,7 @@ describe('Service: Event crud', function () {
       'eventTimingChanged',
       'eventTitleChanged'
     ];
-    var eventFormData = { 'some': 'data'};
+    var eventFormData = {'some': 'data'};
     spyOn(eventCrud, 'updateMajorInfo');
 
     propertyChangedEvents.forEach(function (eventName) {

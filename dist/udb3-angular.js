@@ -2988,12 +2988,14 @@ function UdbApi(
   };
 
   /**
-   * Update the major info of an item.
+   * Update the major info of an offer.
+   * @param {URL} offerLocation
+   * @param {EventFormData} info
    */
-  this.updateMajorInfo = function(id, type, item) {
+  this.updateMajorInfo = function(offerLocation, info) {
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/major-info',
-      item,
+      offerLocation + '/major-info',
+      info,
       defaultApiConfig
     );
   };
@@ -4696,7 +4698,7 @@ function EventCrud(
    */
   service.updateMajorInfo = function(eventFormData) {
     udbApi
-      .updateMajorInfo(eventFormData.id, eventFormData.getType(), eventFormData)
+      .updateMajorInfo(eventFormData)
       .then(jobCreatorFactory(eventFormData, 'updateItem'));
   };
 
@@ -4918,7 +4920,7 @@ function EventCrud(
   };
 
   /**
-   * @param {Object} event
+   * @param {Object} event Angular event object
    * @param {EventFormData} eventFormData
    */
   function updateMajorInfo(event, eventFormData) {

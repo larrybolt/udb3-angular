@@ -476,12 +476,14 @@ function UdbApi(
   };
 
   /**
-   * Update the major info of an item.
+   * Update the major info of an offer.
+   * @param {URL} offerLocation
+   * @param {EventFormData} info
    */
-  this.updateMajorInfo = function(id, type, item) {
+  this.updateMajorInfo = function(offerLocation, info) {
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/major-info',
-      item,
+      offerLocation + '/major-info',
+      info,
       defaultApiConfig
     );
   };
