@@ -270,6 +270,8 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
         .get(appConfig.baseUrl + 'user', defaultApiConfig)
         .success(storeAndResolveUser)
         .error(deferredUser.reject);
+    } else {
+      deferredUser.reject();
     }
 
     return deferredUser.promise;
