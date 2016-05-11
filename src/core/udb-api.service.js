@@ -525,15 +525,18 @@ function UdbApi(
 
   /**
    * Add a new image.
+   * @param {URL} itemLocation
+   * @param {string} imageId
+   * @return {Promise}
    */
-  this.addImage = function(itemId, itemType, imageId) {
+  this.addImage = function(itemLocation, imageId) {
     var postData = {
       mediaObjectId: imageId
     };
 
     return $http
       .post(
-        appConfig.baseUrl + itemType + '/' + itemId + '/images',
+        itemLocation + '/images',
         postData,
         defaultApiConfig
       )
@@ -541,9 +544,15 @@ function UdbApi(
   };
 
   /**
-   * Update an image.
+   * Update the image info of an item.
+   * @param {URL} itemLocation
+   * @param {string} imageId
+   * @param {string} description
+   * @param {string} copyrightHolder
+   * @return {Promise}
+   *
    */
-  this.updateImage = function(itemId, itemType, imageId, description, copyrightHolder) {
+  this.updateImage = function(itemLocation, imageId, description, copyrightHolder) {
     var postData = {
       description: description,
       copyrightHolder: copyrightHolder
@@ -551,7 +560,7 @@ function UdbApi(
 
     return $http
       .post(
-        appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
+        itemLocation + '/images/' + imageId,
         postData,
         defaultApiConfig
       )
@@ -559,38 +568,36 @@ function UdbApi(
   };
 
   /**
-   * Remove an image from an offer.
+   * Remove an image from an item.
    *
-   * @param {string} itemId
-   * @param {OfferTypes} itemType
+   * @param {URL} itemLocation
    * @param {string} imageId
    *
    * @return {Promise}
    */
-  this.removeImage = function(itemId, itemType, imageId) {
-    return $http['delete'](
-      appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
+  this.removeImage = function(itemLocation, imageId) {
+    return $http.delete(
+      itemLocation + '/images/' + imageId,
       defaultApiConfig
     ).then(returnJobData);
   };
 
   /**
-   * Select the main image for an offer.
+   * Select the main image for an item.
    *
-   * @param {string} itemId
-   * @param {OfferTypes} itemType
+   * @param {URL} itemLocation
    * @param {string} imageId
    *
    * @return {Promise.<Object>}
    */
-  this.selectMainImage = function(itemId, itemType, imageId) {
+  this.selectMainImage = function(itemLocation, imageId) {
     var postData = {
       mediaObjectId: imageId
     };
 
     return $http
       .post(
-        appConfig.baseUrl + itemType + '/' + itemId + '/images/main',
+        itemLocation + '/images/main',
         postData,
         defaultApiConfig
       )

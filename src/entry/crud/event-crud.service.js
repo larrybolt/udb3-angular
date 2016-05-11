@@ -231,21 +231,14 @@ function EventCrud(
    *
    * @param {EventFormData} item
    * @param {MediaObject} image
-   * @returns {EventCrud.addImage.jobPromise}
+   * @returns {Promise.<EventCrudJob>}
    */
   service.addImage = function(item, image) {
     var imageId = image.id || image['@id'].split('/').pop();
 
-    function logJob(jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'addImage');
-      addJobAndInvalidateCache(jobLogger, job);
-
-      return $q.resolve(job);
-    }
-
     return udbApi
-      .addImage(item.id, item.getType(), imageId)
-      .then(logJob);
+      .addImage(item.apiUrl, imageId)
+      .then(jobCreatorFactory(item, 'addImage'));
   };
 
   /**
@@ -255,21 +248,14 @@ function EventCrud(
    * @param {MediaObject} image
    * @param {string} description
    * @param {string} copyrightHolder
-   * @returns {EventCrud.updateImage.jobPromise}
+   * @returns {Promise.<EventCrudJob>}
    */
   service.updateImage = function(item, image, description, copyrightHolder) {
     var imageId = image['@id'].split('/').pop();
 
-    function logJob(jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'updateImage');
-      addJobAndInvalidateCache(jobLogger, job);
-
-      return $q.resolve(job);
-    }
-
     return udbApi
-      .updateImage(item.id, item.getType(), imageId, description, copyrightHolder)
-      .then(logJob);
+      .updateImage(item.apiUrl, imageId, description, copyrightHolder)
+      .then(jobCreatorFactory(item, 'updateImage'));
   };
 
   /**
@@ -282,31 +268,24 @@ function EventCrud(
   service.removeImage = function(item, image) {
     var imageId = image['@id'].split('/').pop();
 
-    function logJob(jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'removeImage');
-      addJobAndInvalidateCache(jobLogger, job);
-
-      return $q.resolve(job);
-    }
-
     return udbApi
-      .removeImage(item.id, item.getType(), imageId)
-      .then(logJob);
+      .removeImage(item.apiUrl, imageId)
+      .then(jobCreatorFactory(item, 'removeImage'));
   };
 
+  /**
+   * Select the main image for an item.
+   *
+   * @param {EventFormData} item
+   * @param {image} image
+   * @returns {Promise.<EventCrudJob>}
+   */
   service.selectMainImage = function (item, image) {
     var imageId = image['@id'].split('/').pop();
 
-    function logJob(jobData) {
-      var job = new EventCrudJob(jobData.commandId, item, 'selectMainImage');
-      addJobAndInvalidateCache(jobLogger, job);
-
-      return $q.resolve(job);
-    }
-
     return udbApi
-      .selectMainImage(item.id, item.getType(), imageId)
-      .then(logJob);
+      .selectMainImage(item.apiUrl, imageId)
+      .then(jobCreatorFactory(item, 'selectMainImage'));
   };
 
   /**
