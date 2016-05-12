@@ -114,14 +114,9 @@ function UdbApi(
     var offset = start || 0,
         searchParams = {
           start: offset
-        },
-        requestOptions = {
-          params: searchParams,
-          withCredentials: true,
-          headers: {
-            'Accept': 'application/ld+json'
-          }
         };
+    var requestOptions = _.cloneDeep(defaultApiConfig);
+    requestOptions.params = searchParams;
 
     if (queryString.length) {
       searchParams.query = queryString;
@@ -138,11 +133,6 @@ function UdbApi(
    */
   this.getOffer = function(offerLocation) {
     var deferredOffer = $q.defer();
-    var jsonLdRequestOptions = {
-      headers: {
-        'Accept': 'application/ld+json'
-      }
-    };
     var offer = offerCache.get(offerLocation);
 
     function cacheAndResolveOffer(jsonOffer) {
@@ -156,7 +146,7 @@ function UdbApi(
       deferredOffer.resolve(offer);
     } else {
       $http
-        .get(offerLocation.toString(), jsonLdRequestOptions)
+        .get(offerLocation.toString(), defaultApiConfig)
         .success(cacheAndResolveOffer)
         .error(deferredOffer.reject);
     }
@@ -180,11 +170,8 @@ function UdbApi(
       } else {
         var organizerRequest  = $http.get(
           appConfig.baseApiUrl + 'organizer/' + organizerId,
-          {
-            headers: {
-              'Accept': 'application/ld+json'
-            }
-          });
+          defaultApiConfig
+        );
 
         organizerRequest.success(function(jsonOrganizer) {
           var organizer = new UdbOrganizer();
@@ -202,14 +189,8 @@ function UdbApi(
    * @return {*}
    */
   this.getHistory = function (eventId) {
-    var requestOptions = {
-      headers: {
-        'Accept': 'application/json'
-      }
-    };
-
     return $http
-      .get(eventId + '/history', requestOptions)
+      .get(eventId + '/history', defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
@@ -218,13 +199,7 @@ function UdbApi(
    */
   this.getRecentLabels = function () {
     var deferredLabels = $q.defer();
-
-    var request = $http.get(apiUrl + 'user/labels', {
-      withCredentials: true,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
+    var request = $http.get(apiUrl + 'user/labels', defaultApiConfig);
 
     request
       .success(function (data) {
@@ -652,13 +627,8 @@ function UdbApi(
       'same_as': offerUrl
     };
 
-    var config = {
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      params: _.pick(parameters, _.isString)
-    };
+    var config = _.cloneDeep(defaultApiConfig);
+    config.params = _.pick(parameters, _.isString);
 
     return $http.get(
       appConfig.baseUrl + 'variations/',
@@ -670,12 +640,7 @@ function UdbApi(
     var deferredVariation = $q.defer();
 
     var variationRequest = $http.get(
-      appConfig.baseUrl + 'variations/' + variationId,
-      {
-        headers: {
-          'Accept': 'application/ld+json'
-        }
-      });
+      appConfig.baseUrl + 'variations/' + variationId, defaultApiConfig);
 
     variationRequest.success(function (jsonEvent) {
       var event = new UdbEvent(jsonEvent);
