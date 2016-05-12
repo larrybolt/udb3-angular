@@ -19,6 +19,8 @@ function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
   this.logout = function () {
     $cookieStore.remove('token');
     $cookieStore.remove('user');
+    // reset url
+    $location.search('');
     $location.path('/');
   };
 
