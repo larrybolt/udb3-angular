@@ -50,5 +50,4 @@ function UitidAuth($window, $location, appConfig, $cookieStore) {
   this.getUser = function () {
     return $cookieStore.get('user');
   };
-
 }
