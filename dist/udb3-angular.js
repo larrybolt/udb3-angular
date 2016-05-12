@@ -13463,29 +13463,29 @@ function Search(
     var exportingQuery = $scope.resultViewer.querySelected,
         query = $scope.activeQuery,
         eventCount,
-        selectedOffers = [];
+        selectedIds = [];
 
     if (exportingQuery) {
       eventCount = $scope.resultViewer.totalItems;
     } else {
-      selectedOffers = _.chain($scope.resultViewer.selectedOffers)
+      selectedIds = _.chain($scope.resultViewer.selectedOffers)
         .filter({'@type': 'Event'})
         .map(function(offer) {
-          return new URL(offer['@id']);
+          return offer['@id'].split('/').pop();
         })
         .value();
 
-      if (!selectedOffers.length) {
-        $window.alert('First select the events you want to export.');
+      if (!selectedIds.length) {
+        $window.alert('First select the events you want to label.');
         return;
       } else {
-        eventCount = selectedOffers.length;
+        eventCount = selectedIds.length;
       }
     }
 
     eventExporter.activeExport.query = query;
     eventExporter.activeExport.eventCount = eventCount;
-    eventExporter.activeExport.selection = selectedOffers;
+    eventExporter.activeExport.selection = selectedIds;
 
     if (query && query.queryString.length && queryBuilder.isValid(query)) {
       var modal = $uibModal.open({
