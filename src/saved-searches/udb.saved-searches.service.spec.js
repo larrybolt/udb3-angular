@@ -4,6 +4,8 @@ describe('Service: savedSearchesService', function() {
   var $httpBackend;
   var savedSearchesService;
   var $rootScope;
+  var udbApi;
+  var $q;
 
   var baseUrl = 'http://example.com/';
 
@@ -13,6 +15,14 @@ describe('Service: savedSearchesService', function() {
     };
 
     $provide.constant('appConfig', appConfig);
+
+    udbApi = jasmine.createSpyObj('udbApi', ['createSavedSearch', 'getSavedSearches', 'deleteSavedSearch']);
+
+    $provide.provider('udbApi', {
+      $get: function () {
+        return udbApi;
+      }
+    });
   }));
 
   beforeEach(module('udb.saved-searches'));
@@ -22,6 +32,7 @@ describe('Service: savedSearchesService', function() {
     $httpBackend = $injector.get('$httpBackend');
     savedSearchesService = $injector.get('savedSearchesService');
     $rootScope = $injector.get('$rootScope');
+    $q = $injector.get('$q');
 
     spyOn($rootScope, '$emit');
   }));
@@ -37,23 +48,13 @@ describe('Service: savedSearchesService', function() {
       query: 'city:"Leuven"'
     };
 
-    $httpBackend
-      .expectPOST(
-        baseUrl + 'saved-searches/',
-        JSON.stringify(newSavedSearch),
-        function (headers) {
-          return headers['Content-Type'] == 'application/json';
-        }
-      )
-      .respond(200, '{"jobId":"xyz"}');
+    udbApi.createSavedSearch.and.returnValue($q.resolve());
+    savedSearchesService.createSavedSearch('In Leuven', 'city:"Leuven"');
 
-    var response = savedSearchesService.createSavedSearch('In Leuven', 'city:"Leuven"');
-    $httpBackend.flush();
+    $rootScope.$digest();
+    expect($rootScope.$emit).toHaveBeenCalledWith('savedSearchesChanged', [newSavedSearch]);
 
-    response.success(function (data) {
-      expect(data).toEqual({jobId: 'xyz'});
-      expect($rootScope.$emit).toHaveBeenCalledWith('savedSearchesChanged', [newSavedSearch]);
-    });
+    expect(udbApi.createSavedSearch).toHaveBeenCalledWith('In Leuven', 'city:"Leuven"');
   });
 
   it('gets a list of JSON-encoded saved searches', function () {
@@ -62,31 +63,20 @@ describe('Service: savedSearchesService', function() {
       {"id": "127", "name": "alles in Leuven", "query": "city:leuven"}
     ];
 
-    $httpBackend
-      .expectGET(baseUrl + 'saved-searches/')
-      .respond(200, JSON.stringify(expectedSavedSearches));
-
-    var response = savedSearchesService.getSavedSearches();
-    $httpBackend.flush();
-
-    response.then(function (savedSearches) {
+    udbApi.getSavedSearches.and.returnValue($q.resolve(expectedSavedSearches));
+    savedSearchesService.getSavedSearches().then(function (savedSearches) {
       expect(savedSearches).toEqual(expectedSavedSearches);
-    })
+    });
   });
 
   it('requests to delete a saved search and receives a job', function () {
     var searchId = '1337';
 
-    $httpBackend
-      .expectDELETE(baseUrl + 'saved-searches/' + searchId)
-      .respond(200, '{"jobId":"xyz"}');
+    udbApi.deleteSavedSearch.and.returnValue($q.resolve());
+    savedSearchesService.deleteSavedSearch(searchId);
 
-    var response = savedSearchesService.deleteSavedSearch(searchId);
-    $httpBackend.flush();
-
-    response.success(function (data) {
-      expect(data).toEqual({jobId: 'xyz'});
-      expect($rootScope.$emit).toHaveBeenCalledWith('savedSearchesChanged', []);
-    });
+    $rootScope.$digest();
+    expect($rootScope.$emit).toHaveBeenCalledWith('savedSearchesChanged', []);
+    expect(udbApi.deleteSavedSearch).toHaveBeenCalledWith(searchId);
   });
 });

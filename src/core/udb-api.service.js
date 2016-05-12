@@ -80,6 +80,30 @@ function UdbApi(
     }
   };
 
+  this.createSavedSearch = function (name, queryString) {
+    var post = {
+      name: name,
+      query: queryString
+    };
+    return $http
+      .post(apiUrl + 'saved-searches/', post, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.getSavedSearches = function () {
+    console.log('get saved searches');
+    console.log(defaultApiConfig);
+    return $http
+      .get(apiUrl + 'saved-searches/', defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.deleteSavedSearch = function (searchId) {
+    return $http
+      .delete(apiUrl + 'saved-searches/' + searchId, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
   /**
    * @param {string} queryString - The query used to find events.
    * @param {number} [start] - From which event offset the result set should start.
