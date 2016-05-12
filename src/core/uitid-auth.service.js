@@ -12,7 +12,7 @@ angular
   .service('uitidAuth', UitidAuth);
 
 /* @ngInject */
-function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
+function UitidAuth($window, $location, appConfig, $cookieStore) {
   /**
    * Log the active user out.
    */

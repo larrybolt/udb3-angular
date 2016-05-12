@@ -4024,7 +4024,7 @@ angular
   .service('uitidAuth', UitidAuth);
 
 /* @ngInject */
-function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
+function UitidAuth($window, $location, appConfig, $cookieStore) {
   /**
    * Log the active user out.
    */
@@ -4064,7 +4064,7 @@ function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
   };
 
 }
-UitidAuth.$inject = ["$window", "$location", "$http", "appConfig", "$cookieStore"];
+UitidAuth.$inject = ["$window", "$location", "appConfig", "$cookieStore"];
 
 // Source: src/dashboard/components/dashboard-event-item.directive.js
 /**
