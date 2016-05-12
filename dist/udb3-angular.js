@@ -2592,6 +2592,30 @@ function UdbApi(
     }
   };
 
+  this.createSavedSearch = function (name, queryString) {
+    var post = {
+      name: name,
+      query: queryString
+    };
+    return $http
+      .post(apiUrl + 'saved-searches/', post, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.getSavedSearches = function () {
+    console.log('get saved searches');
+    console.log(defaultApiConfig);
+    return $http
+      .get(apiUrl + 'saved-searches/', defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.deleteSavedSearch = function (searchId) {
+    return $http
+      .delete(apiUrl + 'saved-searches/' + searchId, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
   /**
    * @param {string} queryString - The query used to find events.
    * @param {number} [start] - From which event offset the result set should start.
@@ -2602,14 +2626,9 @@ function UdbApi(
     var offset = start || 0,
         searchParams = {
           start: offset
-        },
-        requestOptions = {
-          params: searchParams,
-          withCredentials: true,
-          headers: {
-            'Accept': 'application/ld+json'
-          }
         };
+    var requestOptions = _.cloneDeep(defaultApiConfig);
+    requestOptions.params = searchParams;
 
     if (queryString.length) {
       searchParams.query = queryString;
@@ -2626,11 +2645,6 @@ function UdbApi(
    */
   this.getOffer = function(offerLocation) {
     var deferredOffer = $q.defer();
-    var jsonLdRequestOptions = {
-      headers: {
-        'Accept': 'application/ld+json'
-      }
-    };
     var offer = offerCache.get(offerLocation);
 
     function cacheAndResolveOffer(jsonOffer) {
@@ -2644,7 +2658,7 @@ function UdbApi(
       deferredOffer.resolve(offer);
     } else {
       $http
-        .get(offerLocation.toString(), jsonLdRequestOptions)
+        .get(offerLocation.toString(), defaultApiConfig)
         .success(cacheAndResolveOffer)
         .error(deferredOffer.reject);
     }
@@ -2668,11 +2682,8 @@ function UdbApi(
       } else {
         var organizerRequest  = $http.get(
           appConfig.baseApiUrl + 'organizer/' + organizerId,
-          {
-            headers: {
-              'Accept': 'application/ld+json'
-            }
-          });
+          defaultApiConfig
+        );
 
         organizerRequest.success(function(jsonOrganizer) {
           var organizer = new UdbOrganizer();
@@ -2690,14 +2701,8 @@ function UdbApi(
    * @return {*}
    */
   this.getHistory = function (eventId) {
-    var requestOptions = {
-      headers: {
-        'Accept': 'application/json'
-      }
-    };
-
     return $http
-      .get(eventId + '/history', requestOptions)
+      .get(eventId + '/history', defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
@@ -2706,13 +2711,7 @@ function UdbApi(
    */
   this.getRecentLabels = function () {
     var deferredLabels = $q.defer();
-
-    var request = $http.get(apiUrl + 'user/labels', {
-      withCredentials: true,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
+    var request = $http.get(apiUrl + 'user/labels', defaultApiConfig);
 
     request
       .success(function (data) {
@@ -3140,13 +3139,8 @@ function UdbApi(
       'same_as': offerUrl
     };
 
-    var config = {
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      params: _.pick(parameters, _.isString)
-    };
+    var config = _.cloneDeep(defaultApiConfig);
+    config.params = _.pick(parameters, _.isString);
 
     return $http.get(
       appConfig.baseUrl + 'variations/',
@@ -3158,12 +3152,7 @@ function UdbApi(
     var deferredVariation = $q.defer();
 
     var variationRequest = $http.get(
-      appConfig.baseUrl + 'variations/' + variationId,
-      {
-        headers: {
-          'Accept': 'application/ld+json'
-        }
-      });
+      appConfig.baseUrl + 'variations/' + variationId, defaultApiConfig);
 
     variationRequest.success(function (jsonEvent) {
       var event = new UdbEvent(jsonEvent);
@@ -4115,10 +4104,6 @@ function UitidAuth($window, $location, appConfig, $cookieStore) {
    */
   this.getUser = function () {
     return $cookieStore.get('user');
-  };
-
-  this.getToken = function () {
-    return 'foo';
   };
 }
 UitidAuth.$inject = ["$window", "$location", "appConfig", "$cookieStore"];
@@ -10876,7 +10861,7 @@ angular
   .service('savedSearchesService', SavedSearchesService);
 
 /* @ngInject */
-function SavedSearchesService($q, $http, appConfig, $rootScope) {
+function SavedSearchesService($q, $http, appConfig, $rootScope, udbApi) {
   var apiUrl = appConfig.baseUrl;
   var defaultApiConfig = {
     withCredentials: true,
@@ -10888,48 +10873,35 @@ function SavedSearchesService($q, $http, appConfig, $rootScope) {
   var ss = this;
 
   ss.createSavedSearch = function(name, query) {
-    var post = {
-      name: name,
-      query: query
-    };
-    var request = $http.post(apiUrl + 'saved-searches/', post, defaultApiConfig);
-
-    request.success(function () {
-      savedSearches.push(post);
+    return udbApi.createSavedSearch(name, query).then(function () {
+      savedSearches.push({'name': name, 'query': query});
       savedSearchesChanged();
-    });
 
-    return request;
+      return $q.resolve();
+    });
   };
 
   ss.getSavedSearches = function () {
-    var deferredSavedSearches = $q.defer();
-    var savedSearchesRequest = $http.get(apiUrl + 'saved-searches/', {withCredentials: true});
-
-    savedSearchesRequest.success(function (data) {
-      deferredSavedSearches.resolve(data);
+    return udbApi.getSavedSearches().then(function (data) {
       savedSearches = data;
+      return $q.resolve(data);
     });
-
-    return deferredSavedSearches.promise;
   };
 
   ss.deleteSavedSearch = function (searchId) {
-    var request = $http.delete(apiUrl + 'saved-searches/' + searchId, defaultApiConfig);
-
-    request.success(function () {
+    return udbApi.deleteSavedSearch(searchId).then(function () {
       _.remove(savedSearches, {id: searchId});
       savedSearchesChanged();
-    });
 
-    return request;
+      return $q.resolve();
+    });
   };
 
   function savedSearchesChanged () {
     $rootScope.$emit('savedSearchesChanged', savedSearches);
   }
 }
-SavedSearchesService.$inject = ["$q", "$http", "appConfig", "$rootScope"];
+SavedSearchesService.$inject = ["$q", "$http", "appConfig", "$rootScope", "udbApi"];
 
 
 // Source: src/saved-searches/ui/saved-searches-list.controller.js
@@ -12808,7 +12780,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   function requestVariation(userId, purpose, offerUrl, deferredVariation) {
     return function () {
-      var offerId = offerUrl.split('/').pop();
+      var offerId = offerUrl.toString().split('/').pop();
 
       if (interruptRequestChain) {
         deferredVariation.reject('navigating away, interrupting request for variation for offer with id: ' + offerId);
