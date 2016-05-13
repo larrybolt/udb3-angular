@@ -17,7 +17,8 @@ function EventCrud(
   EventCrudJob,
   DeleteOfferJob,
   $rootScope ,
-  $q
+  $q,
+  offerLocator
 ) {
 
   var service = this;
@@ -25,21 +26,27 @@ function EventCrud(
   /**
    * Creates a new event and add the job to the logger.
    *
-   * @param {UdbEvent}  event
+   * @param {EventFormData}  eventFormData
    * The event to be created
+   *
+   * @return {Promise.<EventFormData>}
    */
-  service.createEvent = function (event) {
+  service.createOffer = function (eventFormData) {
 
-    var jobPromise = null;
+    var type = eventFormData.isEvent ? 'event' : 'place';
 
-    if (event.isEvent) {
-      jobPromise = udbApi.createEvent(event);
-    }
-    else {
-      jobPromise = udbApi.createPlace(event);
-    }
+    var updateEventFormData = function(url) {
+      eventFormData.apiUrl = url;
+      eventFormData.id = url.toString().split('/').pop();
 
-    return jobPromise;
+      offerLocator.add(eventFormData.id, eventFormData.apiUrl);
+
+      return eventFormData;
+    };
+
+    return udbApi
+      .createOffer(type, eventFormData)
+      .then(updateEventFormData);
   };
 
   /**
@@ -51,13 +58,6 @@ function EventCrud(
    */
   service.findEventsAtPlace = function(place) {
     return udbApi.findEventsAtPlace(place.apiUrl);
-  };
-
-  /**
-   * Creates a new place.
-   */
-  service.createPlace = function(place) {
-    return udbApi.createPlace(place);
   };
 
   /**
@@ -88,7 +88,7 @@ function EventCrud(
    */
   service.updateMajorInfo = function(eventFormData) {
     udbApi
-      .updateMajorInfo(eventFormData)
+      .updateMajorInfo(eventFormData.apiUrl, eventFormData)
       .then(jobCreatorFactory(eventFormData, 'updateItem'));
   };
 
@@ -141,7 +141,7 @@ function EventCrud(
    */
   service.updateOrganizer = function(item) {
     return udbApi
-      .updateProperty(item.id, item.getType(), 'organizer', item.organizer.id)
+      .updateProperty(item.apiUrl, 'organizer', item.organizer.id)
       .then(jobCreatorFactory(item, 'updateOrganizer'));
   };
 

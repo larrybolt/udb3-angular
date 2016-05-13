@@ -24,7 +24,7 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   if (eventId) {
 
     if (offerType === 'event') {
-      udbApi.getEventById(eventId).then(function(event) {
+      udbApi.getOffer(eventId).then(function(event) {
         EventFormData.isEvent = true;
         EventFormData.isPlace = false;
         copyItemDataToFormData(event);
@@ -43,7 +43,7 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   }
   else if (placeId) {
 
-    udbApi.getPlaceById(placeId).then(function(place) {
+    udbApi.getOffer(placeId).then(function(place) {
 
       EventFormData.isEvent = false;
       EventFormData.isPlace = true;

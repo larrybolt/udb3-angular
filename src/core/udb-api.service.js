@@ -396,14 +396,6 @@ function UdbApi(
     );
   };
 
-  this.createEvent = function (event) {
-    return $http.post(
-      appConfig.baseApiUrl + 'event',
-      event,
-      defaultApiConfig
-    );
-  };
-
   this.deleteOffer = function (offer) {
     return $http['delete'](
       offer.apiUrl,
@@ -411,12 +403,20 @@ function UdbApi(
     );
   };
 
-  this.createPlace = function (event) {
+  /**
+   * @param {string} type   either 'place' or 'event'
+   * @param {EventFormData} offer
+   *
+   * @return {Promise.<URL>}
+   */
+  this.createOffer = function (type, offer) {
     return $http.post(
-      appConfig.baseApiUrl + 'place',
-      event,
+      appConfig.baseApiUrl + type,
+      offer,
       defaultApiConfig
-    );
+    ).then(function(response) {
+      return new URL(response.data.url);
+    });
   };
 
   /**

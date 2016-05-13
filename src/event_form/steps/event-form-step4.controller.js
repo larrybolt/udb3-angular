@@ -39,7 +39,7 @@ function EventFormStep4Controller(
   $scope.error = false;
 
   $scope.validateEvent = validateEvent;
-  $scope.saveEvent = saveEvent;
+  $scope.saveEvent = createOffer;
   $scope.resultViewer = new SearchResultViewer();
   $scope.eventTitleChanged = eventTitleChanged;
   $scope.previewSuggestedItem = previewSuggestedItem;
@@ -103,7 +103,7 @@ function EventFormStep4Controller(
         }
         // or save the event immediataly if no duplicates were found.
         else {
-          saveEvent();
+          createOffer();
         }
 
       }, function() {
@@ -113,7 +113,7 @@ function EventFormStep4Controller(
       });
     }
     else {
-      saveEvent();
+      createOffer();
     }
 
   }
@@ -161,41 +161,35 @@ function EventFormStep4Controller(
   /**
    * Save Event for the first time.
    */
-  function saveEvent() {
+  function createOffer() {
 
-    $scope.error = false;
-    $scope.saving = true;
+    resetMajorInfoError();
 
     var eventCrudPromise;
-    if (EventFormData.id) {
-      eventCrudPromise = eventCrud.updateMajorInfo(EventFormData);
-    }
-    else {
-      eventCrudPromise = eventCrud.createEvent(EventFormData);
-    }
+    eventCrudPromise = eventCrud.createOffer(EventFormData);
 
-    eventCrudPromise.then(function(jsonResponse) {
-
+    eventCrudPromise.then(function(newEventFormData) {
+      EventFormData = newEventFormData;
       EventFormData.majorInfoChanged = false;
-
-      if (EventFormData.isEvent && jsonResponse.data.eventId) {
-        EventFormData.id = jsonResponse.data.eventId;
-      }
-      else if (jsonResponse.data.placeId) {
-        EventFormData.id = jsonResponse.data.placeId;
-      }
 
       controller.eventFormSaved();
       $scope.saving = false;
       $scope.resultViewer = new SearchResultViewer();
       EventFormData.showStep(5);
 
-    }, function() {
-      // Error while saving.
-      $scope.error = true;
-      $scope.saving = false;
-    });
+    }, showMajorInfoError);
 
+  }
+
+  function resetMajorInfoError() {
+    $scope.error = false;
+    $scope.saving = true;
+  }
+
+  function showMajorInfoError() {
+    // Error while saving.
+    $scope.error = true;
+    $scope.saving = false;
   }
 
   controller.eventFormSaved = function () {
