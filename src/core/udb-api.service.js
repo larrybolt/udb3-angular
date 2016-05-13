@@ -53,7 +53,8 @@ function UdbApi(
   $cacheFactory,
   UdbEvent,
   UdbPlace,
-  UdbOrganizer
+  UdbOrganizer,
+  Upload
 ) {
   var apiUrl = appConfig.baseApiUrl;
   var defaultApiConfig = {
@@ -134,7 +135,9 @@ function UdbApi(
     var offer = offerCache.get(offerLocation);
 
     function cacheAndResolveOffer(jsonOffer) {
-      var offer = new UdbPlace();
+      var type = jsonOffer['@id'].split('/').reverse()[1];
+
+      var offer = (type === 'event') ? new UdbEvent() : new UdbPlace();
       offer.parseJson(jsonOffer);
       offerCache.put(offerLocation, offer);
       deferredOffer.resolve(offer);
@@ -668,6 +671,29 @@ function UdbApi(
 
     return $http
       .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.uploadMedia = function (imageFile, description, copyrightHolder) {
+    var uploadOptions = {
+      url: appConfig.baseUrl + 'images',
+      fields: {
+        description: description,
+        copyrightHolder: copyrightHolder
+      },
+      file: imageFile
+    };
+    var config = Object.assign(defaultApiConfig, uploadOptions);
+
+    return Upload.upload(config);
+  };
+
+  this.getMedia = function (imageId) {
+    return $http
+      .get(
+        appConfig.baseUrl + 'media/' + imageId,
+        defaultApiConfig
+      )
       .then(returnUnwrappedData);
   };
 }
