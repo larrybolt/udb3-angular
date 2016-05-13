@@ -91,8 +91,6 @@ function UdbApi(
   };
 
   this.getSavedSearches = function () {
-    console.log('get saved searches');
-    console.log(defaultApiConfig);
     return $http
       .get(apiUrl + 'saved-searches/', defaultApiConfig)
       .then(returnUnwrappedData);
@@ -429,7 +427,7 @@ function UdbApi(
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': offerLocation,
+          'same_as': offerLocation.toString(),
           'description': description
         };
 
