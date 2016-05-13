@@ -143,7 +143,7 @@ function EventDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/event/' + eventId + '/edit');
+    $location.path('/event/' + eventId.split('/').pop() + '/edit');
   };
 
   function goToDashboard() {

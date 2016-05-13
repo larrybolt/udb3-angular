@@ -114,7 +114,7 @@ function PlaceDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/place/' + $scope.placeId + '/edit');
+    $location.path('/place/' + $scope.placeId.split('/').pop() + '/edit');
   };
 
   $scope.updateDescription = function(description) {
