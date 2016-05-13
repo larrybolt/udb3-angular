@@ -52,12 +52,12 @@ function EventCrud(
   /**
    * Find all the events that take place here.
    *
-   * @param {UdbPlace} place
+   * @param {URL} url
    *
    * @return {Promise.<OfferIdentifier[]>}
    */
-  service.findEventsAtPlace = function(place) {
-    return udbApi.findEventsAtPlace(place.apiUrl);
+  service.findEventsAtPlace = function(url) {
+    return udbApi.findEventsAtPlace(url);
   };
 
   /**
@@ -166,7 +166,7 @@ function EventCrud(
    */
   function jobCreatorFactory(item, jobName) {
     function jobCreator(response) {
-      var jobData = response.data;
+      var jobData = response.data ? response.data : response;
       var job = new EventCrudJob(jobData.commandId, item, jobName);
       addJobAndInvalidateCache(jobLogger, job);
 

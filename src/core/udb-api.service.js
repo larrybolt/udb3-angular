@@ -459,7 +459,10 @@ function UdbApi(
    */
   this.findEventsAtPlace = function(placeLocation) {
     function unwrapEvents(wrappedEvents) {
-      return $q.resolve(wrappedEvents.events);
+      var eventIdentifiers = _.map(wrappedEvents.events, function(event) {
+        return {'@id': appConfig.baseUrl + 'event/' + event['@id']};
+      });
+      return $q.resolve(eventIdentifiers);
     }
 
     return $http
