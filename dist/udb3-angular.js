@@ -2603,8 +2603,6 @@ function UdbApi(
   };
 
   this.getSavedSearches = function () {
-    console.log('get saved searches');
-    console.log(defaultApiConfig);
     return $http
       .get(apiUrl + 'saved-searches/', defaultApiConfig)
       .then(returnUnwrappedData);
@@ -2908,14 +2906,6 @@ function UdbApi(
     );
   };
 
-  this.createEvent = function (event) {
-    return $http.post(
-      appConfig.baseApiUrl + 'event',
-      event,
-      defaultApiConfig
-    );
-  };
-
   this.deleteOffer = function (offer) {
     return $http['delete'](
       offer.apiUrl,
@@ -2923,12 +2913,20 @@ function UdbApi(
     );
   };
 
-  this.createPlace = function (event) {
+  /**
+   * @param {string} type   either 'place' or 'event'
+   * @param {EventFormData} offer
+   *
+   * @return {Promise.<URL>}
+   */
+  this.createOffer = function (type, offer) {
     return $http.post(
-      appConfig.baseApiUrl + 'place',
-      event,
+      appConfig.baseApiUrl + type,
+      offer,
       defaultApiConfig
-    );
+    ).then(function(response) {
+      return new URL(response.data.url);
+    });
   };
 
   /**
@@ -2941,7 +2939,7 @@ function UdbApi(
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': offerLocation,
+          'same_as': offerLocation.toString(),
           'description': description
         };
 
@@ -4633,7 +4631,8 @@ function EventCrud(
   EventCrudJob,
   DeleteOfferJob,
   $rootScope ,
-  $q
+  $q,
+  offerLocator
 ) {
 
   var service = this;
@@ -4641,21 +4640,27 @@ function EventCrud(
   /**
    * Creates a new event and add the job to the logger.
    *
-   * @param {UdbEvent}  event
+   * @param {EventFormData}  eventFormData
    * The event to be created
+   *
+   * @return {Promise.<EventFormData>}
    */
-  service.createEvent = function (event) {
+  service.createOffer = function (eventFormData) {
 
-    var jobPromise = null;
+    var type = eventFormData.isEvent ? 'event' : 'place';
 
-    if (event.isEvent) {
-      jobPromise = udbApi.createEvent(event);
-    }
-    else {
-      jobPromise = udbApi.createPlace(event);
-    }
+    var updateEventFormData = function(url) {
+      eventFormData.apiUrl = url;
+      eventFormData.id = url.toString().split('/').pop();
 
-    return jobPromise;
+      offerLocator.add(eventFormData.id, eventFormData.apiUrl);
+
+      return eventFormData;
+    };
+
+    return udbApi
+      .createOffer(type, eventFormData)
+      .then(updateEventFormData);
   };
 
   /**
@@ -4667,13 +4672,6 @@ function EventCrud(
    */
   service.findEventsAtPlace = function(place) {
     return udbApi.findEventsAtPlace(place.apiUrl);
-  };
-
-  /**
-   * Creates a new place.
-   */
-  service.createPlace = function(place) {
-    return udbApi.createPlace(place);
   };
 
   /**
@@ -4704,7 +4702,7 @@ function EventCrud(
    */
   service.updateMajorInfo = function(eventFormData) {
     udbApi
-      .updateMajorInfo(eventFormData)
+      .updateMajorInfo(eventFormData.apiUrl, eventFormData)
       .then(jobCreatorFactory(eventFormData, 'updateItem'));
   };
 
@@ -4757,7 +4755,7 @@ function EventCrud(
    */
   service.updateOrganizer = function(item) {
     return udbApi
-      .updateProperty(item.id, item.getType(), 'organizer', item.organizer.id)
+      .updateProperty(item.apiUrl, 'organizer', item.organizer.id)
       .then(jobCreatorFactory(item, 'updateOrganizer'));
   };
 
@@ -4930,7 +4928,7 @@ function EventCrud(
   $rootScope.$on('eventTimingChanged', updateMajorInfo);
   $rootScope.$on('eventTitleChanged', updateMajorInfo);
 }
-EventCrud.$inject = ["jobLogger", "udbApi", "EventCrudJob", "DeleteOfferJob", "$rootScope", "$q"];
+EventCrud.$inject = ["jobLogger", "udbApi", "EventCrudJob", "DeleteOfferJob", "$rootScope", "$q", "offerLocator"];
 
 // Source: src/entry/delete/delete-offer-job.factory.js
 /**
@@ -6190,7 +6188,7 @@ function EventDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/event/' + eventId + '/edit');
+    $location.path('/event/' + eventId.split('/').pop() + '/edit');
   };
 
   function goToDashboard() {
@@ -8897,7 +8895,7 @@ function EventFormStep4Controller(
   $scope.error = false;
 
   $scope.validateEvent = validateEvent;
-  $scope.saveEvent = saveEvent;
+  $scope.saveEvent = createOffer;
   $scope.resultViewer = new SearchResultViewer();
   $scope.eventTitleChanged = eventTitleChanged;
   $scope.previewSuggestedItem = previewSuggestedItem;
@@ -8961,7 +8959,7 @@ function EventFormStep4Controller(
         }
         // or save the event immediataly if no duplicates were found.
         else {
-          saveEvent();
+          createOffer();
         }
 
       }, function() {
@@ -8971,7 +8969,7 @@ function EventFormStep4Controller(
       });
     }
     else {
-      saveEvent();
+      createOffer();
     }
 
   }
@@ -9019,41 +9017,35 @@ function EventFormStep4Controller(
   /**
    * Save Event for the first time.
    */
-  function saveEvent() {
+  function createOffer() {
 
-    $scope.error = false;
-    $scope.saving = true;
+    resetMajorInfoError();
 
     var eventCrudPromise;
-    if (EventFormData.id) {
-      eventCrudPromise = eventCrud.updateMajorInfo(EventFormData);
-    }
-    else {
-      eventCrudPromise = eventCrud.createEvent(EventFormData);
-    }
+    eventCrudPromise = eventCrud.createOffer(EventFormData);
 
-    eventCrudPromise.then(function(jsonResponse) {
-
+    eventCrudPromise.then(function(newEventFormData) {
+      EventFormData = newEventFormData;
       EventFormData.majorInfoChanged = false;
-
-      if (EventFormData.isEvent && jsonResponse.data.eventId) {
-        EventFormData.id = jsonResponse.data.eventId;
-      }
-      else if (jsonResponse.data.placeId) {
-        EventFormData.id = jsonResponse.data.placeId;
-      }
 
       controller.eventFormSaved();
       $scope.saving = false;
       $scope.resultViewer = new SearchResultViewer();
       EventFormData.showStep(5);
 
-    }, function() {
-      // Error while saving.
-      $scope.error = true;
-      $scope.saving = false;
-    });
+    }, showMajorInfoError);
 
+  }
+
+  function resetMajorInfoError() {
+    $scope.error = false;
+    $scope.saving = true;
+  }
+
+  function showMajorInfoError() {
+    // Error while saving.
+    $scope.error = true;
+    $scope.saving = false;
   }
 
   controller.eventFormSaved = function () {
@@ -10592,7 +10584,7 @@ function PlaceDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/place/' + $scope.placeId + '/edit');
+    $location.path('/place/' + $scope.placeId.split('/').pop() + '/edit');
   };
 
   $scope.updateDescription = function(description) {
