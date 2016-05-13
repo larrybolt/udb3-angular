@@ -2565,7 +2565,8 @@ function UdbApi(
   $cacheFactory,
   UdbEvent,
   UdbPlace,
-  UdbOrganizer
+  UdbOrganizer,
+  Upload
 ) {
   var apiUrl = appConfig.baseApiUrl;
   var defaultApiConfig = {
@@ -2646,7 +2647,9 @@ function UdbApi(
     var offer = offerCache.get(offerLocation);
 
     function cacheAndResolveOffer(jsonOffer) {
-      var offer = new UdbPlace();
+      var type = jsonOffer['@id'].split('/').reverse()[1];
+
+      var offer = (type === 'event') ? new UdbEvent() : new UdbPlace();
       offer.parseJson(jsonOffer);
       offerCache.put(offerLocation, offer);
       deferredOffer.resolve(offer);
@@ -2968,7 +2971,10 @@ function UdbApi(
    */
   this.findEventsAtPlace = function(placeLocation) {
     function unwrapEvents(wrappedEvents) {
-      return $q.resolve(wrappedEvents.events);
+      var eventIdentifiers = _.map(wrappedEvents.events, function(event) {
+        return {'@id': appConfig.baseUrl + 'event/' + event['@id']};
+      });
+      return $q.resolve(eventIdentifiers);
     }
 
     return $http
@@ -3182,8 +3188,31 @@ function UdbApi(
       .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
       .then(returnUnwrappedData);
   };
+
+  this.uploadMedia = function (imageFile, description, copyrightHolder) {
+    var uploadOptions = {
+      url: appConfig.baseUrl + 'images',
+      fields: {
+        description: description,
+        copyrightHolder: copyrightHolder
+      },
+      file: imageFile
+    };
+    var config = Object.assign(defaultApiConfig, uploadOptions);
+
+    return Upload.upload(config);
+  };
+
+  this.getMedia = function (imageId) {
+    return $http
+      .get(
+        appConfig.baseUrl + 'media/' + imageId,
+        defaultApiConfig
+      )
+      .then(returnUnwrappedData);
+  };
 }
-UdbApi.$inject = ["$q", "$http", "appConfig", "$cookieStore", "uitidAuth", "$cacheFactory", "UdbEvent", "UdbPlace", "UdbOrganizer"];
+UdbApi.$inject = ["$q", "$http", "appConfig", "$cookieStore", "uitidAuth", "$cacheFactory", "UdbEvent", "UdbPlace", "UdbOrganizer", "Upload"];
 
 // Source: src/core/udb-event.factory.js
 /**
@@ -4666,12 +4695,12 @@ function EventCrud(
   /**
    * Find all the events that take place here.
    *
-   * @param {UdbPlace} place
+   * @param {URL} url
    *
    * @return {Promise.<OfferIdentifier[]>}
    */
-  service.findEventsAtPlace = function(place) {
-    return udbApi.findEventsAtPlace(place.apiUrl);
+  service.findEventsAtPlace = function(url) {
+    return udbApi.findEventsAtPlace(url);
   };
 
   /**
@@ -4780,7 +4809,7 @@ function EventCrud(
    */
   function jobCreatorFactory(item, jobName) {
     function jobCreator(response) {
-      var jobData = response.data;
+      var jobData = response.data ? response.data : response;
       var job = new EventCrudJob(jobData.commandId, item, jobName);
       addJobAndInvalidateCache(jobLogger, job);
 
@@ -10374,7 +10403,7 @@ angular
 /**
  * @ngInject
  */
-function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
+function MediaManager(jobLogger, appConfig, CreateImageJob, $q, $http, udbApi) {
   var service = this;
   var baseUrl = appConfig.baseUrl;
 
@@ -10387,15 +10416,6 @@ function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
    */
   service.createImage = function(imageFile, description, copyrightHolder) {
     var deferredMediaObject = $q.defer();
-    var uploadOptions = {
-      withCredentials: true,
-      url: baseUrl + 'images',
-      fields: {
-        description: description,
-        copyrightHolder: copyrightHolder
-      },
-      file: imageFile
-    };
 
     function logCreateImageJob(uploadResponse) {
       var jobData = uploadResponse.data;
@@ -10413,8 +10433,8 @@ function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
         .then(deferredMediaObject.resolve, deferredMediaObject.reject);
     }
 
-    Upload
-      .upload(uploadOptions)
+    udbApi
+      .uploadMedia(imageFile, description, copyrightHolder)
       .then(logCreateImageJob, deferredMediaObject.reject);
 
     return deferredMediaObject.promise;
@@ -10426,28 +10446,19 @@ function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
    * @return {Promise.<MediaObject>}
    */
   service.getImage = function (imageId) {
-    var requestConfig = {
-      headers: {
-        'Accept': 'application/ld+json'
-      }
-    };
-
-    function returnMediaObject(response) {
-      var mediaObject = response.data;
+    function returnMediaObject(data) {
+      var mediaObject = data;
       mediaObject.id = imageId;
 
       return $q.resolve(mediaObject);
     }
 
-    return $http
-      .get(
-        baseUrl + 'media/' + imageId,
-        requestConfig
-      )
+    return udbApi
+      .getMedia(imageId)
       .then(returnMediaObject);
   };
 }
-MediaManager.$inject = ["jobLogger", "appConfig", "Upload", "CreateImageJob", "$q", "$http"];
+MediaManager.$inject = ["jobLogger", "appConfig", "CreateImageJob", "$q", "$http", "udbApi"];
 
 // Source: src/place-detail/place-detail.directive.js
 /**
@@ -13698,7 +13709,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        <p>De locatie \"<span ng-bind=\"::place.name\"></span>\" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>\n" +
     "\n" +
     "        <ul>\n" +
-    "          <li ng-repeat=\"event in events\" udb-event-link ng-hide=\"fetching\"></li>\n" +
+    "          <li ng-click=\"$dismiss('navigating away')\" ng-repeat=\"event in events\" udb-event-link ng-hide=\"fetching\"></li>\n" +
     "        </ul>\n" +
     "\n" +
     "      </div>\n" +
