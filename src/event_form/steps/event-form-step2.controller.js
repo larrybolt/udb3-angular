@@ -125,6 +125,7 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
    */
   function resetCalendar() {
     EventFormData.activeCalendarType = '';
+    EventFormData.calendarType = '';
   }
 
   /**
