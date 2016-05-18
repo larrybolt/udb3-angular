@@ -1,7 +1,7 @@
 'use strict';
 
 describe('Service: Offer translator', function () {
-  
+
   var offerTranslator, logger, udbApi, $q, scope;
   var examplePlaceJson = {
     '@id': "http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702",
@@ -46,7 +46,7 @@ describe('Service: Offer translator', function () {
     ],
     "labels": ['some label']
   };
-  
+
   beforeEach(module('udb.entry', function($provide){
     logger = jasmine.createSpyObj('jobLogger', ['addJob']);
     udbApi = jasmine.createSpyObj('udbApi', ['translateProperty']);
@@ -63,13 +63,13 @@ describe('Service: Offer translator', function () {
       }
     });
   }));
-  
+
   beforeEach(inject(function (_offerTranslator_, _$q_, $rootScope) {
     offerTranslator = _offerTranslator_;
     $q = _$q_;
     scope = $rootScope.$new();
   }));
-  
+
   it('should translate offer properties', inject(function (UdbPlace) {
     udbApi.translateProperty.and.returnValue($q.resolve({
       data: {
@@ -85,11 +85,11 @@ describe('Service: Offer translator', function () {
     expect(logger.addJob).toHaveBeenCalled();
     expect(udbApi.translateProperty).toHaveBeenCalledWith(
       new URL('http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702'),
-      'name',
+      'title',
       'en',
       'My title'
     );
     expect(place.name.en).toEqual('My title');
   }));
-  
+
 });

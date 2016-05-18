@@ -26,14 +26,13 @@ function OfferTranslator(jobLogger, udbApi, OfferTranslationJob) {
     function logTranslationJob(response) {
       var jobData = response.data;
 
+      if (property === 'title') {
+        property = 'name';
+      }
+
       offer[property][language] = translation;
       var job = new OfferTranslationJob(jobData.commandId, offer, property, language, translation);
       jobLogger.addJob(job);
-    }
-
-    // TODO get rid of this hack;
-    if (property === 'title') {
-      property = 'name';
     }
 
     return udbApi

@@ -6036,14 +6036,13 @@ function OfferTranslator(jobLogger, udbApi, OfferTranslationJob) {
     function logTranslationJob(response) {
       var jobData = response.data;
 
+      if (property === 'title') {
+        property = 'name';
+      }
+
       offer[property][language] = translation;
       var job = new OfferTranslationJob(jobData.commandId, offer, property, language, translation);
       jobLogger.addJob(job);
-    }
-
-    // TODO get rid of this hack;
-    if (property === 'title') {
-      property = 'name';
     }
 
     return udbApi
@@ -13394,11 +13393,7 @@ function Search(
       _.each(selectedOffers, function (offer) {
         var eventPromise;
 
-        if (offer['@type'] === 'Event') {
-          eventPromise = udbApi.getEventByLDId(offer['@id']);
-        } else if (offer['@type'] === 'Place') {
-          eventPromise = udbApi.getPlaceByLDId(offer['@id']);
-        }
+        eventPromise = udbApi.getOffer(new URL(offer['@id']));
 
         eventPromise.then(function (event) {
           event.label(labels);
