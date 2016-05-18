@@ -6609,7 +6609,7 @@ function EventFormImageUploadController(
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
-  $scope.modalTitle = 'Gebruiksvoorwaarden';
+  $scope.modalTitle = 'Afbeelding toevoegen';
   $scope.description = '';
   $scope.copyright = '';
   $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');
@@ -14435,16 +14435,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <div class=\"form-group\">\n" +
     "        <label>Beschrijving <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"description\" required>\n" +
-    "        <p class=\"help-block\">\n" +
-    "            Deze tekst helpt zoekmachines en gebruikers met een visuele beperking.\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
     "        <label>Copyright <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"copyright\" required>\n" +
     "        <p class=\"help-block\">\n" +
-    "          Vermeld de naam van de rechtenhoudende fotograaf.</p>\n" +
+    "            Vermeld de naam van de rechtenhoudende fotograaf. Vul alleen de naam van je eigen vereniging of organisatie in als je zelf de rechten bezit.</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <p class=\"image-copyright-agreements\">\n" +
