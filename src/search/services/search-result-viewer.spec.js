@@ -133,19 +133,19 @@ describe('Service: SearchResultViewer', function () {
     expect(viewer.querySelected).toBe(false);
     expect(viewer.selectionState.name).toBe('none');
 
-    viewer.toggleSelect({apiUrl:'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'});
+    viewer.toggleSelect({'@id':'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'});
 
     expect(viewer.selectedOffers.length).toBe(1);
     expect(viewer.querySelected).toBe(false);
     expect(viewer.selectionState.name).toBe('some');
 
-    expect(viewer.isOfferSelected({apiUrl:'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'})).toBe(true);
-    expect(viewer.isOfferSelected({apiUrl:'http://culudb-silex.dev:8080/event/afb77a75-dfe9-4bb8-831c-d34a4593ad52'})).toBe(false);
+    expect(viewer.isOfferSelected({'@id':'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'})).toBe(true);
+    expect(viewer.isOfferSelected({'@id':'http://culudb-silex.dev:8080/event/afb77a75-dfe9-4bb8-831c-d34a4593ad52'})).toBe(false);
 
-    viewer.toggleSelect({apiUrl:'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'});
+    viewer.toggleSelect({'@id':'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'});
 
     expect(viewer.selectedOffers.length).toBe(0);
-    expect(viewer.isOfferSelected({apiUrl:'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'})).toBe(false);
+    expect(viewer.isOfferSelected({'@id':'http://culudb-silex.dev:8080/place/3aad5023-84e2-4ba9-b1ce-201cee64504c'})).toBe(false);
   });
 
 });
