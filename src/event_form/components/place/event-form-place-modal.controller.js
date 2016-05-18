@@ -108,7 +108,7 @@
         streetAddress : $scope.newPlace.address.streetAddress
       };
 
-      var promise = eventCrud.createPlace(udbPlace);
+      var promise = eventCrud.createOffer(udbPlace);
       promise.then(function(jsonResponse) {
         udbPlace.id = jsonResponse.data.placeId;
         selectPlace(udbPlace);
