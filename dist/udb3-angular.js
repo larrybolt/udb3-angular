@@ -2825,7 +2825,7 @@ function UdbApi(
 
     var exportData = {
       query: query,
-      selection: _.map(selection, Object.prototype.toString) || [],
+      selection: selection,
       order: {},
       include: properties,
       perDay: perDay,
@@ -12642,7 +12642,7 @@ function SearchResultViewerFactory() {
       // select the offer from the result viewer events
       // it's this "event" that will get stored
       var theOffer = _.filter(this.events, function (event) {
-            return offer.apiUrl === event['@id'];
+            return offer['@id'] === event['@id'];
           }).pop();
 
       var selectedOffers = this.selectedOffers,
@@ -12686,7 +12686,7 @@ function SearchResultViewerFactory() {
     isOfferSelected: function (offer) {
       // get the right offer object from the events list
       var theOffer = _.filter(this.events, function (event) {
-            return offer.apiUrl === event['@id'];
+            return offer['@id'] === event['@id'];
           }).pop();
 
       return _.contains(this.selectedOffers, theOffer);

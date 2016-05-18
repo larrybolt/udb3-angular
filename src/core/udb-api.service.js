@@ -313,7 +313,7 @@ function UdbApi(
 
     var exportData = {
       query: query,
-      selection: _.map(selection, Object.prototype.toString) || [],
+      selection: selection,
       order: {},
       include: properties,
       perDay: perDay,
