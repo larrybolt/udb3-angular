@@ -12,7 +12,7 @@ angular
   .service('savedSearchesService', SavedSearchesService);
 
 /* @ngInject */
-function SavedSearchesService($q, $http, appConfig, $rootScope) {
+function SavedSearchesService($q, $http, appConfig, $rootScope, udbApi) {
   var apiUrl = appConfig.baseUrl;
   var defaultApiConfig = {
     withCredentials: true,
@@ -24,41 +24,28 @@ function SavedSearchesService($q, $http, appConfig, $rootScope) {
   var ss = this;
 
   ss.createSavedSearch = function(name, query) {
-    var post = {
-      name: name,
-      query: query
-    };
-    var request = $http.post(apiUrl + 'saved-searches/', post, defaultApiConfig);
-
-    request.success(function () {
-      savedSearches.push(post);
+    return udbApi.createSavedSearch(name, query).then(function () {
+      savedSearches.push({'name': name, 'query': query});
       savedSearchesChanged();
-    });
 
-    return request;
+      return $q.resolve();
+    });
   };
 
   ss.getSavedSearches = function () {
-    var deferredSavedSearches = $q.defer();
-    var savedSearchesRequest = $http.get(apiUrl + 'saved-searches/', {withCredentials: true});
-
-    savedSearchesRequest.success(function (data) {
-      deferredSavedSearches.resolve(data);
+    return udbApi.getSavedSearches().then(function (data) {
       savedSearches = data;
+      return $q.resolve(data);
     });
-
-    return deferredSavedSearches.promise;
   };
 
   ss.deleteSavedSearch = function (searchId) {
-    var request = $http.delete(apiUrl + 'saved-searches/' + searchId, defaultApiConfig);
-
-    request.success(function () {
+    return udbApi.deleteSavedSearch(searchId).then(function () {
       _.remove(savedSearches, {id: searchId});
       savedSearchesChanged();
-    });
 
-    return request;
+      return $q.resolve();
+    });
   };
 
   function savedSearchesChanged () {

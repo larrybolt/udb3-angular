@@ -21,6 +21,7 @@ function Search(
   $uibModal,
   SearchResultViewer,
   offerLabeller,
+  offerLocator,
   searchHelper,
   $rootScope,
   eventExporter,
@@ -87,6 +88,7 @@ function Search(
     $scope.resultViewer.loading = true;
 
     eventPromise.then(function (pagedEvents) {
+      offerLocator.addPagedCollection(pagedEvents);
       $scope.resultViewer.setResults(pagedEvents);
     });
   };
@@ -120,11 +122,7 @@ function Search(
       _.each(selectedOffers, function (offer) {
         var eventPromise;
 
-        if (offer['@type'] === 'Event') {
-          eventPromise = udbApi.getEventByLDId(offer['@id']);
-        } else if (offer['@type'] === 'Place') {
-          eventPromise = udbApi.getPlaceByLDId(offer['@id']);
-        }
+        eventPromise = udbApi.getOffer(new URL(offer['@id']));
 
         eventPromise.then(function (event) {
           event.label(labels);

@@ -24,7 +24,7 @@ angular
 /**
  * @ngInject
  */
-function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
+function MediaManager(jobLogger, appConfig, CreateImageJob, $q, $http, udbApi) {
   var service = this;
   var baseUrl = appConfig.baseUrl;
 
@@ -37,15 +37,6 @@ function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
    */
   service.createImage = function(imageFile, description, copyrightHolder) {
     var deferredMediaObject = $q.defer();
-    var uploadOptions = {
-      withCredentials: true,
-      url: baseUrl + 'images',
-      fields: {
-        description: description,
-        copyrightHolder: copyrightHolder
-      },
-      file: imageFile
-    };
 
     function logCreateImageJob(uploadResponse) {
       var jobData = uploadResponse.data;
@@ -63,8 +54,8 @@ function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
         .then(deferredMediaObject.resolve, deferredMediaObject.reject);
     }
 
-    Upload
-      .upload(uploadOptions)
+    udbApi
+      .uploadMedia(imageFile, description, copyrightHolder)
       .then(logCreateImageJob, deferredMediaObject.reject);
 
     return deferredMediaObject.promise;
@@ -76,24 +67,15 @@ function MediaManager(jobLogger, appConfig, Upload, CreateImageJob, $q, $http) {
    * @return {Promise.<MediaObject>}
    */
   service.getImage = function (imageId) {
-    var requestConfig = {
-      headers: {
-        'Accept': 'application/ld+json'
-      }
-    };
-
-    function returnMediaObject(response) {
-      var mediaObject = response.data;
+    function returnMediaObject(data) {
+      var mediaObject = data;
       mediaObject.id = imageId;
 
       return $q.resolve(mediaObject);
     }
 
-    return $http
-      .get(
-        baseUrl + 'media/' + imageId,
-        requestConfig
-      )
+    return udbApi
+      .getMedia(imageId)
       .then(returnMediaObject);
   };
 }

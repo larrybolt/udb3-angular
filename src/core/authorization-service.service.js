@@ -37,7 +37,7 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
       $location.path(path);
 
       return true;
-    } else {
+    } else if (uitidAuth.getToken()) {
       var userPromise = udbApi.getMe(),
         deferred = $q.defer();
 

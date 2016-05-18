@@ -9,6 +9,21 @@
  */
 
 /**
+ * @typedef {Object} PagedCollection
+ * @property {string} @context
+ * @property {string} @type
+ * @property {int} itemsPerPage
+ * @property {int} totalItems
+ * @property {Object[]} member
+ */
+
+/**
+ * @typedef {Object} OfferIdentifier
+ * @property {string} @id
+ * @property {string} @type
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -29,138 +44,115 @@ angular
   .service('udbApi', UdbApi);
 
 /* @ngInject */
-function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
-  $cacheFactory, UdbEvent, UdbPlace, UdbOrganizer) {
+function UdbApi(
+  $q,
+  $http,
+  appConfig,
+  $cookieStore,
+  uitidAuth,
+  $cacheFactory,
+  UdbEvent,
+  UdbPlace,
+  UdbOrganizer,
+  Upload
+) {
   var apiUrl = appConfig.baseApiUrl;
   var defaultApiConfig = {
     withCredentials: true,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + uitidAuth.getToken()
     },
     params: {}
   };
-  var eventCache = $cacheFactory('eventCache');
+  var offerCache = $cacheFactory('offerCache');
 
   this.mainLanguage = 'nl';
 
   /**
-   * Removes an item from the eventCache.
-   * @param {string} id - The uuid of the item.
+   * Removes an item from the offerCache.
+   * @param {string} id - The uuid of the offer.
    */
   this.removeItemFromCache = function (id) {
-    var event = eventCache.get(id);
+    var offer = offerCache.get(id);
 
-    if (event) {
-      eventCache.remove(id);
+    if (offer) {
+      offerCache.remove(id);
     }
+  };
+
+  this.createSavedSearch = function (name, queryString) {
+    var post = {
+      name: name,
+      query: queryString
+    };
+    return $http
+      .post(apiUrl + 'saved-searches/', post, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.getSavedSearches = function () {
+    return $http
+      .get(apiUrl + 'saved-searches/', defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.deleteSavedSearch = function (searchId) {
+    return $http
+      .delete(apiUrl + 'saved-searches/' + searchId, defaultApiConfig)
+      .then(returnUnwrappedData);
   };
 
   /**
    * @param {string} queryString - The query used to find events.
-   * @param {?number} start - From which event offset the result set should start.
-   * @returns {Promise} A promise that signals a successful retrieval of
+   * @param {number} [start] - From which event offset the result set should start.
+   * @returns {Promise.<PagedCollection>} A promise that signals a successful retrieval of
    *  search results or a failure.
    */
   this.findEvents = function (queryString, start) {
-    var deferredEvents = $q.defer(),
-        offset = start || 0,
+    var offset = start || 0,
         searchParams = {
           start: offset
         };
+    var requestOptions = _.cloneDeep(defaultApiConfig);
+    requestOptions.params = searchParams;
 
     if (queryString.length) {
       searchParams.query = queryString;
     }
 
-    var request = $http.get(apiUrl + 'search', {
-      params: searchParams,
-      withCredentials: true,
-      headers: {
-        'Accept': 'application/ld+json'
-      }
-    });
-
-    request
-      .success(function (data) {
-        deferredEvents.resolve(data);
-      })
-      .error(function () {
-        deferredEvents.reject();
-      });
-
-    return deferredEvents.promise;
+    return $http
+      .get(apiUrl + 'search', requestOptions)
+      .then(returnUnwrappedData);
   };
 
-  this.getEventById = function (eventId) {
-    var deferredEvent = $q.defer();
+  /**
+   * @param {URL} offerLocation
+   * @return {UdbPlace|UdbEvent}
+   */
+  this.getOffer = function(offerLocation) {
+    var deferredOffer = $q.defer();
+    var offer = offerCache.get(offerLocation);
 
-    var event = eventCache.get(eventId);
+    function cacheAndResolveOffer(jsonOffer) {
+      var type = jsonOffer['@id'].split('/').reverse()[1];
 
-    if (event) {
-      deferredEvent.resolve(event);
-    } else {
-      var eventRequest = $http.get(
-        appConfig.baseUrl + 'event/' + eventId,
-        {
-          headers: {
-            'Accept': 'application/ld+json'
-          }
-        });
-
-      eventRequest.success(function (jsonEvent) {
-        var event = new UdbEvent();
-        event.parseJson(jsonEvent);
-        eventCache.put(eventId, event);
-        deferredEvent.resolve(event);
-      });
-
-      eventRequest.error(function () {
-        deferredEvent.reject();
-      });
+      var offer = (type === 'event') ? new UdbEvent() : new UdbPlace();
+      offer.parseJson(jsonOffer);
+      offerCache.put(offerLocation, offer);
+      deferredOffer.resolve(offer);
     }
 
-    return deferredEvent.promise;
-  };
-
-  this.getEventByLDId = function (eventLDId) {
-    var eventId = eventLDId.split('/').pop();
-    return this.getEventById(eventId);
-  };
-
-  this.getPlaceById = function(placeId) {
-    var deferredEvent = $q.defer();
-
-    var place = eventCache.get(placeId);
-
-    if (place) {
-      deferredEvent.resolve(place);
+    if (offer) {
+      deferredOffer.resolve(offer);
     } else {
-      var placeRequest  = $http.get(
-        appConfig.baseUrl + 'place/' + placeId,
-        {
-          headers: {
-            'Accept': 'application/ld+json'
-          }
-        });
-
-      placeRequest.success(function(jsonPlace) {
-        var place = new UdbPlace();
-        place.parseJson(jsonPlace);
-        eventCache.put(placeId, place);
-        deferredEvent.resolve(place);
-      });
-
-      placeRequest.error(function () {
-        deferredEvent.reject();
-      });
+      $http
+        .get(offerLocation.toString(), defaultApiConfig)
+        .success(cacheAndResolveOffer)
+        .error(deferredOffer.reject);
     }
 
-    return deferredEvent.promise;
-  };
-
-  this.getPlaceByLDId = function (placeLDId) {
-    var placeId = placeLDId.split('/').pop();
-    return this.getPlaceById(placeId);
+    return deferredOffer.promise;
   };
 
   this.getOrganizerByLDId = function(organizerLDId) {
@@ -168,52 +160,39 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return this.getOrganizerById(organizerId);
   };
 
+  // TODO: Give organizers their own cache instead of using offer?
   this.getOrganizerById = function(organizerId) {
       var deferredOrganizer = $q.defer();
 
-      var organizer = eventCache.get(organizerId);
+      var organizer = offerCache.get(organizerId);
 
       if (organizer) {
         deferredOrganizer.resolve(organizer);
       } else {
         var organizerRequest  = $http.get(
           appConfig.baseApiUrl + 'organizer/' + organizerId,
-          {
-            headers: {
-              'Accept': 'application/ld+json'
-            }
-          });
+          defaultApiConfig
+        );
 
         organizerRequest.success(function(jsonOrganizer) {
           var organizer = new UdbOrganizer();
           organizer.parseJson(jsonOrganizer);
-          eventCache.put(organizerId, organizer);
+          offerCache.put(organizerId, organizer);
           deferredOrganizer.resolve(organizer);
         });
       }
 
       return deferredOrganizer.promise;
     };
-  this.getEventHistoryById = function (eventId) {
-    var eventHistoryLoaded = $q.defer();
 
-    var eventHistoryRequest = $http.get(
-      appConfig.baseUrl + 'event/' + eventId + '/history',
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-    eventHistoryRequest.success(function (eventHistory) {
-      eventHistoryLoaded.resolve(eventHistory);
-    });
-
-    eventHistoryRequest.error(function () {
-      eventHistoryLoaded.reject();
-    });
-
-    return eventHistoryLoaded.promise;
+  /**
+   * @param {URL} eventId
+   * @return {*}
+   */
+  this.getHistory = function (eventId) {
+    return $http
+      .get(eventId + '/history', defaultApiConfig)
+      .then(returnUnwrappedData);
   };
 
   /**
@@ -221,13 +200,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
    */
   this.getRecentLabels = function () {
     var deferredLabels = $q.defer();
-
-    var request = $http.get(apiUrl + 'user/labels', {
-      withCredentials: true,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
+    var request = $http.get(apiUrl + 'user/labels', defaultApiConfig);
 
     request
       .success(function (data) {
@@ -262,38 +235,44 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
     if (activeUser) {
       deferredUser.resolve(activeUser);
-    } else {
+    } else if (uitidAuth.getToken()) {
+      // set the freshest, newest token
+      defaultApiConfig.headers.Authorization = 'Bearer ' + uitidAuth.getToken();
+
       $http
-        .get(appConfig.baseUrl + 'uitid/user', defaultApiConfig)
+        .get(appConfig.baseUrl + 'user', defaultApiConfig)
         .success(storeAndResolveUser)
         .error(deferredUser.reject);
+    } else {
+      deferredUser.reject();
     }
 
     return deferredUser.promise;
   };
 
   /**
-   * @param {string} id
-   *   Id of item to check
+   * Get the editing permission for an offer.
+
+   * @param {URL} offerLocation
    */
-  this.hasPermission = function(id) {
+  this.hasPermission = function(offerLocation) {
     return $http.get(
-      appConfig.baseUrl + 'event/' + id + '/permission',
+      offerLocation + '/permission',
       defaultApiConfig
-    );
+    ).then(function (response) {
+      if (response.data.hasPermission) {
+        return $q.resolve();
+      } else {
+        $q.reject();
+      }
+    });
   };
 
   /**
-   * @param {string} id
-   *   Id of item to check
+   * @param {OfferIdentifier[]} offers
+   * @param {string} label
+   * @return {Promise}
    */
-  this.hasPlacePermission = function(id) {
-    return $http.get(
-        appConfig.baseUrl + 'place/' + id + '/permission',
-        defaultApiConfig
-    );
-  };
-
   this.labelOffers = function (offers, label) {
     return $http.post(appConfig.baseUrl + 'offers/labels',
       {
@@ -304,6 +283,11 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
+  /**
+   * @param {string} query
+   * @param {string} label
+   * @return {Promise}
+   */
   this.labelQuery = function (query, label) {
     return $http.post(appConfig.baseUrl + 'query/labels',
       {
@@ -314,11 +298,22 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
+  /**
+   *
+   * @param {string} query
+   * @param {string} [email]
+   * @param {string} format
+   * @param {string[]} properties
+   * @param {boolean} perDay
+   * @param {URL[]} selection
+   * @param {Object} [customizations]
+   * @return {*}
+   */
   this.exportEvents = function (query, email, format, properties, perDay, selection, customizations) {
 
     var exportData = {
       query: query,
-      selection: selection || [],
+      selection: selection,
       order: {},
       include: properties,
       perDay: perDay,
@@ -332,13 +327,23 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return $http.post(appConfig.baseUrl + 'events/export/' + format, exportData, defaultApiConfig);
   };
 
-  this.translateProperty = function (id, type, property, language, translation) {
-
+  /**
+   * @param {URL} offerLocation
+   * @param {string} propertyName
+   *  'title' or 'description'
+   * @param {string} language
+   *  ISO 639-1 language code: https://en.wikipedia.org/wiki/ISO_639-1
+   *  Languages known to be supported: nl, en, fr, de.
+   * @param {string} translation
+   *
+   * @return {Promise}
+   */
+  this.translateProperty = function (offerLocation, propertyName, language, translation) {
     var translationData = {};
-    translationData[property] = translation;
+    translationData[propertyName] = translation;
 
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/' + language + '/' + property,
+      offerLocation + '/' + language + '/' + propertyName,
       translationData,
       defaultApiConfig
     );
@@ -347,47 +352,47 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   /**
    * Update the property for a given id.
    *
-   * @param {string} id
-   *   ID to update
-   * @param {string} type
-   *   Type of entity to update
+   * @param {URL} offerLocation
+   *   The location of the offer to update
    * @param {string} property
    *   Property to update
    * @param {string} value
    *   Value to save
    */
-  this.updateProperty = function(id, type, property, value) {
-
+  this.updateProperty = function(offerLocation, property, value) {
     var updateData = {};
     updateData[property] = value;
 
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/' + property,
+      offerLocation +  '/' + property,
       updateData,
       defaultApiConfig
     );
-
   };
 
-  this.labelOffer = function (offer, label) {
+  /**
+   * @param {URL} offerLocation
+   * @param {string} label
+   *
+   * @return {Promise}
+   */
+  this.labelOffer = function (offerLocation, label) {
     return $http.post(
-      offer.apiUrl + '/labels',
+      offerLocation + '/labels',
       {'label': label},
       defaultApiConfig
     );
   };
 
-  this.unlabelOffer = function (offer, label) {
-    return $http['delete'](
-      offer.apiUrl + '/labels/' + label,
-      defaultApiConfig
-    );
-  };
-
-  this.createEvent = function (event) {
-    return $http.post(
-      appConfig.baseApiUrl + 'event',
-      event,
+  /**
+   * @param {URL} offerLocation
+   * @param {string} label
+   *
+   * @return {Promise}
+   */
+  this.unlabelOffer = function (offerLocation, label) {
+    return $http.delete(
+      offerLocation + '/labels/' + label,
       defaultApiConfig
     );
   };
@@ -399,20 +404,33 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
-  this.createPlace = function (event) {
+  /**
+   * @param {string} type   either 'place' or 'event'
+   * @param {EventFormData} offer
+   *
+   * @return {Promise.<URL>}
+   */
+  this.createOffer = function (type, offer) {
     return $http.post(
-      appConfig.baseApiUrl + 'place',
-      event,
+      appConfig.baseApiUrl + type,
+      offer,
       defaultApiConfig
-    );
+    ).then(function(response) {
+      return new URL(response.data.url);
+    });
   };
 
-  this.createVariation = function (offer, description, purpose) {
+  /**
+   * @param {URL} offerLocation
+   * @param {string} description
+   * @param {string} purpose
+   */
+  this.createVariation = function (offerLocation, description, purpose) {
     var activeUser = uitidAuth.getUser(),
         requestData = {
           'owner': activeUser.id,
           'purpose': purpose,
-          'same_as': offer.apiUrl,
+          'same_as': offerLocation.toString(),
           'description': description
         };
 
@@ -423,6 +441,10 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     );
   };
 
+  /**
+   * @param {string} variationId
+   * @param {string} description
+   */
   this.editDescription = function (variationId, description) {
     return $http.patch(
       appConfig.baseUrl + 'variations/' + variationId,
@@ -432,17 +454,23 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * Find all the events that take place there.
-
-   * @param {UdbPlace} place
-
-   * @returns {array}
+   * @param {URL} placeLocation
+   * @returns {OfferIdentifier[]}
    */
-  this.findEventsAtPlace = function(place) {
-    return $http.get(
-      place.apiUrl + '/events',
-      defaultApiConfig
-    );
+  this.findEventsAtPlace = function(placeLocation) {
+    function unwrapEvents(wrappedEvents) {
+      var eventIdentifiers = _.map(wrappedEvents.events, function(event) {
+        return {'@id': appConfig.baseUrl + 'event/' + event['@id']};
+      });
+      return $q.resolve(eventIdentifiers);
+    }
+
+    return $http
+      .get(placeLocation + '/events', defaultApiConfig)
+      .then(function (response) {
+        return returnUnwrappedData(response)
+          .then(unwrapEvents);
+      });
   };
 
   /**
@@ -457,40 +485,48 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * Update the major info of an item.
+   * Update the major info of an offer.
+   * @param {URL} offerLocation
+   * @param {EventFormData} info
    */
-  this.updateMajorInfo = function(id, type, item) {
+  this.updateMajorInfo = function(offerLocation, info) {
     return $http.post(
-      appConfig.baseUrl + type + '/' + id + '/major-info',
-      item,
+      offerLocation + '/major-info',
+      info,
       defaultApiConfig
     );
   };
 
   /**
    * Delete the typical age range for an offer.
+   * @param {URL} offerLocation
    */
-  this.deleteTypicalAgeRange = function(id, type) {
+  this.deleteTypicalAgeRange = function(offerLocation) {
 
-    return $http['delete'](
-      appConfig.baseApiUrl + type + '/' + id + '/typicalAgeRange',
+    return $http.delete(
+      offerLocation + '/typicalAgeRange',
       defaultApiConfig
     );
   };
 
   /**
    * Delete the organizer for an offer.
+   * @param {URL} offerLocation
+   * @param {string} organizerId
    */
-  this.deleteOfferOrganizer = function(id, type, organizerId) {
+  this.deleteOfferOrganizer = function(offerLocation, organizerId) {
 
-    return $http['delete'](
-        appConfig.baseUrl + type + '/' + id + '/organizer/' + organizerId,
-        defaultApiConfig
+    return $http.delete(
+      offerLocation + '/organizer/' + organizerId,
+      defaultApiConfig
     );
   };
 
+  /**
+   * @param {string} variationId
+   */
   this.deleteVariation = function (variationId) {
-    return $http['delete'](
+    return $http.delete(
       appConfig.baseUrl + 'variations/' + variationId,
       defaultApiConfig
     );
@@ -498,15 +534,18 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
   /**
    * Add a new image.
+   * @param {URL} itemLocation
+   * @param {string} imageId
+   * @return {Promise}
    */
-  this.addImage = function(itemId, itemType, imageId) {
+  this.addImage = function(itemLocation, imageId) {
     var postData = {
       mediaObjectId: imageId
     };
 
     return $http
       .post(
-        appConfig.baseUrl + itemType + '/' + itemId + '/images',
+        itemLocation + '/images',
         postData,
         defaultApiConfig
       )
@@ -514,9 +553,15 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * Update an image.
+   * Update the image info of an item.
+   * @param {URL} itemLocation
+   * @param {string} imageId
+   * @param {string} description
+   * @param {string} copyrightHolder
+   * @return {Promise}
+   *
    */
-  this.updateImage = function(itemId, itemType, imageId, description, copyrightHolder) {
+  this.updateImage = function(itemLocation, imageId, description, copyrightHolder) {
     var postData = {
       description: description,
       copyrightHolder: copyrightHolder
@@ -524,7 +569,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
 
     return $http
       .post(
-        appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
+        itemLocation + '/images/' + imageId,
         postData,
         defaultApiConfig
       )
@@ -532,38 +577,36 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
   };
 
   /**
-   * Remove an image from an offer.
+   * Remove an image from an item.
    *
-   * @param {string} itemId
-   * @param {OfferTypes} itemType
+   * @param {URL} itemLocation
    * @param {string} imageId
    *
    * @return {Promise}
    */
-  this.removeImage = function(itemId, itemType, imageId) {
-    return $http['delete'](
-      appConfig.baseUrl + itemType + '/' + itemId + '/images/' + imageId,
+  this.removeImage = function(itemLocation, imageId) {
+    return $http.delete(
+      itemLocation + '/images/' + imageId,
       defaultApiConfig
     ).then(returnJobData);
   };
 
   /**
-   * Select the main image for an offer.
+   * Select the main image for an item.
    *
-   * @param {string} itemId
-   * @param {OfferTypes} itemType
+   * @param {URL} itemLocation
    * @param {string} imageId
    *
    * @return {Promise.<Object>}
    */
-  this.selectMainImage = function(itemId, itemType, imageId) {
+  this.selectMainImage = function(itemLocation, imageId) {
     var postData = {
       mediaObjectId: imageId
     };
 
     return $http
       .post(
-        appConfig.baseUrl + itemType + '/' + itemId + '/images/main',
+        itemLocation + '/images/main',
         postData,
         defaultApiConfig
       )
@@ -588,13 +631,8 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
       'same_as': offerUrl
     };
 
-    var config = {
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      params: _.pick(parameters, _.isString)
-    };
+    var config = _.cloneDeep(defaultApiConfig);
+    config.params = _.pick(parameters, _.isString);
 
     return $http.get(
       appConfig.baseUrl + 'variations/',
@@ -606,12 +644,7 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     var deferredVariation = $q.defer();
 
     var variationRequest = $http.get(
-      appConfig.baseUrl + 'variations/' + variationId,
-      {
-        headers: {
-          'Accept': 'application/ld+json'
-        }
-      });
+      appConfig.baseUrl + 'variations/' + variationId, defaultApiConfig);
 
     variationRequest.success(function (jsonEvent) {
       var event = new UdbEvent(jsonEvent);
@@ -625,15 +658,45 @@ function UdbApi($q, $http, appConfig, $cookieStore, uitidAuth,
     return deferredVariation.promise;
   };
 
+  function returnUnwrappedData(response) {
+    return $q.resolve(response.data);
+  }
+
+  /**
+   * @param {int} page
+   * @return {Promise.<PagedCollection>}
+   */
   this.getDashboardItems = function(page) {
     var requestConfig = _.cloneDeep(defaultApiConfig);
     if (page > 1) {
       requestConfig.params.page = page;
     }
 
-    return $http.get(
-        appConfig.baseUrl + 'dashboard/items',
-        requestConfig
-    );
+    return $http
+      .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  this.uploadMedia = function (imageFile, description, copyrightHolder) {
+    var uploadOptions = {
+      url: appConfig.baseUrl + 'images',
+      fields: {
+        description: description,
+        copyrightHolder: copyrightHolder
+      },
+      file: imageFile
+    };
+    var config = Object.assign(defaultApiConfig, uploadOptions);
+
+    return Upload.upload(config);
+  };
+
+  this.getMedia = function (imageId) {
+    return $http
+      .get(
+        appConfig.baseUrl + 'media/' + imageId,
+        defaultApiConfig
+      )
+      .then(returnUnwrappedData);
   };
 }
