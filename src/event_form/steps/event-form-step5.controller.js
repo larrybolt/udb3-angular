@@ -552,7 +552,8 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     if (type === 'website') {
 
       // Autoset http://.
-      if ($scope.bookingModel.url.substring(0, 7) !== 'http://') {
+      if ($scope.bookingModel.url.substring(0, 7) !== 'http://' &&
+        $scope.bookingModel.url.substring(0, 8) !== 'https://') {
         $scope.bookingModel.url = 'http://' + $scope.bookingModel.url;
       }
 

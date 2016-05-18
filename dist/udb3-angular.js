@@ -7402,7 +7402,8 @@ function UdbContactInfoValidationDirective() {
 
           var viewValue = ngModel.$viewValue;
           // Autoset http://.
-          if (ngModel.$modelValue.value.substring(0, 7) !== 'http://') {
+          if (ngModel.$modelValue.value.substring(0, 7) !== 'http://' &&
+            ngModel.$modelValue.value.substring(0, 8) !== 'https://') {
             viewValue.value = 'http://' + viewValue.value;
             ngModel.$setViewValue(viewValue);
           }
@@ -9740,7 +9741,8 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     if (type === 'website') {
 
       // Autoset http://.
-      if ($scope.bookingModel.url.substring(0, 7) !== 'http://') {
+      if ($scope.bookingModel.url.substring(0, 7) !== 'http://' &&
+        $scope.bookingModel.url.substring(0, 8) !== 'https://') {
         $scope.bookingModel.url = 'http://' + $scope.bookingModel.url;
       }
 
