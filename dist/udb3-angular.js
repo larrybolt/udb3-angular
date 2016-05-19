@@ -2599,19 +2599,19 @@ function UdbApi(
       query: queryString
     };
     return $http
-      .post(apiUrl + 'saved-searches/', post, defaultApiConfig)
+      .post(appConfig.baseUrl + 'saved-searches/', post, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
   this.getSavedSearches = function () {
     return $http
-      .get(apiUrl + 'saved-searches/', defaultApiConfig)
+      .get(appConfig.baseUrl + 'saved-searches/', defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
   this.deleteSavedSearch = function (searchId) {
     return $http
-      .delete(apiUrl + 'saved-searches/' + searchId, defaultApiConfig)
+      .delete(appConfig.baseUrl + 'saved-searches/' + searchId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
