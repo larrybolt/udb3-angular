@@ -40,8 +40,11 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
    */
   function jobCreatorFactory(jobType) {
     var args =  Array.prototype.slice.call(arguments);
+    var info = args.shift(); // contains a function with argument info etc.
+
     function jobCreator(response) {
       args.unshift(response.data.commandId);
+      args.unshift(info); // needs to be the first element
       var job = new (Function.prototype.bind.apply(jobType, args))();
 
       jobLogger.addJob(job);
