@@ -1,0 +1,11 @@
+<form class="navbar-form navbar-left udb-header-search" role="search"
+      ng-class="{'has-errors': usb.hasErrors, 'is-editing': usb.isEditing}">
+  <div class="form-group has-warning has-feedback">
+    <input type="text" class="form-control" ng-model="usb.queryString" ng-change="usb.queryChanged()">
+    <i ng-show="usb.hasErrors" class="fa fa-warning warning-icon" tooltip-append-to-body="true"
+       tooltip-placement="bottom" uib-tooltip="{{usb.errors}}"></i>
+  </div>
+  <button type="submit" class="btn udb-search-button" ng-click="usb.find()">
+    <i class="fa fa-search"></i>
+  </button>
+</form>

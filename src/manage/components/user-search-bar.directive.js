@@ -7,13 +7,13 @@
  * # udbSearchBar
  */
 angular
-  .module('udb.search')
-  .directive('udbSearchBar', udbSearchBar);
+  .module('udb.manage')
+  .directive('udbUserSearchBar', udbUserSearchBar);
 
 /* @ngInject */
-function udbSearchBar(searchHelper, $rootScope, $uibModal, savedSearchesService) {
+function udbUserSearchBar($rootScope, $uibModal) {
   return {
-    templateUrl: 'templates/search-bar.directive.html',
+    templateUrl: 'templates/user-search-bar.directive.html',
     restrict: 'E',
     link: function postLink(scope, element, attrs) {
 
@@ -21,8 +21,7 @@ function udbSearchBar(searchHelper, $rootScope, $uibModal, savedSearchesService)
         queryString: '',
         hasErrors: false,
         errors: '',
-        isEditing: false,
-        savedSearches: []
+        isEditing: false
       };
 
       var editorModal;
@@ -89,23 +88,6 @@ function udbSearchBar(searchHelper, $rootScope, $uibModal, savedSearchesService)
         return formattedErrors;
       }
 
-      /**
-       * Show the first 5 items from a list of saved searches.
-       *
-       * @param {Object[]} savedSearches
-       */
-      function showSavedSearches(savedSearches) {
-        searchBar.savedSearches = _.take(savedSearches, 5);
-      }
-
-      savedSearchesService
-        .getSavedSearches()
-        .then(showSavedSearches);
-
-      var savedSearchesChangedListener = $rootScope.$on('savedSearchesChanged', function (event, savedSearches) {
-        showSavedSearches(savedSearches);
-      });
-
       var stopEditingQueryListener = $rootScope.$on('stopEditingQuery', function () {
         scope.sb.isEditing = false;
         if (editorModal) {
@@ -115,7 +97,6 @@ function udbSearchBar(searchHelper, $rootScope, $uibModal, savedSearchesService)
 
       var searchQueryChangedListener = $rootScope.$on('searchQueryChanged', searchBar.updateQuery);
 
-      scope.$on('$destroy', savedSearchesChangedListener);
       scope.$on('$destroy', stopEditingQueryListener);
       scope.$on('$destroy', searchQueryChangedListener);
     }
