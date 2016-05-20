@@ -22,6 +22,7 @@ angular
     'udb.dashboard',
     'udb.saved-searches',
     'udb.media',
+    'udb.manage',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
