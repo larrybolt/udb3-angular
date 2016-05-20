@@ -22,6 +22,7 @@ angular
     'udb.dashboard',
     'udb.saved-searches',
     'udb.media',
+    'udb.manage',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
@@ -1841,6 +1842,30 @@ angular.module('peg', []).factory('LuceneQueryParser', function () {
   };
 })()
 });
+/**
+ * @ngdoc module
+ * @name udb.manage
+ * @description
+ * The udb manage module
+ */
+angular
+  .module('udb.manage', [
+    'ngSanitize',
+    'ui.bootstrap',
+    'udb.core',
+    'udb.config'
+  ])
+
+  .config(["$routeProvider", function ($routeProvider) {
+    $routeProvider
+      .when('/manage/users/list', {
+        templateUrl: 'templates/users-list.html',
+        controller: 'UsersListController',
+        controllerAs: 'ulc'
+      });
+
+  }]);
+
 // Source: src/core/authorization-service.service.js
 /**
  * @ngdoc service
@@ -10329,6 +10354,381 @@ function udbExportModalButtons() {
   };
 }
 
+// Source: src/manage/components/user-search-bar.directive.js
+/**
+ * @ngdoc directive
+ * @name udb.search.directive:udbSearchBar
+ * @description
+ * # udbSearchBar
+ */
+angular
+  .module('udb.manage')
+  .directive('udbUserSearchBar', udbUserSearchBar);
+
+/* @ngInject */
+function udbUserSearchBar($rootScope, $uibModal) {
+  return {
+    templateUrl: 'templates/user-search-bar.directive.html',
+    restrict: 'E',
+    link: function postLink(scope, element, attrs) {
+
+      var searchBar = {
+        queryString: '',
+        hasErrors: false,
+        errors: '',
+        isEditing: false
+      };
+
+      var editorModal;
+
+      searchBar.editQuery = function () {
+        $rootScope.$emit('startEditingQuery');
+        searchBar.isEditing = true;
+
+        editorModal = $uibModal.open({
+          templateUrl: 'templates/query-editor-modal.html',
+          controller: 'QueryEditorController',
+          controllerAs: 'qe',
+          size: 'lg'
+        });
+      };
+
+      /**
+       * Search with a given query string and update the search bar or use the one currently displayed in the search bar
+       *
+       * @param {String} [queryString]
+       */
+      searchBar.find = function (queryString) {
+        var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
+
+        searchBar.queryString = query;
+        searchHelper.setQueryString(query);
+        $rootScope.$emit('searchSubmitted');
+      };
+
+      /**
+       * When the user manually changes the query field the current query tree should be cleared
+       */
+      searchBar.queryChanged = function() {
+        searchHelper.clearQueryTree();
+      };
+
+      scope.sb = searchBar;
+
+      /**
+       * Update the search bar with the info from a query object.
+       *
+       * @param {Object} event
+       * @param {Object} query
+       */
+      searchBar.updateQuery = function(event, query) {
+        searchBar.queryString = query.queryString;
+
+        if (query.errors && query.errors.length) {
+          scope.sb.hasErrors = true;
+          scope.sb.errors = formatErrors(query.errors);
+        } else {
+          scope.sb.hasErrors = false;
+          scope.sb.errors = '';
+        }
+      };
+
+      function formatErrors(errors) {
+        var formattedErrors = '';
+
+        _.forEach(errors, function (error) {
+          formattedErrors += (error + '\n');
+        });
+
+        return formattedErrors;
+      }
+
+      var stopEditingQueryListener = $rootScope.$on('stopEditingQuery', function () {
+        scope.sb.isEditing = false;
+        if (editorModal) {
+          editorModal.dismiss();
+        }
+      });
+
+      var searchQueryChangedListener = $rootScope.$on('searchQueryChanged', searchBar.updateQuery);
+
+      scope.$on('$destroy', stopEditingQueryListener);
+      scope.$on('$destroy', searchQueryChangedListener);
+    }
+  };
+}
+udbUserSearchBar.$inject = ["$rootScope", "$uibModal"];
+
+// Source: src/manage/services/user-search-result-viewer.factory.js
+/**
+ * @ngdoc service
+ * @name udb.manage.UserSearchResultViewer
+ * @description
+ * # UserSearchResultViewer
+ * User search result viewer factory
+ */
+angular
+  .module('udb.manage')
+  .factory('UserSearchResultViewer', UserSearchResultViewerFactory);
+
+function UserSearchResultViewerFactory() {
+
+  /**
+   * @class SearchResultViewer
+   * @constructor
+   * @param    {number}     pageSize        The number of items shown per page
+   *
+   * @property {object[]}   events          A list of json-LD event objects
+   * @property {number}     pageSize        The current page size
+   * @property {number}     totalItems      The total items found
+   * @property {number}     currentPage     The index of the current page without zeroing
+   * @property {boolean}    loading         A flag to indicate the period between changing of the query and
+   *                                        receiving of the results.
+   * @property {SelectionState} selectionState Enum that keeps the state of selected results
+   */
+  var UserSearchResultViewer = function (pageSize, activePage) {
+    this.pageSize = pageSize || 30;
+    this.users = [];
+    this.totalItems = 0;
+    this.currentPage = activePage || 1;
+    this.loading = true;
+    this.lastQuery = null;
+    this.querySelected = false;
+  };
+
+  UserSearchResultViewer.prototype = {
+    /**
+     * @param {PagedCollection} pagedResults
+     */
+    setResults: function (pagedResults) {
+      var viewer = this;
+
+      viewer.pageSize = pagedResults.itemsPerPage || 30;
+      viewer.users = pagedResults.member || [];
+      viewer.totalItems = pagedResults.totalItems || 0;
+
+      viewer.loading = false;
+    },
+    queryChanged: function (query) {
+      this.loading = true;
+      this.selectedOffers = [];
+      this.querySelected = false;
+
+      // prevent the initial search from resetting the active page
+      if (this.lastQuery && this.lastQuery !== query) {
+        this.currentPage = 1;
+      }
+
+      this.lastQuery = query;
+    }
+  };
+
+  return (UserSearchResultViewer);
+}
+
+// Source: src/manage/services/user.service.js
+/**
+ * @ngdoc service
+ * @name udb.manage.user
+ * @description
+ * # user
+ * Service in the udb.manage.
+ */
+angular
+  .module('udb.manage')
+  .service('userService', userService);
+
+/* @ngInject */
+function userService($q, uitidAuth) {
+  var service = this;
+
+  var defaultApiConfig = {
+    withCredentials: true,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + uitidAuth.getToken()
+    },
+    params: {}
+  };
+
+  service.getUsers = function (page) {
+
+    var deferredUsers = $q.defer();
+    var jsonUsers = {
+      '1': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': [
+          'admin',
+          'moderator'
+        ]
+      },
+      '2': {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': [
+          'moderator'
+        ]
+      },
+      '3': {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': [
+          'admin'
+        ]
+      },
+      '4': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': [
+          'admin'
+        ]
+      },
+      '5': {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '6': {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': [
+          'moderator'
+        ]
+      },
+      '7': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '8': {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '9': {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '10': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '11': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '12': {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '13': {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '14': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '15': {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '16': {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '17': {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '18': {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      },
+      '19': {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname',
+        'roles': []
+      }
+    };
+
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    if (page > 1) {
+      requestConfig.params.page = page;
+    }
+
+    /*return $http
+      .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
+      .then(returnUnwrappedData);*/
+
+    deferredUsers.resolve(jsonUsers, requestConfig);
+
+    return deferredUsers.promise;
+  };
+}
+userService.$inject = ["$q", "uitidAuth"];
+// Source: src/manage/users-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:UserListController
+ * @description
+ * # UserListController
+ */
+angular
+  .module('udb.manage')
+  .controller('UsersListController', UsersListController);
+
+/* @ngInject */
+function UsersListController($scope, userService, UserSearchResultViewer) {
+  var ulc = this;
+  ulc.loading = false;
+  ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
+
+  /**
+   * @param {PagedCollection} results
+   */
+  function setUsersResults(users) {
+    ulc.users = users;
+  }
+
+  function getUsersResult() {
+    userService
+      .getUsers(ulc.pagedItemViewer.currentPage)
+      .then(setUsersResults);
+  }
+  getUsersResult();
+}
+UsersListController.$inject = ["$scope", "userService", "UserSearchResultViewer"];
 // Source: src/media/create-image-job.factory.js
 /**
  * @ngdoc service
@@ -16067,6 +16467,77 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <button ng-hide=\"exporter.onLastStep()\" class=\"btn btn-primary\"\n" +
     "          ng-click=\"exporter.nextStep()\">Volgende</button>\n" +
     "  <button ng-show=\"exporter.onLastStep()\" class=\"btn btn-primary\" ng-click=\"exporter.export()\">Exporteren</button>\n" +
+    "</div>\n"
+  );
+
+
+  $templateCache.put('templates/user-search-bar.directive.html',
+    "<form class=\"navbar-form navbar-left udb-header-search\" role=\"search\"\n" +
+    "      ng-class=\"{'has-errors': usb.hasErrors, 'is-editing': usb.isEditing}\">\n" +
+    "  <div class=\"form-group has-warning has-feedback\">\n" +
+    "    <input type=\"text\" class=\"form-control\" ng-model=\"usb.queryString\" ng-change=\"usb.queryChanged()\">\n" +
+    "    <i ng-show=\"usb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
+    "       tooltip-placement=\"bottom\" uib-tooltip=\"{{usb.errors}}\"></i>\n" +
+    "  </div>\n" +
+    "  <button type=\"submit\" class=\"btn udb-search-button\" ng-click=\"usb.find()\">\n" +
+    "    <i class=\"fa fa-search\"></i>\n" +
+    "  </button>\n" +
+    "</form>\n"
+  );
+
+
+  $templateCache.put('templates/users-list.html',
+    "<h1 class=\"title\" id=\"page-title\">\n" +
+    "    Gebruikers\n" +
+    "</h1>\n" +
+    "<div class=\"row\">\n" +
+    "    <udb-user-search-bar></udb-user-search-bar>\n" +
+    "</div>\n" +
+    "<div class=\"text-center\" ng-show=\"ulc.loading\">\n" +
+    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"row\" ng-cloak ng-show=\"!ulc.loading\">\n" +
+    "    <div class=\"table-responsive\">\n" +
+    "        <table class=\"table table-hover table-striped\">\n" +
+    "            <thead>\n" +
+    "                <tr>\n" +
+    "                    <th>E-mail</th>\n" +
+    "                    <th>Nick</th>\n" +
+    "                    <th>Rol</th>\n" +
+    "                    <th>Opties</th>\n" +
+    "                </tr>\n" +
+    "            </thead>\n" +
+    "            <tbody>\n" +
+    "                <tr ng-repeat=\"user in ulc.users\">\n" +
+    "                    <td>{{ user.email }}</td>\n" +
+    "                    <td>{{ user.nick }}</td>\n" +
+    "                    <td>{{ user.roles.join(', ') }}</td>\n" +
+    "                    <td>\n" +
+    "                        <div class=\"btn-group\">\n" +
+    "                            <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
+    "                                Bewerken <span class=\"caret\"></span>\n" +
+    "                            </button>\n" +
+    "                            <ul class=\"dropdown-menu\">\n" +
+    "                                <li><a href=\"#\">Bewerken</a></li>\n" +
+    "                                <li><a href=\"#\">Verwijderen</a></li>\n" +
+    "                            </ul>\n" +
+    "                        </div>\n" +
+    "                    </td>\n" +
+    "                </tr>\n" +
+    "            </tbody>\n" +
+    "        </table>\n" +
+    "    </div>\n" +
+    "    <div class=\"panel-footer\">\n" +
+    "        <uib-pagination\n" +
+    "                total-items=\"ulc.pagedItemViewer.totalItems\"\n" +
+    "                ng-model=\"ulc.pagedItemViewer.currentPage\"\n" +
+    "                items-per-page=\"ulc.pagedItemViewer.pageSize\"\n" +
+    "                ng-show=\"ulc.pagedItemViewer.totalItems > 0\"\n" +
+    "                max-size=\"10\"\n" +
+    "                ng-change=\"ulc.getUsersResult()\">\n" +
+    "        </uib-pagination>\n" +
+    "    </div>\n" +
     "</div>\n"
   );
 
