@@ -2936,7 +2936,7 @@ function UdbApi(
 
   this.deleteOffer = function (offer) {
     return $http['delete'](
-      offer.apiUrl,
+      offer['@id'],
       defaultApiConfig
     );
   };
@@ -4692,10 +4692,10 @@ function EventCrud(
   var service = this;
 
   /**
-   * Creates a new event and add the job to the logger.
+   * Creates a new offer and add the job to the logger.
    *
    * @param {EventFormData}  eventFormData
-   * The event to be created
+   *  The form data required to create an offer.
    *
    * @return {Promise.<EventFormData>}
    */
@@ -6981,16 +6981,21 @@ EventFormOrganizerModalController.$inject = ["$scope", "$uibModalInstance", "udb
         streetAddress : $scope.newPlace.address.streetAddress
       };
 
-      var promise = eventCrud.createOffer(udbPlace);
-      promise.then(function(jsonResponse) {
-        udbPlace.id = jsonResponse.data.placeId;
+      function showError() {
+        $scope.saving = false;
+        $scope.error = true;
+      }
+
+      function passOnPlaceData(eventFormData) {
+        udbPlace.id = eventFormData.id;
         selectPlace(udbPlace);
         $scope.saving = true;
         $scope.error = false;
-      }, function() {
-        $scope.saving = false;
-        $scope.error = true;
-      });
+      }
+
+      eventCrud
+        .createOffer(udbPlace)
+        .then(passOnPlaceData, showError);
     }
 
     /**
@@ -8795,7 +8800,7 @@ function EventFormStep3Controller(
   $scope.orderCityLocations = controller.orderCityLocations;
 
   /**
-   * Open the organizer modal.
+   * Open the place modal.
    */
   function openPlaceModal() {
 
@@ -8812,7 +8817,10 @@ function EventFormStep3Controller(
       }
     });
 
-    modalInstance.result.then(function (place) {
+    /**
+     * @param {UdbPlace} place
+     */
+    function setEventFormDataPlace(place) {
 
       // Assign the just saved place to the event form data.
       EventFormData.place = place;
@@ -8834,8 +8842,10 @@ function EventFormStep3Controller(
       $scope.selectedLocation = location;
 
       controller.stepCompleted();
+    }
 
-    });
+    modalInstance.result
+      .then(setEventFormDataPlace);
   }
 
   function setStreetAddress() {

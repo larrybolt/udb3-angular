@@ -24,10 +24,10 @@ function EventCrud(
   var service = this;
 
   /**
-   * Creates a new event and add the job to the logger.
+   * Creates a new offer and add the job to the logger.
    *
    * @param {EventFormData}  eventFormData
-   * The event to be created
+   *  The form data required to create an offer.
    *
    * @return {Promise.<EventFormData>}
    */
