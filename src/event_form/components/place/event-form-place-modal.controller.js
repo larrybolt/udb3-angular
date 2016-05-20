@@ -110,7 +110,7 @@
 
       var promise = eventCrud.createOffer(udbPlace);
       promise.then(function(jsonResponse) {
-        udbPlace.id = jsonResponse.data.placeId;
+        udbPlace.id = jsonResponse.id;
         selectPlace(udbPlace);
         $scope.saving = true;
         $scope.error = false;
