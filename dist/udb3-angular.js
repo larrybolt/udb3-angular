@@ -10366,31 +10366,17 @@ angular
   .directive('udbUserSearchBar', udbUserSearchBar);
 
 /* @ngInject */
-function udbUserSearchBar($rootScope, $uibModal) {
+function udbUserSearchBar(UserService) {
   return {
     templateUrl: 'templates/user-search-bar.directive.html',
     restrict: 'E',
-    link: function postLink(scope, element, attrs) {
+    link: function postLink(scope) {
 
       var searchBar = {
         queryString: '',
         hasErrors: false,
         errors: '',
         isEditing: false
-      };
-
-      var editorModal;
-
-      searchBar.editQuery = function () {
-        $rootScope.$emit('startEditingQuery');
-        searchBar.isEditing = true;
-
-        editorModal = $uibModal.open({
-          templateUrl: 'templates/query-editor-modal.html',
-          controller: 'QueryEditorController',
-          controllerAs: 'qe',
-          size: 'lg'
-        });
       };
 
       /**
@@ -10402,62 +10388,15 @@ function udbUserSearchBar($rootScope, $uibModal) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        searchHelper.setQueryString(query);
-        $rootScope.$emit('searchSubmitted');
+        UserService.getUsers();
       };
 
-      /**
-       * When the user manually changes the query field the current query tree should be cleared
-       */
-      searchBar.queryChanged = function() {
-        searchHelper.clearQueryTree();
-      };
+      scope.usb = searchBar;
 
-      scope.sb = searchBar;
-
-      /**
-       * Update the search bar with the info from a query object.
-       *
-       * @param {Object} event
-       * @param {Object} query
-       */
-      searchBar.updateQuery = function(event, query) {
-        searchBar.queryString = query.queryString;
-
-        if (query.errors && query.errors.length) {
-          scope.sb.hasErrors = true;
-          scope.sb.errors = formatErrors(query.errors);
-        } else {
-          scope.sb.hasErrors = false;
-          scope.sb.errors = '';
-        }
-      };
-
-      function formatErrors(errors) {
-        var formattedErrors = '';
-
-        _.forEach(errors, function (error) {
-          formattedErrors += (error + '\n');
-        });
-
-        return formattedErrors;
-      }
-
-      var stopEditingQueryListener = $rootScope.$on('stopEditingQuery', function () {
-        scope.sb.isEditing = false;
-        if (editorModal) {
-          editorModal.dismiss();
-        }
-      });
-
-      var searchQueryChangedListener = $rootScope.$on('searchQueryChanged', searchBar.updateQuery);
-
-      scope.$on('$destroy', stopEditingQueryListener);
-      scope.$on('$destroy', searchQueryChangedListener);
     }
   };
 }
-udbUserSearchBar.$inject = ["$rootScope", "$uibModal"];
+udbUserSearchBar.$inject = ["UserService"];
 
 // Source: src/manage/services/user-search-result-viewer.factory.js
 /**
@@ -10536,10 +10475,10 @@ function UserSearchResultViewerFactory() {
  */
 angular
   .module('udb.manage')
-  .service('userService', userService);
+  .service('UserService', UserService);
 
 /* @ngInject */
-function userService($q, uitidAuth) {
+function UserService($q, uitidAuth) {
   var service = this;
 
   var defaultApiConfig = {
@@ -10696,7 +10635,8 @@ function userService($q, uitidAuth) {
     return deferredUsers.promise;
   };
 }
-userService.$inject = ["$q", "uitidAuth"];
+UserService.$inject = ["$q", "uitidAuth"];
+
 // Source: src/manage/users-list.controller.js
 /**
  * @ngdoc function
@@ -10709,26 +10649,27 @@ angular
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */
-function UsersListController($scope, userService, UserSearchResultViewer) {
+function UsersListController($scope, UserService, UserSearchResultViewer) {
   var ulc = this;
   ulc.loading = false;
   ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
 
   /**
-   * @param {PagedCollection} results
+   * @param {PagedCollection} users
    */
   function setUsersResults(users) {
     ulc.users = users;
   }
 
   function getUsersResult() {
-    userService
+    UserService
       .getUsers(ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
   }
   getUsersResult();
 }
-UsersListController.$inject = ["$scope", "userService", "UserSearchResultViewer"];
+UsersListController.$inject = ["$scope", "UserService", "UserSearchResultViewer"];
+
 // Source: src/media/create-image-job.factory.js
 /**
  * @ngdoc service
@@ -16472,16 +16413,15 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
 
   $templateCache.put('templates/user-search-bar.directive.html',
-    "<form class=\"navbar-form navbar-left udb-header-search\" role=\"search\"\n" +
+    "<form class=\"form-inline\" role=\"search\"\n" +
     "      ng-class=\"{'has-errors': usb.hasErrors, 'is-editing': usb.isEditing}\">\n" +
-    "  <div class=\"form-group has-warning has-feedback\">\n" +
-    "    <input type=\"text\" class=\"form-control\" ng-model=\"usb.queryString\" ng-change=\"usb.queryChanged()\">\n" +
+    "  <div class=\"form-group\">\n" +
+    "    <label for=\"user-search-input\">Zoeken op e-mail</label>\n" +
+    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"usb.queryString\" ng-change=\"usb.queryChanged()\">\n" +
     "    <i ng-show=\"usb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
     "       tooltip-placement=\"bottom\" uib-tooltip=\"{{usb.errors}}\"></i>\n" +
     "  </div>\n" +
-    "  <button type=\"submit\" class=\"btn udb-search-button\" ng-click=\"usb.find()\">\n" +
-    "    <i class=\"fa fa-search\"></i>\n" +
-    "  </button>\n" +
+    "  <button type=\"submit\" class=\"btn\" ng-click=\"usb.find()\">Zoeken</button>\n" +
     "</form>\n"
   );
 
@@ -16513,17 +16453,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                    <td>{{ user.email }}</td>\n" +
     "                    <td>{{ user.nick }}</td>\n" +
     "                    <td>{{ user.roles.join(', ') }}</td>\n" +
-    "                    <td>\n" +
-    "                        <div class=\"btn-group\">\n" +
-    "                            <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
-    "                                Bewerken <span class=\"caret\"></span>\n" +
-    "                            </button>\n" +
-    "                            <ul class=\"dropdown-menu\">\n" +
-    "                                <li><a href=\"#\">Bewerken</a></li>\n" +
-    "                                <li><a href=\"#\">Verwijderen</a></li>\n" +
-    "                            </ul>\n" +
-    "                        </div>\n" +
-    "                    </td>\n" +
+    "                    <td><a href=\"#\">Bewerken</a></td>\n" +
     "                </tr>\n" +
     "            </tbody>\n" +
     "        </table>\n" +

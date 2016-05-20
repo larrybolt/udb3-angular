@@ -9,10 +9,10 @@
  */
 angular
   .module('udb.manage')
-  .service('userService', userService);
+  .service('UserService', UserService);
 
 /* @ngInject */
-function userService($q, uitidAuth) {
+function UserService($q, uitidAuth) {
   var service = this;
 
   var defaultApiConfig = {

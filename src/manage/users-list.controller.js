@@ -11,20 +11,20 @@ angular
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */
-function UsersListController($scope, userService, UserSearchResultViewer) {
+function UsersListController($scope, UserService, UserSearchResultViewer) {
   var ulc = this;
   ulc.loading = false;
   ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
 
   /**
-   * @param {PagedCollection} results
+   * @param {PagedCollection} users
    */
   function setUsersResults(users) {
     ulc.users = users;
   }
 
   function getUsersResult() {
-    userService
+    UserService
       .getUsers(ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
   }
