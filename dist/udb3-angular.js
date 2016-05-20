@@ -2911,7 +2911,7 @@ function UdbApi(
 
   this.deleteOffer = function (offer) {
     return $http['delete'](
-      offer.apiUrl,
+      offer['@id'],
       defaultApiConfig
     );
   };
