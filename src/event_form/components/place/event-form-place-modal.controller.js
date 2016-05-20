@@ -108,16 +108,21 @@
         streetAddress : $scope.newPlace.address.streetAddress
       };
 
-      var promise = eventCrud.createOffer(udbPlace);
-      promise.then(function(jsonResponse) {
-        udbPlace.id = jsonResponse.id;
+      function showError() {
+        $scope.saving = false;
+        $scope.error = true;
+      }
+
+      function passOnPlaceData(eventFormData) {
+        udbPlace.id = eventFormData.id;
         selectPlace(udbPlace);
         $scope.saving = true;
         $scope.error = false;
-      }, function() {
-        $scope.saving = false;
-        $scope.error = true;
-      });
+      }
+
+      eventCrud
+        .createOffer(udbPlace)
+        .then(passOnPlaceData, showError);
     }
 
     /**
