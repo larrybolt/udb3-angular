@@ -5062,7 +5062,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
     var handleCreationJob = function (jobData) {
       var variation = angular.copy(offer);
       variation.description.nl = description;
-      var variationCreationJob = new VariationCreationJob(jobData.commandId, offer.id);
+      var variationCreationJob = new VariationCreationJob(jobData.data.commandId, offer.id);
       jobLogger.addJob(variationCreationJob);
 
       variationCreationJob.task.promise.then(function (jobInfo) {
