@@ -100,7 +100,7 @@ describe('Controller: Search', function() {
     // Explicitly start the digest cycle in order to let $translate's promises resolve.
     $scope.$digest();
     expect(eventExporter.activeExport.selection).toEqual([
-      '35560d45-984c-47f2-b392-f40c2b8f9b45'
+      new URL('http://culudb-silex.dev:8080/event/35560d45-984c-47f2-b392-f40c2b8f9b45')
     ]);
   }));
 

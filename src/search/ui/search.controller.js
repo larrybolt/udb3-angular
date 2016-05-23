@@ -177,7 +177,7 @@ function Search(
       selectedIds = _.chain($scope.resultViewer.selectedOffers)
         .filter({'@type': 'Event'})
         .map(function(offer) {
-          return offer['@id'].split('/').pop();
+          return new URL(offer['@id']);
         })
         .value();
 
