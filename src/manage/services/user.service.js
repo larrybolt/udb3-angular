@@ -24,8 +24,8 @@ function UserService($q, uitidAuth) {
     params: {}
   };
 
-  var jsonUsers = {
-    '1': {
+  var jsonUsers = [
+    {
       'id': '1',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -34,7 +34,7 @@ function UserService($q, uitidAuth) {
         'moderator'
       ]
     },
-    '2': {
+    {
       'id': '2',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -42,7 +42,7 @@ function UserService($q, uitidAuth) {
         'moderator'
       ]
     },
-    '3': {
+    {
       'id': '3',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -50,7 +50,7 @@ function UserService($q, uitidAuth) {
         'admin'
       ]
     },
-    '4': {
+    {
       'id': '4',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -58,13 +58,13 @@ function UserService($q, uitidAuth) {
         'admin'
       ]
     },
-    '5': {
+    {
       'id': '5',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '6': {
+    {
       'id': '6',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -72,111 +72,123 @@ function UserService($q, uitidAuth) {
         'moderator'
       ]
     },
-    '7': {
+    {
       'id': '7',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '8': {
+    {
       'id': '8',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '9': {
+    {
       'id': '9',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '10': {
+    {
       'id': '10',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '11': {
+    {
       'id': '11',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '12': {
+    {
       'id': '12',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '13': {
+    {
       'id': '13',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '14': {
+    {
       'id': '14',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '15': {
+    {
       'id': '15',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '16': {
+    {
       'id': '16',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '17': {
+    {
       'id': '17',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '18': {
+    {
       'id': '18',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '19': {
+    {
       'id': '19',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     }
-  };
+  ];
 
-  service.getUsers = function (page) {
+  function pageArray(items, itemsPerPage) {
+    var result = [];
+    angular.forEach(items, function(item, index) {
+      var rowIndex = Math.floor(index / itemsPerPage),
+          colIndex = index % itemsPerPage;
+      if (!result[rowIndex]) {
+        result[rowIndex] = [];
+        result[rowIndex].users = [];
+        result[rowIndex].itemsPerPage = itemsPerPage;
+        result[rowIndex].totalItems = items.length;
+      }
 
+      result[rowIndex].users[colIndex] = item;
+    });
+
+    return result;
+  }
+
+  service.find = function(query, page) {
+    console.log('jup');
     var deferredUsers = $q.defer();
+
+    var usersArray;
+    if (query) {
+      usersArray = _.shuffle(jsonUsers);
+    }
+    else {
+      usersArray = jsonUsers;
+    }
+    usersArray = pageArray(usersArray, 10);
 
     var requestConfig = _.cloneDeep(defaultApiConfig);
     if (page > 1) {
       requestConfig.params.page = page;
     }
 
-    /*return $http
-      .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
-      .then(returnUnwrappedData);*/
-
-    deferredUsers.resolve(jsonUsers, requestConfig);
-
-    return deferredUsers.promise;
-  };
-
-  service.find = function(query) {
-    var deferredUsers = $q.defer();
-
-    var requestConfig = _.cloneDeep(defaultApiConfig);
-    var shuffled_array = _.shuffle(jsonUsers)
-
-    deferredUsers.resolve(_.shuffle(jsonUsers), requestConfig);
+    deferredUsers.resolve(usersArray[page - 1], requestConfig);
     return deferredUsers.promise;
   };
 }

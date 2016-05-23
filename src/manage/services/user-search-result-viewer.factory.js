@@ -41,12 +41,9 @@ function UserSearchResultViewerFactory() {
     setResults: function (pagedResults) {
       var viewer = this;
 
-      /*viewer.pageSize = pagedResults.itemsPerPage || 30;
+      viewer.pageSize = pagedResults.itemsPerPage || 30;
       viewer.users = pagedResults.users || [];
-      viewer.totalItems = pagedResults.totalItems || 0;*/
-      viewer.pageSize = 10;
-      viewer.users = pagedResults;
-      viewer.totalItems = pagedResults.length;
+      viewer.totalItems = pagedResults.totalItems || 0;
 
       viewer.loading = false;
     }

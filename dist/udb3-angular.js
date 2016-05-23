@@ -10450,12 +10450,9 @@ function UserSearchResultViewerFactory() {
     setResults: function (pagedResults) {
       var viewer = this;
 
-      /*viewer.pageSize = pagedResults.itemsPerPage || 30;
+      viewer.pageSize = pagedResults.itemsPerPage || 30;
       viewer.users = pagedResults.users || [];
-      viewer.totalItems = pagedResults.totalItems || 0;*/
-      viewer.pageSize = 10;
-      viewer.users = pagedResults;
-      viewer.totalItems = 19;
+      viewer.totalItems = pagedResults.totalItems || 0;
 
       viewer.loading = false;
     }
@@ -10489,8 +10486,8 @@ function UserService($q, uitidAuth) {
     params: {}
   };
 
-  var jsonUsers = {
-    '1': {
+  var jsonUsers = [
+    {
       'id': '1',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -10499,7 +10496,7 @@ function UserService($q, uitidAuth) {
         'moderator'
       ]
     },
-    '2': {
+    {
       'id': '2',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -10507,7 +10504,7 @@ function UserService($q, uitidAuth) {
         'moderator'
       ]
     },
-    '3': {
+    {
       'id': '3',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -10515,7 +10512,7 @@ function UserService($q, uitidAuth) {
         'admin'
       ]
     },
-    '4': {
+    {
       'id': '4',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -10523,13 +10520,13 @@ function UserService($q, uitidAuth) {
         'admin'
       ]
     },
-    '5': {
+    {
       'id': '5',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '6': {
+    {
       'id': '6',
       'email': 'info@mail.com',
       'nick': 'nickname',
@@ -10537,110 +10534,123 @@ function UserService($q, uitidAuth) {
         'moderator'
       ]
     },
-    '7': {
+    {
       'id': '7',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '8': {
+    {
       'id': '8',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '9': {
+    {
       'id': '9',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '10': {
+    {
       'id': '10',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '11': {
+    {
       'id': '11',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '12': {
+    {
       'id': '12',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '13': {
+    {
       'id': '13',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '14': {
+    {
       'id': '14',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '15': {
+    {
       'id': '15',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '16': {
+    {
       'id': '16',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '17': {
+    {
       'id': '17',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '18': {
+    {
       'id': '18',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     },
-    '19': {
+    {
       'id': '19',
       'email': 'info@mail.com',
       'nick': 'nickname',
       'roles': []
     }
-  };
+  ];
 
-  service.getUsers = function (page) {
+  function pageArray(items, itemsPerPage) {
+    var result = [];
+    angular.forEach(items, function(item, index) {
+      var rowIndex = Math.floor(index / itemsPerPage),
+          colIndex = index % itemsPerPage;
+      if (!result[rowIndex]) {
+        result[rowIndex] = [];
+        result[rowIndex].users = [];
+        result[rowIndex].itemsPerPage = itemsPerPage;
+        result[rowIndex].totalItems = items.length;
+      }
 
+      result[rowIndex].users[colIndex] = item;
+    });
+
+    return result;
+  }
+
+  service.find = function(query, page) {
+    console.log('jup');
     var deferredUsers = $q.defer();
+
+    var usersArray;
+    if (query) {
+      usersArray = _.shuffle(jsonUsers);
+    }
+    else {
+      usersArray = jsonUsers;
+    }
+    usersArray = pageArray(usersArray, 10);
 
     var requestConfig = _.cloneDeep(defaultApiConfig);
     if (page > 1) {
       requestConfig.params.page = page;
     }
 
-    /*return $http
-      .get(appConfig.baseUrl + 'dashboard/items', requestConfig)
-      .then(returnUnwrappedData);*/
-
-    deferredUsers.resolve(jsonUsers, requestConfig);
-
-    return deferredUsers.promise;
-  };
-
-  service.find = function(query) {
-    var deferredUsers = $q.defer();
-
-    var requestConfig = _.cloneDeep(defaultApiConfig);
-
-    deferredUsers.resolve(_.shuffle(jsonUsers), requestConfig);
+    deferredUsers.resolve(usersArray[page - 1], requestConfig);
     return deferredUsers.promise;
   };
 }
@@ -10664,27 +10674,21 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
   ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
 
   /**
-   * @param {PagedCollection} users
+   * @param {PagedCollection} data
    */
-  function setUsersResults(users) {
+  function setUsersResults(data) {
     ulc.pagedItemViewer.loading = true;
-    ulc.pagedItemViewer.setResults(users);
-    ulc.users = users;
+    ulc.pagedItemViewer.setResults(data);
+    ulc.users = data.users;
   }
 
-  function getUsersResult() {
+  function findUsers(query) {
     UserService
-      .getUsers(ulc.pagedItemViewer.currentPage)
+      .find(query, ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
   }
 
-  function findUsers() {
-    UserService
-      .find()
-      .then(setUsersResults);
-  }
-
-  getUsersResult();
+  findUsers();
 
   var userSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
     findUsers(args.query);
@@ -16489,7 +16493,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                items-per-page=\"ulc.pagedItemViewer.pageSize\"\n" +
     "                ng-show=\"ulc.pagedItemViewer.totalItems > 0\"\n" +
     "                max-size=\"10\"\n" +
-    "                ng-change=\"ulc.getUsersResult()\">\n" +
+    "                ng-change=\"ulc.findUsers()\">\n" +
     "        </uib-pagination>\n" +
     "    </div>\n" +
     "</div>\n"

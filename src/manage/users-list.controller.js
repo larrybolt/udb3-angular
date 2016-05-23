@@ -17,27 +17,21 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
   ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
 
   /**
-   * @param {PagedCollection} users
+   * @param {PagedCollection} data
    */
-  function setUsersResults(users) {
+  function setUsersResults(data) {
     ulc.pagedItemViewer.loading = true;
-    ulc.pagedItemViewer.setResults(users);
-    ulc.users = users;
+    ulc.pagedItemViewer.setResults(data);
+    ulc.users = data.users;
   }
 
-  function getUsersResult() {
+  function findUsers(query) {
     UserService
-      .getUsers(ulc.pagedItemViewer.currentPage)
+      .find(query, ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
   }
 
-  function findUsers() {
-    UserService
-      .find()
-      .then(setUsersResults);
-  }
-
-  getUsersResult();
+  findUsers();
 
   var userSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
     findUsers(args.query);
