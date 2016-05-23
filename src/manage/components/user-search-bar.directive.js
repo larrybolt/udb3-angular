@@ -11,7 +11,7 @@ angular
   .directive('udbUserSearchBar', udbUserSearchBar);
 
 /* @ngInject */
-function udbUserSearchBar(UserService) {
+function udbUserSearchBar($rootScope) {
   return {
     templateUrl: 'templates/user-search-bar.directive.html',
     restrict: 'E',
@@ -33,7 +33,7 @@ function udbUserSearchBar(UserService) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        UserService.getUsers();
+        $rootScope.$emit('userSearchSubmitted', {query: query});
       };
 
       scope.usb = searchBar;
