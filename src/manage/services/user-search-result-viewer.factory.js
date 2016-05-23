@@ -32,8 +32,6 @@ function UserSearchResultViewerFactory() {
     this.totalItems = 0;
     this.currentPage = activePage || 1;
     this.loading = true;
-    this.lastQuery = null;
-    this.querySelected = false;
   };
 
   UserSearchResultViewer.prototype = {
@@ -43,23 +41,14 @@ function UserSearchResultViewerFactory() {
     setResults: function (pagedResults) {
       var viewer = this;
 
-      viewer.pageSize = pagedResults.itemsPerPage || 30;
-      viewer.users = pagedResults.member || [];
-      viewer.totalItems = pagedResults.totalItems || 0;
+      /*viewer.pageSize = pagedResults.itemsPerPage || 30;
+      viewer.users = pagedResults.users || [];
+      viewer.totalItems = pagedResults.totalItems || 0;*/
+      viewer.pageSize = 10;
+      viewer.users = pagedResults;
+      viewer.totalItems = pagedResults.length;
 
       viewer.loading = false;
-    },
-    queryChanged: function (query) {
-      this.loading = true;
-      this.selectedOffers = [];
-      this.querySelected = false;
-
-      // prevent the initial search from resetting the active page
-      if (this.lastQuery && this.lastQuery !== query) {
-        this.currentPage = 1;
-      }
-
-      this.lastQuery = query;
     }
   };
 

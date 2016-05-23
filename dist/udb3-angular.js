@@ -10376,7 +10376,7 @@ angular
   .directive('udbUserSearchBar', udbUserSearchBar);
 
 /* @ngInject */
-function udbUserSearchBar(UserService) {
+function udbUserSearchBar($rootScope) {
   return {
     templateUrl: 'templates/user-search-bar.directive.html',
     restrict: 'E',
@@ -10398,7 +10398,7 @@ function udbUserSearchBar(UserService) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        UserService.getUsers();
+        $rootScope.$emit('userSearchSubmitted', {query: query});
       };
 
       scope.usb = searchBar;
@@ -10406,7 +10406,7 @@ function udbUserSearchBar(UserService) {
     }
   };
 }
-udbUserSearchBar.$inject = ["UserService"];
+udbUserSearchBar.$inject = ["$rootScope"];
 
 // Source: src/manage/services/user-search-result-viewer.factory.js
 /**
@@ -10441,8 +10441,6 @@ function UserSearchResultViewerFactory() {
     this.totalItems = 0;
     this.currentPage = activePage || 1;
     this.loading = true;
-    this.lastQuery = null;
-    this.querySelected = false;
   };
 
   UserSearchResultViewer.prototype = {
@@ -10452,23 +10450,14 @@ function UserSearchResultViewerFactory() {
     setResults: function (pagedResults) {
       var viewer = this;
 
-      viewer.pageSize = pagedResults.itemsPerPage || 30;
-      viewer.users = pagedResults.member || [];
-      viewer.totalItems = pagedResults.totalItems || 0;
+      /*viewer.pageSize = pagedResults.itemsPerPage || 30;
+      viewer.users = pagedResults.users || [];
+      viewer.totalItems = pagedResults.totalItems || 0;*/
+      viewer.pageSize = 10;
+      viewer.users = pagedResults;
+      viewer.totalItems = 19;
 
       viewer.loading = false;
-    },
-    queryChanged: function (query) {
-      this.loading = true;
-      this.selectedOffers = [];
-      this.querySelected = false;
-
-      // prevent the initial search from resetting the active page
-      if (this.lastQuery && this.lastQuery !== query) {
-        this.currentPage = 1;
-      }
-
-      this.lastQuery = query;
     }
   };
 
@@ -10500,136 +10489,137 @@ function UserService($q, uitidAuth) {
     params: {}
   };
 
+  var jsonUsers = {
+    '1': {
+      'id': '1',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': [
+        'admin',
+        'moderator'
+      ]
+    },
+    '2': {
+      'id': '2',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': [
+        'moderator'
+      ]
+    },
+    '3': {
+      'id': '3',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': [
+        'admin'
+      ]
+    },
+    '4': {
+      'id': '4',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': [
+        'admin'
+      ]
+    },
+    '5': {
+      'id': '5',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '6': {
+      'id': '6',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': [
+        'moderator'
+      ]
+    },
+    '7': {
+      'id': '7',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '8': {
+      'id': '8',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '9': {
+      'id': '9',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '10': {
+      'id': '10',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '11': {
+      'id': '11',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '12': {
+      'id': '12',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '13': {
+      'id': '13',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '14': {
+      'id': '14',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '15': {
+      'id': '15',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '16': {
+      'id': '16',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '17': {
+      'id': '17',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '18': {
+      'id': '18',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    },
+    '19': {
+      'id': '19',
+      'email': 'info@mail.com',
+      'nick': 'nickname',
+      'roles': []
+    }
+  };
+
   service.getUsers = function (page) {
 
     var deferredUsers = $q.defer();
-    var jsonUsers = {
-      '1': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': [
-          'admin',
-          'moderator'
-        ]
-      },
-      '2': {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': [
-          'moderator'
-        ]
-      },
-      '3': {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': [
-          'admin'
-        ]
-      },
-      '4': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': [
-          'admin'
-        ]
-      },
-      '5': {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '6': {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': [
-          'moderator'
-        ]
-      },
-      '7': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '8': {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '9': {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '10': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '11': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '12': {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '13': {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '14': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '15': {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '16': {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '17': {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '18': {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      },
-      '19': {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname',
-        'roles': []
-      }
-    };
 
     var requestConfig = _.cloneDeep(defaultApiConfig);
     if (page > 1) {
@@ -10642,6 +10632,15 @@ function UserService($q, uitidAuth) {
 
     deferredUsers.resolve(jsonUsers, requestConfig);
 
+    return deferredUsers.promise;
+  };
+
+  service.find = function(query) {
+    var deferredUsers = $q.defer();
+
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+
+    deferredUsers.resolve(_.shuffle(jsonUsers), requestConfig);
     return deferredUsers.promise;
   };
 }
@@ -10659,7 +10658,7 @@ angular
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */
-function UsersListController($scope, UserService, UserSearchResultViewer) {
+function UsersListController($scope, $rootScope, UserService, UserSearchResultViewer) {
   var ulc = this;
   ulc.loading = false;
   ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
@@ -10668,6 +10667,8 @@ function UsersListController($scope, UserService, UserSearchResultViewer) {
    * @param {PagedCollection} users
    */
   function setUsersResults(users) {
+    ulc.pagedItemViewer.loading = true;
+    ulc.pagedItemViewer.setResults(users);
     ulc.users = users;
   }
 
@@ -10676,9 +10677,22 @@ function UsersListController($scope, UserService, UserSearchResultViewer) {
       .getUsers(ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
   }
+
+  function findUsers() {
+    UserService
+      .find()
+      .then(setUsersResults);
+  }
+
   getUsersResult();
+
+  var userSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
+    findUsers(args.query);
+  });
+
+  $scope.$on('$destroy', userSearchSubmittedListener);
 }
-UsersListController.$inject = ["$scope", "UserService", "UserSearchResultViewer"];
+UsersListController.$inject = ["$scope", "$rootScope", "UserService", "UserSearchResultViewer"];
 
 // Source: src/media/create-image-job.factory.js
 /**
@@ -16427,7 +16441,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      ng-class=\"{'has-errors': usb.hasErrors, 'is-editing': usb.isEditing}\">\n" +
     "  <div class=\"form-group\">\n" +
     "    <label for=\"user-search-input\">Zoeken op e-mail</label>\n" +
-    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"usb.queryString\" ng-change=\"usb.queryChanged()\">\n" +
+    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"usb.queryString\">\n" +
     "    <i ng-show=\"usb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
     "       tooltip-placement=\"bottom\" uib-tooltip=\"{{usb.errors}}\"></i>\n" +
     "  </div>\n" +
