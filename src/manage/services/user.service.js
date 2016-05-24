@@ -171,7 +171,6 @@ function UserService($q, uitidAuth) {
   }
 
   service.find = function(query, page) {
-    console.log('jup');
     var deferredUsers = $q.defer();
 
     var usersArray;

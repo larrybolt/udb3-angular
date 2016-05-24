@@ -26,6 +26,11 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
   }
 
   function findUsers(query) {
+    // Reset the pager when search query is changed.
+    if (query !== ulc.query) {
+      ulc.pagedItemViewer.currentPage = 1;
+    }
+    ulc.query = query;
     UserService
       .find(query, ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
@@ -36,6 +41,10 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
   var userSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
     findUsers(args.query);
   });
+
+  ulc.pageChanged = function() {
+    findUsers(ulc.query);
+  };
 
   $scope.$on('$destroy', userSearchSubmittedListener);
 }
