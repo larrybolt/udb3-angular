@@ -5,8 +5,9 @@ describe('Directive: User Search Bar', function () {
   var searchBar, $rootScope, $scope;
 
   beforeEach(module('udb.manage'));
+  beforeEach(module('udb.templates'));
 
-  beforeEach(inject(function (_$rootScope_){
+  beforeEach(inject(function (_$rootScope_, $compile){
     $rootScope = _$rootScope_;
     $scope = $rootScope.$new();
 
@@ -18,6 +19,8 @@ describe('Directive: User Search Bar', function () {
   }));
 
   it('should fire an emit when finding results for a given query string', function () {
+    spyOn($rootScope, '$emit');
+
     searchBar.find('foo:bar');
 
     expect(searchBar.queryString).toEqual('foo:bar');

@@ -12,17 +12,8 @@ angular
   .service('UserService', UserService);
 
 /* @ngInject */
-function UserService($q, uitidAuth) {
+function UserService($q) {
   var service = this;
-
-  var defaultApiConfig = {
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + uitidAuth.getToken()
-    },
-    params: {}
-  };
 
   var jsonUsers = [
     {
@@ -182,12 +173,7 @@ function UserService($q, uitidAuth) {
     }
     usersArray = pageArray(usersArray, 10);
 
-    var requestConfig = _.cloneDeep(defaultApiConfig);
-    if (page > 1) {
-      requestConfig.params.page = page;
-    }
-
-    deferredUsers.resolve(usersArray[page - 1], requestConfig);
+    deferredUsers.resolve(usersArray[page - 1]);
     return deferredUsers.promise;
   };
 }

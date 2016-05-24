@@ -18,10 +18,7 @@ function udbUserSearchBar($rootScope) {
     link: function postLink(scope) {
 
       var searchBar = {
-        queryString: '',
-        hasErrors: false,
-        errors: '',
-        isEditing: false
+        queryString: ''
       };
 
       /**
