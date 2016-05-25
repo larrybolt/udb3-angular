@@ -25,25 +25,25 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
     ulc.users = data.users;
   }
 
-  function findUsers(query) {
+  ulc.findUsers = function(query) {
     // Reset the pager when search query is changed.
     if (query !== ulc.query) {
       ulc.pagedItemViewer.currentPage = 1;
     }
     ulc.query = query;
     UserService
-      .find(query, ulc.pagedItemViewer.currentPage)
+      .find(ulc.query, ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
-  }
+  };
 
-  findUsers();
+  ulc.findUsers();
 
   var userSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
-    findUsers(args.query);
+    ulc.findUsers(args.query);
   });
 
   ulc.pageChanged = function() {
-    findUsers(ulc.query);
+    ulc.findUsers(ulc.query);
   };
 
   $scope.$on('$destroy', userSearchSubmittedListener);

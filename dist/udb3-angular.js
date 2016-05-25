@@ -1852,19 +1852,8 @@ angular
   .module('udb.manage', [
     'ngSanitize',
     'ui.bootstrap',
-    'udb.core',
-    'udb.config'
-  ])
-
-  .config(["$routeProvider", function ($routeProvider) {
-    $routeProvider
-      .when('/manage/users/list', {
-        templateUrl: 'templates/users-list.html',
-        controller: 'UsersListController',
-        controllerAs: 'ulc'
-      });
-
-  }]);
+    'udb.core'
+  ]);
 
 // Source: src/core/authorization-service.service.js
 /**
@@ -10383,10 +10372,7 @@ function udbUserSearchBar($rootScope) {
     link: function postLink(scope) {
 
       var searchBar = {
-        queryString: '',
-        hasErrors: false,
-        errors: '',
-        isEditing: false
+        queryString: ''
       };
 
       /**
@@ -10474,17 +10460,8 @@ angular
   .service('UserService', UserService);
 
 /* @ngInject */
-function UserService($q, uitidAuth) {
+function UserService($q) {
   var service = this;
-
-  var defaultApiConfig = {
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + uitidAuth.getToken()
-    },
-    params: {}
-  };
 
   var jsonUsers = [
     {
@@ -10644,16 +10621,11 @@ function UserService($q, uitidAuth) {
     }
     usersArray = pageArray(usersArray, 10);
 
-    var requestConfig = _.cloneDeep(defaultApiConfig);
-    if (page > 1) {
-      requestConfig.params.page = page;
-    }
-
-    deferredUsers.resolve(usersArray[page - 1], requestConfig);
+    deferredUsers.resolve(usersArray[page - 1]);
     return deferredUsers.promise;
   };
 }
-UserService.$inject = ["$q", "uitidAuth"];
+UserService.$inject = ["$q"];
 
 // Source: src/manage/users-list.controller.js
 /**
@@ -10681,25 +10653,25 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
     ulc.users = data.users;
   }
 
-  function findUsers(query) {
+  ulc.findUsers = function(query) {
     // Reset the pager when search query is changed.
     if (query !== ulc.query) {
       ulc.pagedItemViewer.currentPage = 1;
     }
     ulc.query = query;
     UserService
-      .find(query, ulc.pagedItemViewer.currentPage)
+      .find(ulc.query, ulc.pagedItemViewer.currentPage)
       .then(setUsersResults);
-  }
+  };
 
-  findUsers();
+  ulc.findUsers();
 
   var userSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
-    findUsers(args.query);
+    ulc.findUsers(args.query);
   });
 
   ulc.pageChanged = function() {
-    findUsers(ulc.query);
+    ulc.findUsers(ulc.query);
   };
 
   $scope.$on('$destroy', userSearchSubmittedListener);
