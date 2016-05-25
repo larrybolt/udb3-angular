@@ -83,8 +83,23 @@ describe('Controller: Event Detail', function() {
           ]
         },
         "organizer": {
-          "name": ",",
-          "@type": "Organizer"
+          "@type":"Organizer",
+          "@id":"http:\/\/culudb-silex.dev\/organizer\/8ee68d6d-c118-4b34-8be7-dd8a7321b6d2",
+          "@context":"\/api\/1.0\/organizer.jsonld",
+          "name":"mijn organisator bis",
+          "addresses":[
+            {
+              "addressCountry":"BE",
+              "addressLocality":"Leuven",
+              "postalCode":"3000",
+              "streetAddress":"Teststraat 5"
+            }
+          ],
+          "phone":[],
+          "email":[],
+          "url":[],
+          "created":"2016-05-19T14:34:05+00:00",
+          "creator":"948cf2a5-65c5-470e-ab55-97ee4b05f576 (nickbacc)"
         },
         "bookingInfo": [
           {

@@ -3229,7 +3229,7 @@ angular
   .factory('UdbEvent', UdbEventFactory);
 
 /* @ngInject */
-function UdbEventFactory(EventTranslationState, UdbPlace) {
+function UdbEventFactory(EventTranslationState, UdbPlace, UdbOrganizer) {
 
   var EventPricing = {
     FREE: 'free',
@@ -3347,11 +3347,17 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
         return label;
       });
       if (jsonEvent.organizer) {
-        this.organizer = {
-          name: jsonEvent.organizer.name,
-          email: jsonEvent.organizer.email ? (jsonEvent.organizer.email[0] || '-') : '-',
-          phone: jsonEvent.organizer.phone ? (jsonEvent.organizer.phone[0] || '-') : '-'
-        };
+        // if it's a full organizer object, parse it as one
+        if (jsonEvent.organizer['@id']) {
+          this.organizer = new UdbOrganizer(jsonEvent.organizer);
+        } else {
+          // just create an object
+          this.organizer = {
+            name: jsonEvent.organizer.name,
+            email: jsonEvent.organizer.email ? (jsonEvent.organizer.email[0] || '-') : '-',
+            phone: jsonEvent.organizer.phone ? (jsonEvent.organizer.phone[0] || '-') : '-'
+          };
+        }
       }
       if (jsonEvent.bookingInfo && jsonEvent.bookingInfo.length > 0) {
         this.price = parseFloat(jsonEvent.bookingInfo[0].price);
@@ -3518,7 +3524,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
 
   return (UdbEvent);
 }
-UdbEventFactory.$inject = ["EventTranslationState", "UdbPlace"];
+UdbEventFactory.$inject = ["EventTranslationState", "UdbPlace", "UdbOrganizer"];
 
 // Source: src/core/udb-openinghours.factory.js
 /**
