@@ -1878,26 +1878,28 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
     return deferred.promise;
   };
 
+  /**
+   * @param {string} path
+   * @return {Promise.<boolean>}
+   *  Resolves to TRUE when no user is logged in and no redirect has occurred.
+   */
   this.redirectIfLoggedIn = function (path) {
-    if (uitidAuth.getUser()) {
+    var deferredRedirect = $q.defer();
+
+    function redirect() {
       $location.path(path);
-
-      return true;
-    } else if (uitidAuth.getToken()) {
-      var userPromise = udbApi.getMe(),
-        deferred = $q.defer();
-
-      userPromise.then(function () {
-        deferred.resolve(true);
-        $location.path(path);
-      }, function () {
-        deferred.reject();
-      });
-
-      return deferred.promise;
-    } else {
-      return false;
+      deferredRedirect.resolve(false);
     }
+
+    if (uitidAuth.getToken()) {
+      udbApi
+        .getMe()
+        .then(redirect, deferredRedirect.reject);
+    } else {
+      deferredRedirect.resolve(true);
+    }
+
+    return deferredRedirect.promise;
   };
 }
 AuthorizationService.$inject = ["$q", "uitidAuth", "udbApi", "$location"];
