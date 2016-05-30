@@ -42,13 +42,15 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
         deferred = $q.defer();
 
       userPromise.then(function () {
-        deferred.reject();
+        deferred.resolve(true);
         $location.path(path);
       }, function () {
-        deferred.resolve(true);
+        deferred.reject();
       });
 
       return deferred.promise;
+    } else {
+      return false;
     }
   };
 }
