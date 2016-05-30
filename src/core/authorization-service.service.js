@@ -19,7 +19,7 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
     var deferredUser = udbApi.getMe();
     deferredUser.then(
       function (user) {
-        deferred.resolve();
+        deferred.resolve(user);
       },
       function () {
         uitidAuth.login();
