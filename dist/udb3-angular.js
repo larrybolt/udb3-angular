@@ -101,7 +101,11 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.config'
-  ]);
+  ])
+  .component('dashboard', {
+    controller: 'DashboardController',
+    templateUrl: 'dashboard.html'
+  });
 
 /**
  * @ngdoc module
@@ -1875,7 +1879,7 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
     var deferredUser = udbApi.getMe();
     deferredUser.then(
       function (user) {
-        deferred.resolve();
+        deferred.resolve(user);
       },
       function () {
         uitidAuth.login();
@@ -1898,13 +1902,15 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
         deferred = $q.defer();
 
       userPromise.then(function () {
-        deferred.reject();
+        deferred.resolve(true);
         $location.path(path);
       }, function () {
-        deferred.resolve(true);
+        deferred.reject();
       });
 
       return deferred.promise;
+    } else {
+      return false;
     }
   };
 }
@@ -2839,7 +2845,9 @@ function UdbApi(
 
     var exportData = {
       query: query,
-      selection: selection,
+      selection: _.map(selection, function (url) {
+        return url.toString();
+      }),
       order: {},
       include: properties,
       perDay: perDay,
@@ -3241,7 +3249,7 @@ angular
   .factory('UdbEvent', UdbEventFactory);
 
 /* @ngInject */
-function UdbEventFactory(EventTranslationState, UdbPlace) {
+function UdbEventFactory(EventTranslationState, UdbPlace, UdbOrganizer) {
 
   var EventPricing = {
     FREE: 'free',
@@ -3359,11 +3367,17 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
         return label;
       });
       if (jsonEvent.organizer) {
-        this.organizer = {
-          name: jsonEvent.organizer.name,
-          email: jsonEvent.organizer.email ? (jsonEvent.organizer.email[0] || '-') : '-',
-          phone: jsonEvent.organizer.phone ? (jsonEvent.organizer.phone[0] || '-') : '-'
-        };
+        // if it's a full organizer object, parse it as one
+        if (jsonEvent.organizer['@id']) {
+          this.organizer = new UdbOrganizer(jsonEvent.organizer);
+        } else {
+          // just create an object
+          this.organizer = {
+            name: jsonEvent.organizer.name,
+            email: jsonEvent.organizer.email ? (jsonEvent.organizer.email[0] || '-') : '-',
+            phone: jsonEvent.organizer.phone ? (jsonEvent.organizer.phone[0] || '-') : '-'
+          };
+        }
       }
       if (jsonEvent.bookingInfo && jsonEvent.bookingInfo.length > 0) {
         this.price = parseFloat(jsonEvent.bookingInfo[0].price);
@@ -3530,7 +3544,7 @@ function UdbEventFactory(EventTranslationState, UdbPlace) {
 
   return (UdbEvent);
 }
-UdbEventFactory.$inject = ["EventTranslationState", "UdbPlace"];
+UdbEventFactory.$inject = ["EventTranslationState", "UdbPlace", "UdbOrganizer"];
 
 // Source: src/core/udb-openinghours.factory.js
 /**
@@ -3750,7 +3764,7 @@ angular
   .factory('UdbPlace', UdbPlaceFactory);
 
 /* @ngInject */
-function UdbPlaceFactory(EventTranslationState, placeCategories) {
+function UdbPlaceFactory(EventTranslationState, placeCategories, UdbOrganizer) {
 
   function getCategoryByType(jsonPlace, domain) {
     var category = _.find(jsonPlace.terms, function (category) {
@@ -3873,11 +3887,17 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.bookingInfo = jsonPlace.bookingInfo || {};
       this.contactPoint = jsonPlace.contactPoint || {};
       if (jsonPlace.organizer) {
-        this.organizer = {
-          name: jsonPlace.organizer.name,
-          email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
-          phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
-        };
+        // if it's a full organizer object, parse it as one
+        if (jsonPlace.organizer['@id']) {
+          this.organizer = new UdbOrganizer(jsonPlace.organizer);
+        } else {
+          // just create an object
+          this.organizer = {
+            name: jsonPlace.organizer.name,
+            email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
+            phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
+          };
+        }
       }
       this.image = jsonPlace.image;
       this.labels = _.map(jsonPlace.labels, function (label) {
@@ -4066,7 +4086,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
 
   return (UdbPlace);
 }
-UdbPlaceFactory.$inject = ["EventTranslationState", "placeCategories"];
+UdbPlaceFactory.$inject = ["EventTranslationState", "placeCategories", "UdbOrganizer"];
 
 // Source: src/core/udb3-content.service.js
 /**
@@ -5076,7 +5096,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
     var handleCreationJob = function (jobData) {
       var variation = angular.copy(offer);
       variation.description.nl = description;
-      var variationCreationJob = new VariationCreationJob(jobData.commandId, offer.id);
+      var variationCreationJob = new VariationCreationJob(jobData.data.commandId, offer.id);
       jobLogger.addJob(variationCreationJob);
 
       variationCreationJob.task.promise.then(function (jobInfo) {
@@ -6110,12 +6130,24 @@ function EventDetail(
   variationRepository,
   offerEditor,
   $location,
-  $uibModal
+  $uibModal,
+  $q
 ) {
   var activeTabId = 'data';
   var controller = this;
 
-  $scope.eventId = eventId;
+  $q.when(eventId, function(eventLocation) {
+    $scope.eventId = eventLocation;
+
+    udbApi
+      .hasPermission(eventLocation)
+      .then(allowEditing);
+
+    udbApi
+      .getOffer(eventLocation)
+      .then(showEvent, failedToLoad);
+  });
+
   $scope.eventIdIsInvalid = false;
   $scope.hasEditPermissions = false;
   $scope.eventHistory = [];
@@ -6141,11 +6173,6 @@ function EventDetail(
     $scope.hasEditPermissions = true;
   }
 
-  udbApi
-    .hasPermission($scope.eventId)
-    .then(allowEditing);
-
-  var eventLoaded = udbApi.getOffer($scope.eventId);
   var language = 'nl';
   var cachedEvent;
 
@@ -6153,32 +6180,31 @@ function EventDetail(
     $scope.eventHistory = eventHistory;
   }
 
-  eventLoaded.then(
-      function (event) {
-        cachedEvent = event;
+  function showEvent(event) {
+    cachedEvent = event;
 
-        var personalVariationLoaded = variationRepository.getPersonalVariation(event);
+    var personalVariationLoaded = variationRepository.getPersonalVariation(event);
 
-        udbApi
-          .getHistory($scope.eventId)
-          .then(showHistory);
+    udbApi
+      .getHistory($scope.eventId)
+      .then(showHistory);
 
-        $scope.event = jsonLDLangFilter(event, language);
+    $scope.event = jsonLDLangFilter(event, language);
 
-        $scope.eventIdIsInvalid = false;
+    $scope.eventIdIsInvalid = false;
 
-        personalVariationLoaded
-          .then(function (variation) {
-            $scope.event.description = variation.description[language];
-          })
-          .finally(function () {
-            $scope.eventIsEditable = true;
-          });
-      },
-      function (reason) {
-        $scope.eventIdIsInvalid = true;
-      }
-  );
+    personalVariationLoaded
+      .then(function (variation) {
+        $scope.event.description = variation.description[language];
+      })
+      .finally(function () {
+        $scope.eventIsEditable = true;
+      });
+  }
+
+  function failedToLoad(reason) {
+    $scope.eventIdIsInvalid = true;
+  }
 
   var getActiveTabId = function() {
     return activeTabId;
@@ -6233,7 +6259,7 @@ function EventDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/event/' + eventId.split('/').pop() + '/edit');
+    $location.path('/event/' + $scope.eventId.split('/').pop() + '/edit');
   };
 
   function goToDashboard() {
@@ -6263,7 +6289,7 @@ function EventDetail(
       .then(controller.goToDashboardOnJobCompletion);
   }
 }
-EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal"];
+EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal", "$q"];
 
 // Source: src/event_form/components/calendartypes/event-form-period.directive.js
 /**
@@ -7844,7 +7870,7 @@ angular
   .controller('EventFormController', EventFormController);
 
 /* @ngInject */
-function EventFormController($scope, eventId, placeId, offerType, EventFormData, udbApi, moment, jsonLDLangFilter) {
+function EventFormController($scope, eventId, EventFormData, udbApi, moment, jsonLDLangFilter, $q) {
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
@@ -7852,47 +7878,57 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   // Make sure we start off with clean data every time this controller gets called
   EventFormData.init();
 
-  // Fill the event form data if an event is being edited.
-  if (eventId) {
+  $q.when(eventId)
+    .then(fetchOffer, startCreating);
+
+  function startCreating() {
+    $scope.loaded = true;
+  }
+
+  /**
+   * @param {string} eventId
+   */
+  function fetchOffer(eventId) {
+    udbApi
+      .getOffer(eventId)
+      .then(startEditing);
+  }
+
+  /**
+   *
+   * @param {UdbPlace|UdbEvent} offer
+   */
+  function startEditing(offer) {
+    var offerType = offer.url.split('/').shift();
 
     if (offerType === 'event') {
-      udbApi.getOffer(eventId).then(function(event) {
-        EventFormData.isEvent = true;
-        EventFormData.isPlace = false;
-        copyItemDataToFormData(event);
+      EventFormData.isEvent = true;
+      EventFormData.isPlace = false;
+      copyItemDataToFormData(offer);
 
-        // Copy location.
-        if (event.location && event.location.id) {
-          var location = jsonLDLangFilter(event.location, 'nl');
-          EventFormData.location = {
-            id : location.id.split('/').pop(),
-            name : location.name,
-            address : location.address
-          };
-        }
-      });
-    }
-  }
-  else if (placeId) {
-
-    udbApi.getOffer(placeId).then(function(place) {
-
-      EventFormData.isEvent = false;
-      EventFormData.isPlace = true;
-      copyItemDataToFormData(place);
-
-      // Places only have an address, form uses location property.
-      if (place.address) {
+      // Copy location.
+      if (offer.location && offer.location.id) {
+        var location = jsonLDLangFilter(offer.location, 'nl');
         EventFormData.location = {
-          address : place.address
+          id : location.id.split('/').pop(),
+          name : location.name,
+          address : location.address
         };
       }
+    }
 
-    });
+    if (offerType === 'place') {
+      EventFormData.isEvent = false;
+      EventFormData.isPlace = true;
+      copyItemDataToFormData(offer);
 
-  }
-  else {
-    $scope.loaded = true;
+      // Places only have an address, form uses location property.
+      if (offer.address) {
+        EventFormData.location = {
+          address : offer.address
+        };
+      }
+    }
   }
 
   /**
@@ -8000,7 +8036,7 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   }
 
 }
-EventFormController.$inject = ["$scope", "eventId", "placeId", "offerType", "EventFormData", "udbApi", "moment", "jsonLDLangFilter"];
+EventFormController.$inject = ["$scope", "eventId", "EventFormData", "udbApi", "moment", "jsonLDLangFilter", "$q"];
 
 // Source: src/event_form/event-form.directive.js
 /**
@@ -13800,7 +13836,7 @@ function Search(
       selectedIds = _.chain($scope.resultViewer.selectedOffers)
         .filter({'@type': 'Event'})
         .map(function(offer) {
-          return offer['@id'].split('/').pop();
+          return new URL(offer['@id']);
         })
         .value();
 
