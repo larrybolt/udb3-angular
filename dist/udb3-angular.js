@@ -23,6 +23,7 @@ angular
     'udb.saved-searches',
     'udb.media',
     'udb.manage',
+    'udb.manage.users',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
@@ -194,6 +195,54 @@ angular
     'udb.config'
   ]);
 
+/**
+ * @ngdoc module
+ * @name udb.manage
+ * @description
+ * The udb manage module
+ */
+angular
+  .module('udb.manage', [
+    'ngSanitize',
+    'ui.bootstrap',
+    'udb.core',
+    'udb.manage.users'
+  ])
+  .component('manageComponent', {
+    controller: 'ManageController',
+    controllerAs: 'mc',
+    template: '<ng-outlet></ng-outlet>',
+    $routeConfig: [
+      {
+        path: '/users/list',
+        name: 'UsersList',
+        component: 'usersComponent',
+        useAsDefault: true
+      }
+    ]
+  });
+/**
+ * @ngdoc module
+ * @name udb.manage
+ * @description
+ * The udb manage module
+ */
+angular
+  .module('udb.manage.users', [
+    'ngSanitize',
+    'ui.bootstrap'
+  ])
+  .component('usersComponent', {
+    controller: 'UsersListController',
+    controllerAs: 'ulc',
+    templateUrl: 'templates/users-list.html',
+    $canActivate: isAuthorized
+  });
+
+function isAuthorized(authorizationService) {
+  return authorizationService.isLoggedIn();
+}
+isAuthorized.$inject = ['authorizationService'];
 angular.module('peg', []).factory('LuceneQueryParser', function () {
  return (function() {
   /*
@@ -1846,19 +1895,6 @@ angular.module('peg', []).factory('LuceneQueryParser', function () {
   };
 })()
 });
-/**
- * @ngdoc module
- * @name udb.manage
- * @description
- * The udb manage module
- */
-angular
-  .module('udb.manage', [
-    'ngSanitize',
-    'ui.bootstrap',
-    'udb.core'
-  ]);
-
 // Source: src/core/authorization-service.service.js
 /**
  * @ngdoc service
@@ -10430,7 +10466,7 @@ function udbUserSearchBar($rootScope) {
 }
 udbUserSearchBar.$inject = ["$rootScope"];
 
-// Source: src/manage/services/user-search-result-viewer.factory.js
+// Source: src/manage/components/user-search-result-viewer.factory.js
 /**
  * @ngdoc service
  * @name udb.manage.UserSearchResultViewer
@@ -10483,7 +10519,23 @@ function UserSearchResultViewerFactory() {
   return (UserSearchResultViewer);
 }
 
-// Source: src/manage/services/user.service.js
+// Source: src/manage/manage.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:UserListController
+ * @description
+ * # UserListController
+ */
+angular
+  .module('udb.manage')
+  .controller('ManageController', ManageController);
+
+/* @ngInject */
+function ManageController() {
+  var mc = this;
+}
+
+// Source: src/manage/users/user.service.js
 /**
  * @ngdoc service
  * @name udb.manage.user
@@ -10663,7 +10715,7 @@ function UserService($q) {
 }
 UserService.$inject = ["$q"];
 
-// Source: src/manage/users-list.controller.js
+// Source: src/manage/users/users-list.controller.js
 /**
  * @ngdoc function
  * @name udbApp.controller:UserListController
@@ -10711,6 +10763,7 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
   };
 
   $scope.$on('$destroy', userSearchSubmittedListener);
+  console.log(ulc);
 }
 UsersListController.$inject = ["$scope", "$rootScope", "UserService", "UserSearchResultViewer"];
 
