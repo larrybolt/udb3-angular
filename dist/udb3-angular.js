@@ -1928,26 +1928,28 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
     return deferred.promise;
   };
 
+  /**
+   * @param {string} path
+   * @return {Promise.<boolean>}
+   *  Resolves to TRUE when no user is logged in and no redirect has occurred.
+   */
   this.redirectIfLoggedIn = function (path) {
-    if (uitidAuth.getUser()) {
+    var deferredRedirect = $q.defer();
+
+    function redirect() {
       $location.path(path);
-
-      return true;
-    } else if (uitidAuth.getToken()) {
-      var userPromise = udbApi.getMe(),
-        deferred = $q.defer();
-
-      userPromise.then(function () {
-        deferred.resolve(true);
-        $location.path(path);
-      }, function () {
-        deferred.reject();
-      });
-
-      return deferred.promise;
-    } else {
-      return false;
+      deferredRedirect.resolve(false);
     }
+
+    if (uitidAuth.getToken()) {
+      udbApi
+        .getMe()
+        .then(redirect, deferredRedirect.reject);
+    } else {
+      deferredRedirect.resolve(true);
+    }
+
+    return deferredRedirect.promise;
   };
 }
 AuthorizationService.$inject = ["$q", "uitidAuth", "udbApi", "$location"];
@@ -6172,16 +6174,16 @@ function EventDetail(
   var activeTabId = 'data';
   var controller = this;
 
-  $q.when(eventId, function(eventLocation) {
-    $scope.eventId = eventLocation;
+  $q.when(eventId, function(offerLocation) {
+    $scope.eventId = offerLocation;
 
     udbApi
-      .hasPermission(eventLocation)
+      .hasPermission(offerLocation)
       .then(allowEditing);
 
     udbApi
-      .getOffer(eventLocation)
-      .then(showEvent, failedToLoad);
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
   });
 
   $scope.eventIdIsInvalid = false;
@@ -6216,7 +6218,7 @@ function EventDetail(
     $scope.eventHistory = eventHistory;
   }
 
-  function showEvent(event) {
+  function showOffer(event) {
     cachedEvent = event;
 
     var personalVariationLoaded = variationRepository.getPersonalVariation(event);
@@ -10763,7 +10765,6 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
   };
 
   $scope.$on('$destroy', userSearchSubmittedListener);
-  console.log(ulc);
 }
 UsersListController.$inject = ["$scope", "$rootScope", "UserService", "UserSearchResultViewer"];
 
@@ -10942,12 +10943,24 @@ function PlaceDetail(
   variationRepository,
   offerEditor,
   eventCrud,
-  $uibModal
+  $uibModal,
+  $q
 ) {
   var activeTabId = 'data';
   var controller = this;
 
-  $scope.placeId = placeId;
+  $q.when(placeId, function(offerLocation) {
+    $scope.placeId = offerLocation;
+
+    udbApi
+      .hasPermission(offerLocation)
+      .then(allowEditing);
+
+    udbApi
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
+  });
+
   $scope.placeIdIsInvalid = false;
   $scope.hasEditPermissions = false;
   $scope.placeHistory = [];
@@ -10956,14 +10969,10 @@ function PlaceDetail(
       id: 'data',
       header: 'Gegevens'
     },
-    /*{
-      id: 'history',
-      header: 'Historiek'
-    },*/
     {
       id: 'publication',
       header: 'Publicatie'
-    },
+    }
   ];
   $scope.deletePlace = function () {
     openPlaceDeleteConfirmModal($scope.place);
@@ -10973,41 +10982,29 @@ function PlaceDetail(
     $scope.hasEditPermissions = true;
   }
 
-  udbApi
-    .hasPermission($scope.placeId)
-    .then(allowEditing);
-
-  var placeLoaded = udbApi.getOffer($scope.placeId);
   var language = 'nl';
   var cachedPlace;
 
-  placeLoaded.then(
-      function (place) {
-        cachedPlace = place;
+  function showOffer(place) {
+      cachedPlace = place;
 
-        /*var placeHistoryLoaded = udbApi.getEventHistoryById($scope.placeId);
+      var personalVariationLoaded = variationRepository.getPersonalVariation(place);
 
-        placeHistoryLoaded.then(function(placeHistory) {
-          $scope.placeHistory = placeHistory;
-        });*/
+      $scope.place = jsonLDLangFilter(place, language);
+      $scope.placeIdIsInvalid = false;
 
-        var personalVariationLoaded = variationRepository.getPersonalVariation(place);
+      personalVariationLoaded
+        .then(function (variation) {
+          $scope.place.description = variation.description[language];
+        })
+        .finally(function () {
+          $scope.placeIsEditable = true;
+        });
+    }
 
-        $scope.place = jsonLDLangFilter(place, language);
-        $scope.placeIdIsInvalid = false;
-
-        personalVariationLoaded
-          .then(function (variation) {
-            $scope.place.description = variation.description[language];
-          })
-          .finally(function () {
-            $scope.placeIsEditable = true;
-          });
-      },
-      function (reason) {
-        $scope.placeIdIsInvalid = true;
-      }
-  );
+  function failedToLoad(reason) {
+    $scope.placeIdIsInvalid = true;
+  }
 
   $scope.placeLocation = function (place) {
 
@@ -11092,7 +11089,7 @@ function PlaceDetail(
       });
   }
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal", "$q"];
 
 // Source: src/router/offer-locator.service.js
 /**
