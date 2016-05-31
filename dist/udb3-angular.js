@@ -5694,31 +5694,34 @@ function BaseJobFactory(JobStates) {
 }
 BaseJobFactory.$inject = ["JobStates"];
 
-// Source: src/entry/logging/job-logger.directive.js
+// Source: src/entry/logging/job-log.component.js
 /**
- * @ngdoc directive
- * @name udb.entry.directive:udbJobLog
+ * @ngdoc component
+ * @name udb.entry.component:udbJobLog
  * @description
  * # udbJobLog
  */
 angular
   .module('udb.entry')
-  .directive('udbJobLog', udbJobLog);
+  .component('udbJobLog', {
+    controller: JobLogController,
+    controllerAs: 'logger',
+    templateUrl: 'templates/job-log.component.html'
+  });
 
 /* @ngInject */
-function udbJobLog(jobLogger, JobStates, EventExportJob) {
-  return {
-    templateUrl: 'templates/job-logger.directive.html',
-    restrict: 'E',
-    link: function postLink(scope, element, attrs) {
-      scope.getQueuedJobs = jobLogger.getQueuedJobs;
-      scope.getFinishedExportJobs = jobLogger.getFinishedExportJobs;
-      scope.getFailedJobs = jobLogger.getFailedJobs;
-      scope.hideJob = jobLogger.hideJob;
-    }
-  };
+function JobLogController(jobLogger, $scope) {
+  var controller = this;
+
+  controller.getQueuedJobs = jobLogger.getQueuedJobs;
+  controller.getFinishedExportJobs = jobLogger.getFinishedExportJobs;
+  controller.getFailedJobs = jobLogger.getFailedJobs;
+  controller.hideJobLog = jobLogger.toggleJobLog;
+  controller.isVisible = jobLogger.isVisible;
+
+  $scope.hideJob = jobLogger.hideJob;
 }
-udbJobLog.$inject = ["jobLogger", "JobStates", "EventExportJob"];
+JobLogController.$inject = ["jobLogger", "$scope"];
 
 // Source: src/entry/logging/job-logger.service.js
 /* jshint sub: true */
@@ -5736,7 +5739,8 @@ angular
 
 /* @ngInject */
 function JobLogger(udbSocket, JobStates, EventExportJob, $rootScope) {
-  var jobs = [],
+  var logger = this,
+      jobs = [],
       queuedJobs = [],
       failedJobs = [],
       finishedExportJobs = [],
@@ -5861,6 +5865,17 @@ function JobLogger(udbSocket, JobStates, EventExportJob, $rootScope) {
   };
 
   this.hideJob = hideJob;
+
+  this.toggleJobLog = function() {
+    logger.visible = !logger.visible;
+  };
+
+  /**
+   * @return {boolean}
+   */
+  this.isVisible = function () {
+    return logger.visible;
+  };
 }
 JobLogger.$inject = ["udbSocket", "JobStates", "EventExportJob", "$rootScope"];
 
@@ -13978,23 +13993,23 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
-  $templateCache.put('templates/job-logger.directive.html',
-    "<div class=\"udb-job-log\" ng-class=\"{'shown': showJobLog}\">\n" +
+  $templateCache.put('templates/job-log.component.html',
+    "<div class=\"udb-job-log\" ng-class=\"{'shown': logger.isVisible()}\">\n" +
     "  <div class=\"row\">\n" +
     "    <div class=\"col-sm-12\">\n" +
     "      <div class=\"udb-job-block udb-job-block-ready\">\n" +
     "        <p class=\"udb-job-title\">Geëxporteerde documenten</p>\n" +
     "        <ul class=\"list-unstyled udb-job-messages\">\n" +
-    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in getFinishedExportJobs()\">\n" +
+    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in logger.getFinishedExportJobs()\">\n" +
     "            <udb-job></udb-job>\n" +
     "          </li>\n" +
     "        </ul>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"udb-job-block udb-job-block-errors\">\n" +
-    "        <p class=\"udb-job-title\">Meldingen <span class=\"badge\" ng-bind=\"getFailedJobs().length\"></span></p>\n" +
+    "        <p class=\"udb-job-title\">Meldingen <span class=\"badge\" ng-bind=\"logger.getFailedJobs().length\"></span></p>\n" +
     "        <ul class=\"list-unstyled udb-job-messages\">\n" +
-    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in getFailedJobs()\">\n" +
+    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in logger.getFailedJobs()\">\n" +
     "            <udb-job></udb-job>\n" +
     "          </li>\n" +
     "        </ul>\n" +
@@ -14003,7 +14018,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <div class=\"udb-job-block udb-job-block-pending\">\n" +
     "        <p class=\"udb-job-title\">Bezig</p>\n" +
     "        <ul class=\"list-unstyled udb-job-messages\">\n" +
-    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in getQueuedJobs()\">\n" +
+    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in logger.getQueuedJobs()\">\n" +
     "            <udb-job></udb-job>\n" +
     "          </li>\n" +
     "        </ul>\n" +
@@ -14011,7 +14026,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </div>\n" +
     "  </div>\n" +
     "</div>\n" +
-    "<div class=\"udb-job-log-overlay\" ng-class=\"{'shown': showJobLog}\" ng-click=\"toggleJobLog()\"></div>\n"
+    "<div class=\"udb-job-log-overlay\" ng-class=\"{'shown': logger.isVisible()}\" ng-click=\"logger.hideJobLog()\"></div>\n"
   );
 
 
