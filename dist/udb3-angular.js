@@ -6124,16 +6124,16 @@ function EventDetail(
   var activeTabId = 'data';
   var controller = this;
 
-  $q.when(eventId, function(eventLocation) {
-    $scope.eventId = eventLocation;
+  $q.when(eventId, function(offerLocation) {
+    $scope.eventId = offerLocation;
 
     udbApi
-      .hasPermission(eventLocation)
+      .hasPermission(offerLocation)
       .then(allowEditing);
 
     udbApi
-      .getOffer(eventLocation)
-      .then(showEvent, failedToLoad);
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
   });
 
   $scope.eventIdIsInvalid = false;
@@ -6168,7 +6168,7 @@ function EventDetail(
     $scope.eventHistory = eventHistory;
   }
 
-  function showEvent(event) {
+  function showOffer(event) {
     cachedEvent = event;
 
     var personalVariationLoaded = variationRepository.getPersonalVariation(event);
@@ -10552,12 +10552,24 @@ function PlaceDetail(
   variationRepository,
   offerEditor,
   eventCrud,
-  $uibModal
+  $uibModal,
+  $q
 ) {
   var activeTabId = 'data';
   var controller = this;
 
-  $scope.placeId = placeId;
+  $q.when(placeId, function(offerLocation) {
+    $scope.placeId = offerLocation;
+
+    udbApi
+      .hasPermission(offerLocation)
+      .then(allowEditing);
+
+    udbApi
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
+  });
+
   $scope.placeIdIsInvalid = false;
   $scope.hasEditPermissions = false;
   $scope.placeHistory = [];
@@ -10566,14 +10578,10 @@ function PlaceDetail(
       id: 'data',
       header: 'Gegevens'
     },
-    /*{
-      id: 'history',
-      header: 'Historiek'
-    },*/
     {
       id: 'publication',
       header: 'Publicatie'
-    },
+    }
   ];
   $scope.deletePlace = function () {
     openPlaceDeleteConfirmModal($scope.place);
@@ -10583,41 +10591,29 @@ function PlaceDetail(
     $scope.hasEditPermissions = true;
   }
 
-  udbApi
-    .hasPermission($scope.placeId)
-    .then(allowEditing);
-
-  var placeLoaded = udbApi.getOffer($scope.placeId);
   var language = 'nl';
   var cachedPlace;
 
-  placeLoaded.then(
-      function (place) {
-        cachedPlace = place;
+  function showOffer(place) {
+      cachedPlace = place;
 
-        /*var placeHistoryLoaded = udbApi.getEventHistoryById($scope.placeId);
+      var personalVariationLoaded = variationRepository.getPersonalVariation(place);
 
-        placeHistoryLoaded.then(function(placeHistory) {
-          $scope.placeHistory = placeHistory;
-        });*/
+      $scope.place = jsonLDLangFilter(place, language);
+      $scope.placeIdIsInvalid = false;
 
-        var personalVariationLoaded = variationRepository.getPersonalVariation(place);
+      personalVariationLoaded
+        .then(function (variation) {
+          $scope.place.description = variation.description[language];
+        })
+        .finally(function () {
+          $scope.placeIsEditable = true;
+        });
+    }
 
-        $scope.place = jsonLDLangFilter(place, language);
-        $scope.placeIdIsInvalid = false;
-
-        personalVariationLoaded
-          .then(function (variation) {
-            $scope.place.description = variation.description[language];
-          })
-          .finally(function () {
-            $scope.placeIsEditable = true;
-          });
-      },
-      function (reason) {
-        $scope.placeIdIsInvalid = true;
-      }
-  );
+  function failedToLoad(reason) {
+    $scope.placeIdIsInvalid = true;
+  }
 
   $scope.placeLocation = function (place) {
 
@@ -10702,7 +10698,7 @@ function PlaceDetail(
       });
   }
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal", "$q"];
 
 // Source: src/router/offer-locator.service.js
 /**

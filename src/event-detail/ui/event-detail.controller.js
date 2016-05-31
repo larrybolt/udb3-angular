@@ -26,16 +26,16 @@ function EventDetail(
   var activeTabId = 'data';
   var controller = this;
 
-  $q.when(eventId, function(eventLocation) {
-    $scope.eventId = eventLocation;
+  $q.when(eventId, function(offerLocation) {
+    $scope.eventId = offerLocation;
 
     udbApi
-      .hasPermission(eventLocation)
+      .hasPermission(offerLocation)
       .then(allowEditing);
 
     udbApi
-      .getOffer(eventLocation)
-      .then(showEvent, failedToLoad);
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
   });
 
   $scope.eventIdIsInvalid = false;
@@ -70,7 +70,7 @@ function EventDetail(
     $scope.eventHistory = eventHistory;
   }
 
-  function showEvent(event) {
+  function showOffer(event) {
     cachedEvent = event;
 
     var personalVariationLoaded = variationRepository.getPersonalVariation(event);
