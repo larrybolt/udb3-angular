@@ -4,14 +4,14 @@
  * @ngdoc service
  * @name udb.manage.UserSearchResultViewer
  * @description
- * # UserSearchResultViewer
+ * # QuerySearchResultViewer
  * User search result viewer factory
  */
 angular
   .module('udb.manage')
-  .factory('UserSearchResultViewer', UserSearchResultViewerFactory);
+  .factory('QuerySearchResultViewer', QuerySearchResultViewerFactory);
 
-function UserSearchResultViewerFactory() {
+function QuerySearchResultViewerFactory() {
 
   /**
    * @class SearchResultViewer
@@ -26,7 +26,7 @@ function UserSearchResultViewerFactory() {
    *                                        receiving of the results.
    * @property {SelectionState} selectionState Enum that keeps the state of selected results
    */
-  var UserSearchResultViewer = function (pageSize, activePage) {
+  var QuerySearchResultViewer = function (pageSize, activePage) {
     this.pageSize = pageSize || 30;
     this.users = [];
     this.totalItems = 0;
@@ -34,7 +34,7 @@ function UserSearchResultViewerFactory() {
     this.loading = true;
   };
 
-  UserSearchResultViewer.prototype = {
+  QuerySearchResultViewer.prototype = {
     /**
      * @param {PagedCollection} pagedResults
      */
@@ -49,5 +49,5 @@ function UserSearchResultViewerFactory() {
     }
   };
 
-  return (UserSearchResultViewer);
+  return (QuerySearchResultViewer);
 }

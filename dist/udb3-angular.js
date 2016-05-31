@@ -10427,21 +10427,21 @@ function udbExportModalButtons() {
   };
 }
 
-// Source: src/manage/components/user-search-bar.directive.js
+// Source: src/manage/components/query-search-bar.directive.js
 /**
  * @ngdoc directive
  * @name udb.search.directive:udbSearchBar
  * @description
- * # udbSearchBar
+ * # udbQuerySearchBar
  */
 angular
   .module('udb.manage')
-  .directive('udbUserSearchBar', udbUserSearchBar);
+  .directive('udbQuerySearchBar', udbQuerySearchBar);
 
 /* @ngInject */
-function udbUserSearchBar($rootScope) {
+function udbQuerySearchBar($rootScope) {
   return {
-    templateUrl: 'templates/user-search-bar.directive.html',
+    templateUrl: 'templates/query-search-bar.directive.html',
     restrict: 'E',
     link: function postLink(scope) {
 
@@ -10458,29 +10458,29 @@ function udbUserSearchBar($rootScope) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        $rootScope.$emit('userSearchSubmitted', {query: query});
+        $rootScope.$emit('querySearchSubmitted', {query: query});
       };
 
-      scope.usb = searchBar;
+      scope.qsb = searchBar;
 
     }
   };
 }
-udbUserSearchBar.$inject = ["$rootScope"];
+udbQuerySearchBar.$inject = ["$rootScope"];
 
-// Source: src/manage/components/user-search-result-viewer.factory.js
+// Source: src/manage/components/query-search-result-viewer.factory.js
 /**
  * @ngdoc service
  * @name udb.manage.UserSearchResultViewer
  * @description
- * # UserSearchResultViewer
+ * # QuerySearchResultViewer
  * User search result viewer factory
  */
 angular
   .module('udb.manage')
-  .factory('UserSearchResultViewer', UserSearchResultViewerFactory);
+  .factory('QuerySearchResultViewer', QuerySearchResultViewerFactory);
 
-function UserSearchResultViewerFactory() {
+function QuerySearchResultViewerFactory() {
 
   /**
    * @class SearchResultViewer
@@ -10495,7 +10495,7 @@ function UserSearchResultViewerFactory() {
    *                                        receiving of the results.
    * @property {SelectionState} selectionState Enum that keeps the state of selected results
    */
-  var UserSearchResultViewer = function (pageSize, activePage) {
+  var QuerySearchResultViewer = function (pageSize, activePage) {
     this.pageSize = pageSize || 30;
     this.users = [];
     this.totalItems = 0;
@@ -10503,7 +10503,7 @@ function UserSearchResultViewerFactory() {
     this.loading = true;
   };
 
-  UserSearchResultViewer.prototype = {
+  QuerySearchResultViewer.prototype = {
     /**
      * @param {PagedCollection} pagedResults
      */
@@ -10518,7 +10518,7 @@ function UserSearchResultViewerFactory() {
     }
   };
 
-  return (UserSearchResultViewer);
+  return (QuerySearchResultViewer);
 }
 
 // Source: src/manage/manage.controller.js
@@ -10729,10 +10729,10 @@ angular
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */
-function UsersListController($scope, $rootScope, UserService, UserSearchResultViewer) {
+function UsersListController($scope, $rootScope, UserService, QuerySearchResultViewer) {
   var ulc = this;
   ulc.loading = false;
-  ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
+  ulc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
 
   /**
    * @param {PagedCollection} data
@@ -10766,7 +10766,7 @@ function UsersListController($scope, $rootScope, UserService, UserSearchResultVi
 
   $scope.$on('$destroy', userSearchSubmittedListener);
 }
-UsersListController.$inject = ["$scope", "$rootScope", "UserService", "UserSearchResultViewer"];
+UsersListController.$inject = ["$scope", "$rootScope", "UserService", "QuerySearchResultViewer"];
 
 // Source: src/media/create-image-job.factory.js
 /**
@@ -16506,16 +16506,16 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
-  $templateCache.put('templates/user-search-bar.directive.html',
+  $templateCache.put('templates/query-search-bar.directive.html',
     "<form class=\"form-inline\" role=\"search\"\n" +
-    "      ng-class=\"{'has-errors': usb.hasErrors, 'is-editing': usb.isEditing}\">\n" +
+    "      ng-class=\"{'has-errors': qsb.hasErrors, 'is-editing': qsb.isEditing}\">\n" +
     "  <div class=\"form-group\">\n" +
     "    <label for=\"user-search-input\">Zoeken op e-mail</label>\n" +
-    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"usb.queryString\">\n" +
-    "    <i ng-show=\"usb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
-    "       tooltip-placement=\"bottom\" uib-tooltip=\"{{usb.errors}}\"></i>\n" +
+    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"qsb.queryString\">\n" +
+    "    <i ng-show=\"qsb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
+    "       tooltip-placement=\"bottom\" uib-tooltip=\"{{qsb.errors}}\"></i>\n" +
     "  </div>\n" +
-    "  <button type=\"submit\" class=\"btn\" ng-click=\"usb.find()\">Zoeken</button>\n" +
+    "  <button type=\"submit\" class=\"btn\" ng-click=\"qsb.find()\">Zoeken</button>\n" +
     "</form>\n"
   );
 
@@ -16525,7 +16525,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    Gebruikers\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
-    "    <udb-user-search-bar></udb-user-search-bar>\n" +
+    "    <udb-query-search-bar></udb-query-search-bar>\n" +
     "</div>\n" +
     "<div class=\"text-center\" ng-show=\"ulc.loading\">\n" +
     "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +

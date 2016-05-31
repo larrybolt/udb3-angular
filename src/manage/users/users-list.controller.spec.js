@@ -53,6 +53,7 @@ describe('Controller: User List', function() {
   };
 
   beforeEach(module('udb.manage'));
+  beforeEach(module('udb.manage.users'));
 
   beforeEach(inject(function($rootScope, _$q_, _$controller_) {
     $controller = _$controller_;

@@ -11,10 +11,10 @@ angular
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */
-function UsersListController($scope, $rootScope, UserService, UserSearchResultViewer) {
+function UsersListController($scope, $rootScope, UserService, QuerySearchResultViewer) {
   var ulc = this;
   ulc.loading = false;
-  ulc.pagedItemViewer = new UserSearchResultViewer(10, 1);
+  ulc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
 
   /**
    * @param {PagedCollection} data

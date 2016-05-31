@@ -4,16 +4,16 @@
  * @ngdoc directive
  * @name udb.search.directive:udbSearchBar
  * @description
- * # udbSearchBar
+ * # udbQuerySearchBar
  */
 angular
   .module('udb.manage')
-  .directive('udbUserSearchBar', udbUserSearchBar);
+  .directive('udbQuerySearchBar', udbQuerySearchBar);
 
 /* @ngInject */
-function udbUserSearchBar($rootScope) {
+function udbQuerySearchBar($rootScope) {
   return {
-    templateUrl: 'templates/user-search-bar.directive.html',
+    templateUrl: 'templates/query-search-bar.directive.html',
     restrict: 'E',
     link: function postLink(scope) {
 
@@ -30,10 +30,10 @@ function udbUserSearchBar($rootScope) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        $rootScope.$emit('userSearchSubmitted', {query: query});
+        $rootScope.$emit('querySearchSubmitted', {query: query});
       };
 
-      scope.usb = searchBar;
+      scope.qsb = searchBar;
 
     }
   };

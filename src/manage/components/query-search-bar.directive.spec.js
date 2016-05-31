@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Directive: User Search Bar', function () {
+describe('Directive: Query Search Bar', function () {
 
   var searchBar, $rootScope, $scope;
 
@@ -12,10 +12,10 @@ describe('Directive: User Search Bar', function () {
     $scope = $rootScope.$new();
 
     $rootScope.queryString = 'info';
-    $compile('<udb-user-search-bar></udb-user-search-bar>')($scope);
+    $compile('<udb-query-search-bar></udb-query-search-bar>')($scope);
     $scope.$digest();
 
-    searchBar = $scope.usb;
+    searchBar = $scope.qsb;
   }));
 
   it('should fire an emit when finding results for a given query string', function () {
@@ -24,6 +24,6 @@ describe('Directive: User Search Bar', function () {
     searchBar.find('foo:bar');
 
     expect(searchBar.queryString).toEqual('foo:bar');
-    expect($rootScope.$emit).toHaveBeenCalledWith('userSearchSubmitted', {query: 'foo:bar'});
+    expect($rootScope.$emit).toHaveBeenCalledWith('querySearchSubmitted', {query: 'foo:bar'});
   });
 });
