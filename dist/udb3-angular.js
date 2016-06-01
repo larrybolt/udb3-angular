@@ -7873,7 +7873,7 @@ angular
   .controller('EventFormController', EventFormController);
 
 /* @ngInject */
-function EventFormController($scope, eventId, EventFormData, udbApi, moment, jsonLDLangFilter, $q) {
+function EventFormController($scope, offerId, EventFormData, udbApi, moment, jsonLDLangFilter, $q) {
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
@@ -7881,7 +7881,7 @@ function EventFormController($scope, eventId, EventFormData, udbApi, moment, jso
   // Make sure we start off with clean data every time this controller gets called
   EventFormData.init();
 
-  $q.when(eventId)
+  $q.when(offerId)
     .then(fetchOffer, startCreating);
 
   function startCreating() {
@@ -7889,11 +7889,11 @@ function EventFormController($scope, eventId, EventFormData, udbApi, moment, jso
   }
 
   /**
-   * @param {string} eventId
+   * @param {string} offerId
    */
-  function fetchOffer(eventId) {
+  function fetchOffer(offerId) {
     udbApi
-      .getOffer(eventId)
+      .getOffer(offerId)
       .then(startEditing);
   }
 
@@ -8039,7 +8039,7 @@ function EventFormController($scope, eventId, EventFormData, udbApi, moment, jso
   }
 
 }
-EventFormController.$inject = ["$scope", "eventId", "EventFormData", "udbApi", "moment", "jsonLDLangFilter", "$q"];
+EventFormController.$inject = ["$scope", "offerId", "EventFormData", "udbApi", "moment", "jsonLDLangFilter", "$q"];
 
 // Source: src/event_form/event-form.directive.js
 /**
