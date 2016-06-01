@@ -24,6 +24,7 @@ angular
     'udb.media',
     'udb.manage',
     'udb.manage.users',
+    'udb.manage.roles',
     'btford.socket-io',
     'pascalprecht.translate'
   ])

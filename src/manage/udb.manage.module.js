@@ -11,7 +11,8 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.core',
-    'udb.manage.users'
+    'udb.manage.users',
+    'udb.manage.roles'
   ])
   .component('manageComponent', {
     controller: 'ManageController',
@@ -23,6 +24,11 @@ angular
         name: 'UsersList',
         component: 'usersComponent',
         useAsDefault: true
+      },
+      {
+        path: '/roles/list',
+        name: 'RolesList',
+        component: 'rolesComponent'
       }
     ]
   });

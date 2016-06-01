@@ -2,13 +2,13 @@
 
 /**
  * @ngdoc service
- * @name udb.manage.user
+ * @name udb.manage.users
  * @description
  * # user
  * Service in the udb.manage.
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.users')
   .service('UserService', UserService);
 
 /* @ngInject */

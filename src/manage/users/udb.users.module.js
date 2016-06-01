@@ -2,9 +2,9 @@
 
 /**
  * @ngdoc module
- * @name udb.manage
+ * @name udb.manage.users
  * @description
- * The udb manage module
+ * The udb manage users module
  */
 angular
   .module('udb.manage.users', [

@@ -7,7 +7,7 @@
  * # UserListController
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.users')
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */

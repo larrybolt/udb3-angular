@@ -24,6 +24,7 @@ angular
     'udb.media',
     'udb.manage',
     'udb.manage.users',
+    'udb.manage.roles',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
@@ -202,7 +203,8 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.core',
-    'udb.manage.users'
+    'udb.manage.users',
+    'udb.manage.roles'
   ])
   .component('manageComponent', {
     controller: 'ManageController',
@@ -214,14 +216,19 @@ angular
         name: 'UsersList',
         component: 'usersComponent',
         useAsDefault: true
+      },
+      {
+        path: '/roles/list',
+        name: 'RolesList',
+        component: 'rolesComponent'
       }
     ]
   });
 /**
  * @ngdoc module
- * @name udb.manage
+ * @name udb.manage.users
  * @description
- * The udb manage module
+ * The udb manage users module
  */
 angular
   .module('udb.manage.users', [
@@ -10548,16 +10555,296 @@ function ManageController() {
   var mc = this;
 }
 
+// Source: src/manage/roles/role.service.js
+/**
+ * @ngdoc service
+ * @name udb.manage.roles
+ * @description
+ * # user
+ * Service in the udb.manage.roles.
+ */
+angular
+  .module('udb.manage')
+  .service('RoleService', RoleService);
+
+/* @ngInject */
+function RoleService($q) {
+  var service = this;
+
+  var jsonRoles = [
+    {
+      'id': '1',
+      'name': 'admin',
+      'permissions': [
+        {
+          'id': '1',
+          'name': 'abc'
+        },
+        {
+          'id': '2',
+          'name': 'def'
+        },
+        {
+          'id': '3',
+          'name': 'ghi'
+        }
+      ],
+      'users':[
+      {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '4',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '5',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      }],
+      'labels': [
+        {
+          'id': '1',
+          'name': 'label 1'
+        },
+        {
+          'id': '2',
+          'name': 'label 2'
+        },
+        {
+          'id': '3',
+          'name': 'label 3'
+        }
+      ]
+    },
+    {
+      'id': '2',
+      'name': 'moderator',
+      'permissions': [
+        {
+          'id': '1',
+          'name': 'abc'
+        },
+        {
+          'id': '2',
+          'name': 'def'
+        },
+        {
+          'id': '3',
+          'name': 'ghi'
+        }
+      ],
+      'users':[
+        {
+          'id': '1',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '2',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '3',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '4',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '5',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        }],
+      'labels': [
+        {
+          'id': '1',
+          'name': 'label 1'
+        },
+        {
+          'id': '2',
+          'name': 'label 2'
+        },
+        {
+          'id': '3',
+          'name': 'label 3'
+        }
+      ]
+    },
+    {
+      'id': '3',
+      'name': 'wannabe admin',
+      'permissions': [
+        {
+          'id': '1',
+          'name': 'abc'
+        },
+        {
+          'id': '2',
+          'name': 'def'
+        },
+        {
+          'id': '3',
+          'name': 'ghi'
+        }
+      ],
+      'users':[
+        {
+          'id': '1',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '2',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '3',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '4',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '5',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        }],
+      'labels': [
+        {
+          'id': '1',
+          'name': 'label 1'
+        },
+        {
+          'id': '2',
+          'name': 'label 2'
+        },
+        {
+          'id': '3',
+          'name': 'label 3'
+        }
+      ]
+    }
+  ];
+
+  function pageArray(items, itemsPerPage) {
+    var result = [];
+    angular.forEach(items, function(item, index) {
+      var rowIndex = Math.floor(index / itemsPerPage),
+          colIndex = index % itemsPerPage;
+      if (!result[rowIndex]) {
+        result[rowIndex] = [];
+        result[rowIndex].roles = [];
+        result[rowIndex].itemsPerPage = itemsPerPage;
+        result[rowIndex].totalItems = items.length;
+      }
+
+      result[rowIndex].roles[colIndex] = item;
+    });
+
+    return result;
+  }
+
+  service.find = function(query, page) {
+    var deferredRoles = $q.defer();
+
+    var rolesArray;
+    if (query) {
+      rolesArray = _.shuffle(jsonRoles);
+    }
+    else {
+      rolesArray = jsonRoles;
+    }
+    rolesArray = pageArray(rolesArray, 10);
+
+    deferredRoles.resolve(rolesArray[page - 1]);
+    return deferredRoles.promise;
+  };
+}
+RoleService.$inject = ["$q"];
+
+// Source: src/manage/roles/roles-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:RolesListController
+ * @description
+ * # RolesListController
+ */
+angular
+  .module('udb.manage')
+  .controller('RolesListController', RolesListController);
+
+/* @ngInject */
+function RolesListController($scope, $rootScope, RolesService, QuerySearchResultViewer) {
+  var rlc = this;
+  rlc.loading = false;
+  rlc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+
+  /**
+   * @param {PagedCollection} data
+   */
+  function setRolesResults(data) {
+    rlc.pagedItemViewer.loading = true;
+    rlc.pagedItemViewer.setResults(data);
+    rlc.roles = data.roles;
+  }
+
+  rlc.findRoles = function(query) {
+    // Reset the pager when search query is changed.
+    if (query !== rlc.query) {
+      rlc.pagedItemViewer.currentPage = 1;
+    }
+    rlc.query = query;
+    RolesService
+      .find(rlc.query, rlc.pagedItemViewer.currentPage)
+      .then(setRolesResults);
+  };
+
+  rlc.findRoles();
+
+  var rolesSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
+    rlc.findRoles(args.query);
+  });
+
+  rlc.pageChanged = function() {
+    rlc.findRoles(rlc.query);
+  };
+
+  $scope.$on('$destroy', rolesSearchSubmittedListener);
+}
+RolesListController.$inject = ["$scope", "$rootScope", "RolesService", "QuerySearchResultViewer"];
+
 // Source: src/manage/users/user.service.js
 /**
  * @ngdoc service
- * @name udb.manage.user
+ * @name udb.manage.users
  * @description
  * # user
  * Service in the udb.manage.
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.users')
   .service('UserService', UserService);
 
 /* @ngInject */
@@ -10736,7 +11023,7 @@ UserService.$inject = ["$q"];
  * # UserListController
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.users')
   .controller('UsersListController', UsersListController);
 
 /* @ngInject */
@@ -16528,6 +16815,48 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  </div>\n" +
     "  <button type=\"submit\" class=\"btn\" ng-click=\"qsb.find()\">Zoeken</button>\n" +
     "</form>\n"
+  );
+
+
+  $templateCache.put('templates/roles-list.html',
+    "<h1 class=\"title\" id=\"page-title\">\n" +
+    "    Rollen\n" +
+    "</h1>\n" +
+    "<div class=\"row\">\n" +
+    "    <udb-query-search-bar></udb-query-search-bar>\n" +
+    "</div>\n" +
+    "<div class=\"text-center\" ng-show=\"rlc.loading\">\n" +
+    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"row\" ng-cloak ng-show=\"!rlc.loading\">\n" +
+    "    <div class=\"table-responsive\">\n" +
+    "        <table class=\"table table-hover table-striped\">\n" +
+    "            <thead>\n" +
+    "                <tr>\n" +
+    "                    <th>Naam</th>\n" +
+    "                    <th>Opties</th>\n" +
+    "                </tr>\n" +
+    "            </thead>\n" +
+    "            <tbody>\n" +
+    "                <tr ng-repeat=\"rol in rlc.roles\">\n" +
+    "                    <td>{{ rol.name }}</td>\n" +
+    "                    <td><a href=\"#\">Bewerken</a></td>\n" +
+    "                </tr>\n" +
+    "            </tbody>\n" +
+    "        </table>\n" +
+    "    </div>\n" +
+    "    <div class=\"panel-footer\">\n" +
+    "        <uib-pagination\n" +
+    "                total-items=\"rlc.pagedItemViewer.totalItems\"\n" +
+    "                ng-model=\"rlc.pagedItemViewer.currentPage\"\n" +
+    "                items-per-page=\"rlc.pagedItemViewer.pageSize\"\n" +
+    "                ng-show=\"rlc.pagedItemViewer.totalItems > 0\"\n" +
+    "                max-size=\"10\"\n" +
+    "                ng-change=\"rlc.pageChanged()\">\n" +
+    "        </uib-pagination>\n" +
+    "    </div>\n" +
+    "</div>\n"
   );
 
 
