@@ -1,19 +1,19 @@
-<div class="udb-job-log" ng-class="{'shown': showJobLog}">
+<div class="udb-job-log" ng-class="{'shown': logger.isVisible()}">
   <div class="row">
     <div class="col-sm-12">
       <div class="udb-job-block udb-job-block-ready">
         <p class="udb-job-title">Geëxporteerde documenten</p>
         <ul class="list-unstyled udb-job-messages">
-          <li class="alert repeat-animation" ng-repeat="job in getFinishedExportJobs()">
+          <li class="alert repeat-animation" ng-repeat="job in logger.getFinishedExportJobs()">
             <udb-job></udb-job>
           </li>
         </ul>
       </div>
 
       <div class="udb-job-block udb-job-block-errors">
-        <p class="udb-job-title">Meldingen <span class="badge" ng-bind="getFailedJobs().length"></span></p>
+        <p class="udb-job-title">Meldingen <span class="badge" ng-bind="logger.getFailedJobs().length"></span></p>
         <ul class="list-unstyled udb-job-messages">
-          <li class="alert repeat-animation" ng-repeat="job in getFailedJobs()">
+          <li class="alert repeat-animation" ng-repeat="job in logger.getFailedJobs()">
             <udb-job></udb-job>
           </li>
         </ul>
@@ -22,7 +22,7 @@
       <div class="udb-job-block udb-job-block-pending">
         <p class="udb-job-title">Bezig</p>
         <ul class="list-unstyled udb-job-messages">
-          <li class="alert repeat-animation" ng-repeat="job in getQueuedJobs()">
+          <li class="alert repeat-animation" ng-repeat="job in logger.getQueuedJobs()">
             <udb-job></udb-job>
           </li>
         </ul>
@@ -30,4 +30,4 @@
     </div>
   </div>
 </div>
-<div class="udb-job-log-overlay" ng-class="{'shown': showJobLog}" ng-click="toggleJobLog()"></div>
+<div class="udb-job-log-overlay" ng-class="{'shown': logger.isVisible()}" ng-click="logger.hideJobLog()"></div>

@@ -15,7 +15,8 @@ angular
 
 /* @ngInject */
 function JobLogger(udbSocket, JobStates, EventExportJob, $rootScope) {
-  var jobs = [],
+  var logger = this,
+      jobs = [],
       queuedJobs = [],
       failedJobs = [],
       finishedExportJobs = [],
@@ -140,4 +141,15 @@ function JobLogger(udbSocket, JobStates, EventExportJob, $rootScope) {
   };
 
   this.hideJob = hideJob;
+
+  this.toggleJobLog = function() {
+    logger.visible = !logger.visible;
+  };
+
+  /**
+   * @return {boolean}
+   */
+  this.isVisible = function () {
+    return logger.visible;
+  };
 }

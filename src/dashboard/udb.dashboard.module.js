@@ -11,8 +11,4 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.config'
-  ])
-  .component('dashboard', {
-    controller: 'DashboardController',
-    templateUrl: 'dashboard.html'
-  });
+  ]);
