@@ -15321,8 +15321,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "      </div>\n" +
     "      <div class=\"col-xs-12 col-md-8\">\n" +
+    "       <ul>\n" +
+    "        <li><small>Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. \"Fietsen langs kappelletjes\", \"De Sage van de Eenhoorn\")</small></li>\n" +
+    "        <li><small>Gebruik de <strong>officiële benaming</strong> voor een locatie (bv. \"Gravensteen\", \"Abdijsite Herkenrode\", \"Cultuurcentrum De Werf\")</small></li>\n" +
+    "      </ul>\n" +
+    "\n" +
     "        <p class=\"text-block\">\n" +
-    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort en bondig</strong>. Een uitgebreide beschrijving vul je in stap 5 in.\n" +
+    "          <small>Een uitgebreide beschrijving kan je in stap 5 toevoegen.</small>\n" +
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
