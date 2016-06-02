@@ -8446,7 +8446,7 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
   /**
    * Click listener to reset the calendar. User can select a new calendar type.
    */
-  function resetCalendar() {
+  function resetCalendar () {
     EventFormData.activeCalendarType = '';
     EventFormData.calendarType = '';
   }
