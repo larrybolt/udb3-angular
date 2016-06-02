@@ -701,4 +701,45 @@ function UdbApi(
       )
       .then(returnUnwrappedData);
   };
+
+  /**
+   * @param {string}  name
+   * @param {boolean} isVisible
+   * @param {boolean} isPrivate
+   * @param {string}  [parentId]
+   * @return {Promise.<Object>}
+   */
+  this.createLabel = function (name, isVisible, isPrivate, parentId) {
+    var labelData = {
+      name: name,
+      visibility: isVisible ? 'visible' : 'invisible',
+      privacy: isPrivate ? 'private' : 'public'
+    };
+
+    if (parentId) {
+      labelData.parentId = parentId;
+    }
+
+    return $http
+      .post(appConfig.baseUrl + 'label', labelData, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string} labelId
+   * @param {string} command
+   */
+  this.updateLabel = function (labelId, command) {
+    return $http.patch(
+      appConfig.baseUrl + 'label/' + labelId,
+      {'command': command},
+      defaultApiConfig
+    ).then(returnUnwrappedData);
+  };
+
+  this.deleteLabel = function (labelId) {
+    return $http
+      .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
 }

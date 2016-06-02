@@ -189,6 +189,17 @@ angular
     'udb.config'
   ]);
 
+/**
+ * @ngdoc module
+ * @name udb.management
+ * @description
+ * The udb management module
+ */
+angular
+  .module('udb.management', [
+    'udb.core'
+  ]);
+
 angular.module('peg', []).factory('LuceneQueryParser', function () {
  return (function() {
   /*
@@ -3215,6 +3226,47 @@ function UdbApi(
         appConfig.baseUrl + 'media/' + imageId,
         defaultApiConfig
       )
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string}  name
+   * @param {boolean} isVisible
+   * @param {boolean} isPrivate
+   * @param {string}  [parentId]
+   * @return {Promise.<Object>}
+   */
+  this.createLabel = function (name, isVisible, isPrivate, parentId) {
+    var labelData = {
+      name: name,
+      visibility: isVisible ? 'visible' : 'invisible',
+      privacy: isPrivate ? 'private' : 'public'
+    };
+
+    if (parentId) {
+      labelData.parentId = parentId;
+    }
+
+    return $http
+      .post(appConfig.baseUrl + 'label', labelData, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string} labelId
+   * @param {string} command
+   */
+  this.updateLabel = function (labelId, command) {
+    return $http.patch(
+      appConfig.baseUrl + 'label/' + labelId,
+      {'command': command},
+      defaultApiConfig
+    ).then(returnUnwrappedData);
+  };
+
+  this.deleteLabel = function (labelId) {
+    return $http
+      .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 }
@@ -10387,6 +10439,86 @@ function udbExportModalButtons() {
     restrict: 'E'
   };
 }
+
+// Source: src/management/label-manager.service.js
+/**
+ * @typedef {Object} Label
+ * @property {string}   id
+ * @property {string}   name
+ * @property {boolean}  isVisible
+ * @property {boolean}  isPrivate
+ */
+
+/**
+ * @ngdoc function
+ * @name udb.management.service:LabelManager
+ * @description
+ * # LabelManager
+ * Service to manage labels.
+ */
+angular
+  .module('udb.management')
+  .service('LabelManager', LabelManager);
+
+/** @ngInject */
+function LabelManager(udbApi, jobLogger, BaseJob) {
+  var service = this;
+
+  /**
+   * @param {string} name
+   * @param {boolean} isVisible
+   * @param {boolean} isPrivate
+   *
+   * @return {Promise.<Label>}
+   */
+  service.create = function (name, isVisible, isPrivate) {
+    udbApi
+      .createLabel(name, isVisible, isPrivate)
+      .then(logLabelJob);
+  };
+
+  /**
+   *
+   * @param {Label} label
+   * @return {Promise.<Label>}
+   */
+  service.copy = function (label) {
+    udbApi
+      .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
+      .then(logLabelJob);
+  };
+
+  service.delete = function (label) {
+    udbApi
+      .deleteLabel(label.id)
+      .then(logLabelJob);
+  };
+
+  service.makeInvisible = function (label) {
+    udbApi
+      .updateLabel(label.id, 'MakeInvisible')
+      .then(logLabelJob);
+  };
+  service.makeVisible = function (label) {
+    udbApi
+      .updateLabel(label.id, 'MakeVisible')
+      .then(logLabelJob);
+  };
+  service.makePrivate = function (label) {
+    udbApi.updateLabel(label.id, 'MakePrivate');
+  };
+  service.makePublic = function (label) {
+    udbApi
+      .updateLabel(label.id, 'MakePublic')
+      .then(logLabelJob);
+  };
+
+  function logLabelJob(commandInfo) {
+    var job = new BaseJob(commandInfo.commandId);
+    jobLogger.addJob(job);
+  }
+}
+LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob"];
 
 // Source: src/media/create-image-job.factory.js
 /**
