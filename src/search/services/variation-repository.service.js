@@ -44,7 +44,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   function requestVariation(userId, purpose, offerUrl, deferredVariation) {
     return function () {
-      var offerId = offerUrl.split('/').pop();
+      var offerId = offerUrl.toString().split('/').pop();
 
       if (interruptRequestChain) {
         deferredVariation.reject('navigating away, interrupting request for variation for offer with id: ' + offerId);
