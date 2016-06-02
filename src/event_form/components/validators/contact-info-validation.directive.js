@@ -40,14 +40,7 @@ function UdbContactInfoValidationDirective() {
 
         }
         else if (ngModel.$modelValue.type === 'url') {
-
           var viewValue = ngModel.$viewValue;
-          // Autoset http://.
-          if (ngModel.$modelValue.value.substring(0, 7) !== 'http://' &&
-            ngModel.$modelValue.value.substring(0, 8) !== 'https://') {
-            viewValue.value = 'http://' + viewValue.value;
-            ngModel.$setViewValue(viewValue);
-          }
 
           if (!URL_REGEXP.test(viewValue.value)) {
             scope.infoErrorMessage = 'Gelieve een geldige url in te vullen';
