@@ -14692,12 +14692,21 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "              <option value=\"email\">E-mailadres</option>\n" +
     "            </select>\n" +
     "          </td>\n" +
-    "          <td>\n" +
+    "          <td ng-switch=\"info.type\">\n" +
     "            <input type=\"text\"\n" +
+    "                   ng-switch-when=\"url\"\n" +
+    "                   udb-http-prefix\n" +
     "                   class=\"form-control\"\n" +
     "                   ng-model=\"info.value\"\n" +
     "                   name=\"contact[{{key}}]\"\n" +
-    "                   ng-change=\"validateInfo(key)\"\n" +
+    "                   ng-change=\"validateInfo()\"\n" +
+    "                   ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
+    "            <input type=\"text\"\n" +
+    "                   ng-switch-default\n" +
+    "                   class=\"form-control\"\n" +
+    "                   ng-model=\"info.value\"\n" +
+    "                   name=\"contact[{{key}}]\"\n" +
+    "                   ng-change=\"validateInfo()\"\n" +
     "                   ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
     "            <span class=\"help-block\" ng-if=\"infoErrorMessage\" ng-bind=\"::infoErrorMessage\"></span>\n" +
     "          </td>\n" +
