@@ -9,7 +9,7 @@
         <p>De locatie "<span ng-bind="::place.name"></span>" kan niet verwijderd worden omdat er activiteiten gepland zijn.</p>
 
         <ul>
-          <li ng-repeat="event in events" udb-event-link ng-hide="fetching"></li>
+          <li ng-click="$dismiss('navigating away')" ng-repeat="event in events" udb-event-link ng-hide="fetching"></li>
         </ul>
 
       </div>

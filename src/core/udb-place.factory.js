@@ -12,7 +12,7 @@ angular
   .factory('UdbPlace', UdbPlaceFactory);
 
 /* @ngInject */
-function UdbPlaceFactory(EventTranslationState, placeCategories) {
+function UdbPlaceFactory(EventTranslationState, placeCategories, UdbOrganizer) {
 
   function getCategoryByType(jsonPlace, domain) {
     var category = _.find(jsonPlace.terms, function (category) {
@@ -121,7 +121,7 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this['@id'] = jsonPlace['@id'];
       this['@type'] = jsonPlace['@type'];
       if (jsonPlace['@id']) {
-        this.apiUrl = jsonPlace['@id'];
+        this.apiUrl = new URL(jsonPlace['@id']);
       }
       this.name = jsonPlace.name || {};
       this.address = jsonPlace.address || this.address;
@@ -135,11 +135,17 @@ function UdbPlaceFactory(EventTranslationState, placeCategories) {
       this.bookingInfo = jsonPlace.bookingInfo || {};
       this.contactPoint = jsonPlace.contactPoint || {};
       if (jsonPlace.organizer) {
-        this.organizer = {
-          name: jsonPlace.organizer.name,
-          email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
-          phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
-        };
+        // if it's a full organizer object, parse it as one
+        if (jsonPlace.organizer['@id']) {
+          this.organizer = new UdbOrganizer(jsonPlace.organizer);
+        } else {
+          // just create an object
+          this.organizer = {
+            name: jsonPlace.organizer.name,
+            email: jsonPlace.organizer.email ? (jsonPlace.organizer.email[0] || '-') : '-',
+            phone: jsonPlace.organizer.phone ? (jsonPlace.organizer.phone[0] || '-') : '-'
+          };
+        }
       }
       this.image = jsonPlace.image;
       this.labels = _.map(jsonPlace.labels, function (label) {
