@@ -244,7 +244,7 @@ function EventFormStep3Controller(
   $scope.orderCityLocations = controller.orderCityLocations;
 
   /**
-   * Open the organizer modal.
+   * Open the place modal.
    */
   function openPlaceModal() {
 
@@ -261,7 +261,10 @@ function EventFormStep3Controller(
       }
     });
 
-    modalInstance.result.then(function (place) {
+    /**
+     * @param {UdbPlace} place
+     */
+    function setEventFormDataPlace(place) {
 
       // Assign the just saved place to the event form data.
       EventFormData.place = place;
@@ -283,8 +286,10 @@ function EventFormStep3Controller(
       $scope.selectedLocation = location;
 
       controller.stepCompleted();
+    }
 
-    });
+    modalInstance.result
+      .then(setEventFormDataPlace);
   }
 
   function setStreetAddress() {

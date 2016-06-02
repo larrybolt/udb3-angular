@@ -9,7 +9,7 @@ describe('Service: UDB3 Api', function () {
     var appConfig = {
       baseUrl: baseUrl
     };
-    uitidAuth = jasmine.createSpyObj('uitidAuth', ['getUser']);
+    uitidAuth = jasmine.createSpyObj('uitidAuth', ['getUser', 'getToken']);
 
     $provide.constant('appConfig', appConfig);
     $provide.provider('uitidAuth', {
@@ -56,7 +56,7 @@ describe('Service: UDB3 Api', function () {
       'pageMemberships': null,
       'adminPagesCount': 0
     };
-    var userUrl = baseUrl + 'uitid/user';
+    var userUrl = baseUrl + 'user';
     var expectedUser = {
       id: 2,
       nick: 'foo',
@@ -70,6 +70,7 @@ describe('Service: UDB3 Api', function () {
     }
 
     uitidAuth.getUser.and.returnValue(null);
+    uitidAuth.getToken.and.returnValue('bob');
 
     $httpBackend
       .expectGET(userUrl)

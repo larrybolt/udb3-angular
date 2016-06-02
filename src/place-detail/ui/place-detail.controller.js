@@ -48,12 +48,15 @@ function PlaceDetail(
     openPlaceDeleteConfirmModal($scope.place);
   };
 
-  // Check if user has permissions.
-  udbApi.hasPlacePermission($scope.placeId).then(function(result) {
-    $scope.hasEditPermissions = result.data.hasPermission;
-  });
+  function allowEditing() {
+    $scope.hasEditPermissions = true;
+  }
 
-  var placeLoaded = udbApi.getPlaceById($scope.placeId);
+  udbApi
+    .hasPermission($scope.placeId)
+    .then(allowEditing);
+
+  var placeLoaded = udbApi.getOffer($scope.placeId);
   var language = 'nl';
   var cachedPlace;
 
@@ -111,7 +114,7 @@ function PlaceDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/place/' + $scope.placeId + '/edit');
+    $location.path('/place/' + $scope.placeId.split('/').pop() + '/edit');
   };
 
   $scope.updateDescription = function(description) {
@@ -162,9 +165,9 @@ function PlaceDetail(
 
     // Check if this place has planned events.
     eventCrud
-      .findEventsAtPlace(item)
-      .then(function(jsonResponse) {
-        displayModal(item, jsonResponse.data.events);
+      .findEventsAtPlace(item.apiUrl)
+      .then(function(events) {
+        displayModal(item, events);
       });
   }
 }
