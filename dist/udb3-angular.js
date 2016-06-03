@@ -10454,6 +10454,39 @@ function udbExportModalButtons() {
   };
 }
 
+// Source: src/management/label-editor.component.js
+angular
+  .module('udb.management')
+  .component('udbLabelEditor', {
+    templateUrl: 'views/label-editor.html',
+    $routeConfig: [
+      {
+        path: '/label/:id',
+        name: 'label-editor',
+        component: 'udbLabelEditor',
+        controller: LabelEditor,
+        controllerAs: 'editor'
+      }
+    ]
+  });
+
+/** @ngInject */
+function LabelEditor(LabelManager) {
+  var editor = this;
+
+  editor.$routerOnActivate = function(next, previous) {
+    var id = next.params.id;
+
+    editor.label = {
+      name: 'Dope',
+      id: id,
+      isPrivate: false,
+      isVisible: true
+    };
+  };
+}
+LabelEditor.$inject = ["LabelManager"];
+
 // Source: src/management/label-manager.service.js
 /**
  * @typedef {Object} Label
@@ -16322,6 +16355,23 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          ng-click=\"exporter.nextStep()\">Volgende</button>\n" +
     "  <button ng-show=\"exporter.onLastStep()\" class=\"btn btn-primary\" ng-click=\"exporter.export()\">Exporteren</button>\n" +
     "</div>\n"
+  );
+
+
+  $templateCache.put('templates/label-editor.html',
+    "<h2>Labels</h2>\n" +
+    "<h3>Label bewerken (<span ng-bind=\"editor.label.id\"></span>)</h3>\n" +
+    "\n" +
+    "<label for=\"label-name-field\"></label>\n" +
+    "<input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\">\n" +
+    "\n" +
+    "<label>\n" +
+    "    <input type=\"checkbox\" ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
+    "</label>\n" +
+    "\n" +
+    "<label>\n" +
+    "    <input type=\"checkbox\" ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
+    "</label>"
   );
 
 
