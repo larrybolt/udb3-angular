@@ -36,7 +36,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
       userPromise
         .then(function(user) {
           requestChain = requestChain.then(
-            requestVariation(user.id, 'personal', offer.apiUrl, deferredVariation)
+            requestVariation(user.id, 'personal', offer['@id'], deferredVariation)
           );
         });
     }
