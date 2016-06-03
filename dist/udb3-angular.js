@@ -10464,10 +10464,24 @@ angular
   });
 
 /** @ngInject */
-function LabelEditor() {
+function LabelEditor(LabelManager) {
   var editor = this;
+  editor.updateVisibility = updateVisibility;
+  editor.updatePrivacy = updatePrivacy;
+  editor.$routerOnActivate = loadLabelFromParams;
+  editor.renaming = false;
+  editor.rename = rename;
 
-  editor.$routerOnActivate = function(next) {
+  function rename() {
+    editor.renaming = true;
+    LabelManager
+      .copy(editor.label)
+      .finally(function () {
+        editor.renaming = false;
+      });
+  }
+
+  function loadLabelFromParams(next) {
     var id = next.params.id;
 
     editor.label = {
@@ -10476,8 +10490,19 @@ function LabelEditor() {
       isPrivate: false,
       isVisible: true
     };
-  };
+  }
+
+  function updateVisibility () {
+    var isVisible = editor.label.isVisible;
+    var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
+  }
+
+  function updatePrivacy () {
+    var isPrivate = editor.label.isPrivate;
+    var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
+  }
 }
+LabelEditor.$inject = ["LabelManager"];
 
 // Source: src/management/label-manager.service.js
 /**
@@ -16354,15 +16379,22 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "<h2>Labels</h2>\n" +
     "<h3>Label bewerken (<span ng-bind=\"editor.label.id\"></span>)</h3>\n" +
     "\n" +
-    "<label for=\"label-name-field\"></label>\n" +
-    "<input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\">\n" +
-    "\n" +
+    "<label for=\"label-name-field\">Naam</label>\n" +
+    "<input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\" ng-disabled=\"editor.renaming\">\n" +
+    "<button ng-disabled=\"editor.renaming\" type=\"button\" class=\"btn btn-primary\" ng-click=\"editor.rename()\">\n" +
+    "    Hernoemen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"editor.renaming\"></i>\n" +
+    "</button>\n" +
+    "<br>\n" +
     "<label>\n" +
-    "    <input type=\"checkbox\" ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
+    "    <input type=\"checkbox\"\n" +
+    "           ng-change=\"editor.updateVisibility()\"\n" +
+    "           ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
     "</label>\n" +
-    "\n" +
+    "<br>\n" +
     "<label>\n" +
-    "    <input type=\"checkbox\" ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
+    "    <input type=\"checkbox\"\n" +
+    "           ng-change=\"editor.updatePrivacy()\"\n" +
+    "           ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
     "</label>"
   );
 

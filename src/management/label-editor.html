@@ -1,13 +1,20 @@
 <h2>Labels</h2>
 <h3>Label bewerken (<span ng-bind="editor.label.id"></span>)</h3>
 
-<label for="label-name-field"></label>
-<input id="label-name-field" type="text" ng-model="editor.label.name">
-
+<label for="label-name-field">Naam</label>
+<input id="label-name-field" type="text" ng-model="editor.label.name" ng-disabled="editor.renaming">
+<button ng-disabled="editor.renaming" type="button" class="btn btn-primary" ng-click="editor.rename()">
+    Hernoemen <i class="fa fa-circle-o-notch fa-spin" ng-show="editor.renaming"></i>
+</button>
+<br>
 <label>
-    <input type="checkbox" ng-model="editor.label.isVisible"> Tonen op publicatiekanalen
+    <input type="checkbox"
+           ng-change="editor.updateVisibility()"
+           ng-model="editor.label.isVisible"> Tonen op publicatiekanalen
 </label>
-
+<br>
 <label>
-    <input type="checkbox" ng-model="editor.label.isPrivate"> Voorbehouden aan specifieke gebruikersgroepen
+    <input type="checkbox"
+           ng-change="editor.updatePrivacy()"
+           ng-model="editor.label.isPrivate"> Voorbehouden aan specifieke gebruikersgroepen
 </label>
