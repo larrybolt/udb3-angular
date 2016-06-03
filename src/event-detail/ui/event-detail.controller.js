@@ -20,12 +20,24 @@ function EventDetail(
   variationRepository,
   offerEditor,
   $location,
-  $uibModal
+  $uibModal,
+  $q
 ) {
   var activeTabId = 'data';
   var controller = this;
 
-  $scope.eventId = eventId;
+  $q.when(eventId, function(offerLocation) {
+    $scope.eventId = offerLocation;
+
+    udbApi
+      .hasPermission(offerLocation)
+      .then(allowEditing);
+
+    udbApi
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
+  });
+
   $scope.eventIdIsInvalid = false;
   $scope.hasEditPermissions = false;
   $scope.eventHistory = [];
@@ -51,11 +63,6 @@ function EventDetail(
     $scope.hasEditPermissions = true;
   }
 
-  udbApi
-    .hasPermission($scope.eventId)
-    .then(allowEditing);
-
-  var eventLoaded = udbApi.getOffer($scope.eventId);
   var language = 'nl';
   var cachedEvent;
 
@@ -63,32 +70,31 @@ function EventDetail(
     $scope.eventHistory = eventHistory;
   }
 
-  eventLoaded.then(
-      function (event) {
-        cachedEvent = event;
+  function showOffer(event) {
+    cachedEvent = event;
 
-        var personalVariationLoaded = variationRepository.getPersonalVariation(event);
+    var personalVariationLoaded = variationRepository.getPersonalVariation(event);
 
-        udbApi
-          .getHistory($scope.eventId)
-          .then(showHistory);
+    udbApi
+      .getHistory($scope.eventId)
+      .then(showHistory);
 
-        $scope.event = jsonLDLangFilter(event, language);
+    $scope.event = jsonLDLangFilter(event, language);
 
-        $scope.eventIdIsInvalid = false;
+    $scope.eventIdIsInvalid = false;
 
-        personalVariationLoaded
-          .then(function (variation) {
-            $scope.event.description = variation.description[language];
-          })
-          .finally(function () {
-            $scope.eventIsEditable = true;
-          });
-      },
-      function (reason) {
-        $scope.eventIdIsInvalid = true;
-      }
-  );
+    personalVariationLoaded
+      .then(function (variation) {
+        $scope.event.description = variation.description[language];
+      })
+      .finally(function () {
+        $scope.eventIsEditable = true;
+      });
+  }
+
+  function failedToLoad(reason) {
+    $scope.eventIdIsInvalid = true;
+  }
 
   var getActiveTabId = function() {
     return activeTabId;
@@ -143,7 +149,7 @@ function EventDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/event/' + eventId.split('/').pop() + '/edit');
+    $location.path('/event/' + $scope.eventId.split('/').pop() + '/edit');
   };
 
   function goToDashboard() {

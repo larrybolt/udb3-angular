@@ -12,7 +12,7 @@ angular
   .controller('EventFormController', EventFormController);
 
 /* @ngInject */
-function EventFormController($scope, eventId, placeId, offerType, EventFormData, udbApi, moment, jsonLDLangFilter) {
+function EventFormController($scope, offerId, EventFormData, udbApi, moment, jsonLDLangFilter, $q) {
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
@@ -20,47 +20,57 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   // Make sure we start off with clean data every time this controller gets called
   EventFormData.init();
 
-  // Fill the event form data if an event is being edited.
-  if (eventId) {
+  $q.when(offerId)
+    .then(fetchOffer, startCreating);
+
+  function startCreating() {
+    $scope.loaded = true;
+  }
+
+  /**
+   * @param {string} offerId
+   */
+  function fetchOffer(offerId) {
+    udbApi
+      .getOffer(offerId)
+      .then(startEditing);
+  }
+
+  /**
+   *
+   * @param {UdbPlace|UdbEvent} offer
+   */
+  function startEditing(offer) {
+    var offerType = offer.url.split('/').shift();
 
     if (offerType === 'event') {
-      udbApi.getOffer(eventId).then(function(event) {
-        EventFormData.isEvent = true;
-        EventFormData.isPlace = false;
-        copyItemDataToFormData(event);
+      EventFormData.isEvent = true;
+      EventFormData.isPlace = false;
+      copyItemDataToFormData(offer);
 
-        // Copy location.
-        if (event.location && event.location.id) {
-          var location = jsonLDLangFilter(event.location, 'nl');
-          EventFormData.location = {
-            id : location.id.split('/').pop(),
-            name : location.name,
-            address : location.address
-          };
-        }
-      });
-    }
-  }
-  else if (placeId) {
-
-    udbApi.getOffer(placeId).then(function(place) {
-
-      EventFormData.isEvent = false;
-      EventFormData.isPlace = true;
-      copyItemDataToFormData(place);
-
-      // Places only have an address, form uses location property.
-      if (place.address) {
+      // Copy location.
+      if (offer.location && offer.location.id) {
+        var location = jsonLDLangFilter(offer.location, 'nl');
         EventFormData.location = {
-          address : place.address
+          id : location.id.split('/').pop(),
+          name : location.name,
+          address : location.address
         };
       }
+    }
 
-    });
+    if (offerType === 'place') {
+      EventFormData.isEvent = false;
+      EventFormData.isPlace = true;
+      copyItemDataToFormData(offer);
 
-  }
-  else {
-    $scope.loaded = true;
+      // Places only have an address, form uses location property.
+      if (offer.address) {
+        EventFormData.location = {
+          address : offer.address
+        };
+      }
+    }
   }
 
   /**

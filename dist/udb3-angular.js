@@ -1861,7 +1861,7 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
     var deferredUser = udbApi.getMe();
     deferredUser.then(
       function (user) {
-        deferred.resolve();
+        deferred.resolve(user);
       },
       function () {
         uitidAuth.login();
@@ -1874,24 +1874,28 @@ function AuthorizationService($q, uitidAuth, udbApi, $location) {
     return deferred.promise;
   };
 
+  /**
+   * @param {string} path
+   * @return {Promise.<boolean>}
+   *  Resolves to TRUE when no user is logged in and no redirect has occurred.
+   */
   this.redirectIfLoggedIn = function (path) {
-    if (uitidAuth.getUser()) {
+    var deferredRedirect = $q.defer();
+
+    function redirect() {
       $location.path(path);
-
-      return true;
-    } else if (uitidAuth.getToken()) {
-      var userPromise = udbApi.getMe(),
-        deferred = $q.defer();
-
-      userPromise.then(function () {
-        deferred.reject();
-        $location.path(path);
-      }, function () {
-        deferred.resolve(true);
-      });
-
-      return deferred.promise;
+      deferredRedirect.resolve(false);
     }
+
+    if (uitidAuth.getToken()) {
+      udbApi
+        .getMe()
+        .then(redirect, deferredRedirect.reject);
+    } else {
+      deferredRedirect.resolve(true);
+    }
+
+    return deferredRedirect.promise;
   };
 }
 AuthorizationService.$inject = ["$q", "uitidAuth", "udbApi", "$location"];
@@ -5686,31 +5690,34 @@ function BaseJobFactory(JobStates) {
 }
 BaseJobFactory.$inject = ["JobStates"];
 
-// Source: src/entry/logging/job-logger.directive.js
+// Source: src/entry/logging/job-log.component.js
 /**
- * @ngdoc directive
- * @name udb.entry.directive:udbJobLog
+ * @ngdoc component
+ * @name udb.entry.component:udbJobLog
  * @description
  * # udbJobLog
  */
 angular
   .module('udb.entry')
-  .directive('udbJobLog', udbJobLog);
+  .component('udbJobLog', {
+    controller: JobLogController,
+    controllerAs: 'logger',
+    templateUrl: 'templates/job-log.component.html'
+  });
 
 /* @ngInject */
-function udbJobLog(jobLogger, JobStates, EventExportJob) {
-  return {
-    templateUrl: 'templates/job-logger.directive.html',
-    restrict: 'E',
-    link: function postLink(scope, element, attrs) {
-      scope.getQueuedJobs = jobLogger.getQueuedJobs;
-      scope.getFinishedExportJobs = jobLogger.getFinishedExportJobs;
-      scope.getFailedJobs = jobLogger.getFailedJobs;
-      scope.hideJob = jobLogger.hideJob;
-    }
-  };
+function JobLogController(jobLogger, $scope) {
+  var controller = this;
+
+  controller.getQueuedJobs = jobLogger.getQueuedJobs;
+  controller.getFinishedExportJobs = jobLogger.getFinishedExportJobs;
+  controller.getFailedJobs = jobLogger.getFailedJobs;
+  controller.hideJobLog = jobLogger.toggleJobLog;
+  controller.isVisible = jobLogger.isVisible;
+
+  $scope.hideJob = jobLogger.hideJob;
 }
-udbJobLog.$inject = ["jobLogger", "JobStates", "EventExportJob"];
+JobLogController.$inject = ["jobLogger", "$scope"];
 
 // Source: src/entry/logging/job-logger.service.js
 /* jshint sub: true */
@@ -5728,7 +5735,8 @@ angular
 
 /* @ngInject */
 function JobLogger(udbSocket, JobStates, EventExportJob, $rootScope) {
-  var jobs = [],
+  var logger = this,
+      jobs = [],
       queuedJobs = [],
       failedJobs = [],
       finishedExportJobs = [],
@@ -5853,6 +5861,17 @@ function JobLogger(udbSocket, JobStates, EventExportJob, $rootScope) {
   };
 
   this.hideJob = hideJob;
+
+  this.toggleJobLog = function() {
+    logger.visible = !logger.visible;
+  };
+
+  /**
+   * @return {boolean}
+   */
+  this.isVisible = function () {
+    return logger.visible;
+  };
 }
 JobLogger.$inject = ["udbSocket", "JobStates", "EventExportJob", "$rootScope"];
 
@@ -6110,12 +6129,24 @@ function EventDetail(
   variationRepository,
   offerEditor,
   $location,
-  $uibModal
+  $uibModal,
+  $q
 ) {
   var activeTabId = 'data';
   var controller = this;
 
-  $scope.eventId = eventId;
+  $q.when(eventId, function(offerLocation) {
+    $scope.eventId = offerLocation;
+
+    udbApi
+      .hasPermission(offerLocation)
+      .then(allowEditing);
+
+    udbApi
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
+  });
+
   $scope.eventIdIsInvalid = false;
   $scope.hasEditPermissions = false;
   $scope.eventHistory = [];
@@ -6141,11 +6172,6 @@ function EventDetail(
     $scope.hasEditPermissions = true;
   }
 
-  udbApi
-    .hasPermission($scope.eventId)
-    .then(allowEditing);
-
-  var eventLoaded = udbApi.getOffer($scope.eventId);
   var language = 'nl';
   var cachedEvent;
 
@@ -6153,32 +6179,31 @@ function EventDetail(
     $scope.eventHistory = eventHistory;
   }
 
-  eventLoaded.then(
-      function (event) {
-        cachedEvent = event;
+  function showOffer(event) {
+    cachedEvent = event;
 
-        var personalVariationLoaded = variationRepository.getPersonalVariation(event);
+    var personalVariationLoaded = variationRepository.getPersonalVariation(event);
 
-        udbApi
-          .getHistory($scope.eventId)
-          .then(showHistory);
+    udbApi
+      .getHistory($scope.eventId)
+      .then(showHistory);
 
-        $scope.event = jsonLDLangFilter(event, language);
+    $scope.event = jsonLDLangFilter(event, language);
 
-        $scope.eventIdIsInvalid = false;
+    $scope.eventIdIsInvalid = false;
 
-        personalVariationLoaded
-          .then(function (variation) {
-            $scope.event.description = variation.description[language];
-          })
-          .finally(function () {
-            $scope.eventIsEditable = true;
-          });
-      },
-      function (reason) {
-        $scope.eventIdIsInvalid = true;
-      }
-  );
+    personalVariationLoaded
+      .then(function (variation) {
+        $scope.event.description = variation.description[language];
+      })
+      .finally(function () {
+        $scope.eventIsEditable = true;
+      });
+  }
+
+  function failedToLoad(reason) {
+    $scope.eventIdIsInvalid = true;
+  }
 
   var getActiveTabId = function() {
     return activeTabId;
@@ -6233,7 +6258,7 @@ function EventDetail(
   };
 
   $scope.openEditPage = function() {
-    $location.path('/event/' + eventId.split('/').pop() + '/edit');
+    $location.path('/event/' + $scope.eventId.split('/').pop() + '/edit');
   };
 
   function goToDashboard() {
@@ -6263,7 +6288,7 @@ function EventDetail(
       .then(controller.goToDashboardOnJobCompletion);
   }
 }
-EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal"];
+EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal", "$q"];
 
 // Source: src/event_form/components/calendartypes/event-form-period.directive.js
 /**
@@ -7844,7 +7869,7 @@ angular
   .controller('EventFormController', EventFormController);
 
 /* @ngInject */
-function EventFormController($scope, eventId, placeId, offerType, EventFormData, udbApi, moment, jsonLDLangFilter) {
+function EventFormController($scope, offerId, EventFormData, udbApi, moment, jsonLDLangFilter, $q) {
 
   // Other controllers won't load until this boolean is set to true.
   $scope.loaded = false;
@@ -7852,47 +7877,57 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   // Make sure we start off with clean data every time this controller gets called
   EventFormData.init();
 
-  // Fill the event form data if an event is being edited.
-  if (eventId) {
+  $q.when(offerId)
+    .then(fetchOffer, startCreating);
+
+  function startCreating() {
+    $scope.loaded = true;
+  }
+
+  /**
+   * @param {string} offerId
+   */
+  function fetchOffer(offerId) {
+    udbApi
+      .getOffer(offerId)
+      .then(startEditing);
+  }
+
+  /**
+   *
+   * @param {UdbPlace|UdbEvent} offer
+   */
+  function startEditing(offer) {
+    var offerType = offer.url.split('/').shift();
 
     if (offerType === 'event') {
-      udbApi.getOffer(eventId).then(function(event) {
-        EventFormData.isEvent = true;
-        EventFormData.isPlace = false;
-        copyItemDataToFormData(event);
+      EventFormData.isEvent = true;
+      EventFormData.isPlace = false;
+      copyItemDataToFormData(offer);
 
-        // Copy location.
-        if (event.location && event.location.id) {
-          var location = jsonLDLangFilter(event.location, 'nl');
-          EventFormData.location = {
-            id : location.id.split('/').pop(),
-            name : location.name,
-            address : location.address
-          };
-        }
-      });
-    }
-  }
-  else if (placeId) {
-
-    udbApi.getOffer(placeId).then(function(place) {
-
-      EventFormData.isEvent = false;
-      EventFormData.isPlace = true;
-      copyItemDataToFormData(place);
-
-      // Places only have an address, form uses location property.
-      if (place.address) {
+      // Copy location.
+      if (offer.location && offer.location.id) {
+        var location = jsonLDLangFilter(offer.location, 'nl');
         EventFormData.location = {
-          address : place.address
+          id : location.id.split('/').pop(),
+          name : location.name,
+          address : location.address
         };
       }
+    }
 
-    });
+    if (offerType === 'place') {
+      EventFormData.isEvent = false;
+      EventFormData.isPlace = true;
+      copyItemDataToFormData(offer);
 
-  }
-  else {
-    $scope.loaded = true;
+      // Places only have an address, form uses location property.
+      if (offer.address) {
+        EventFormData.location = {
+          address : offer.address
+        };
+      }
+    }
   }
 
   /**
@@ -8000,7 +8035,7 @@ function EventFormController($scope, eventId, placeId, offerType, EventFormData,
   }
 
 }
-EventFormController.$inject = ["$scope", "eventId", "placeId", "offerType", "EventFormData", "udbApi", "moment", "jsonLDLangFilter"];
+EventFormController.$inject = ["$scope", "offerId", "EventFormData", "udbApi", "moment", "jsonLDLangFilter", "$q"];
 
 // Source: src/event_form/event-form.directive.js
 /**
@@ -10530,12 +10565,24 @@ function PlaceDetail(
   variationRepository,
   offerEditor,
   eventCrud,
-  $uibModal
+  $uibModal,
+  $q
 ) {
   var activeTabId = 'data';
   var controller = this;
 
-  $scope.placeId = placeId;
+  $q.when(placeId, function(offerLocation) {
+    $scope.placeId = offerLocation;
+
+    udbApi
+      .hasPermission(offerLocation)
+      .then(allowEditing);
+
+    udbApi
+      .getOffer(offerLocation)
+      .then(showOffer, failedToLoad);
+  });
+
   $scope.placeIdIsInvalid = false;
   $scope.hasEditPermissions = false;
   $scope.placeHistory = [];
@@ -10544,14 +10591,10 @@ function PlaceDetail(
       id: 'data',
       header: 'Gegevens'
     },
-    /*{
-      id: 'history',
-      header: 'Historiek'
-    },*/
     {
       id: 'publication',
       header: 'Publicatie'
-    },
+    }
   ];
   $scope.deletePlace = function () {
     openPlaceDeleteConfirmModal($scope.place);
@@ -10561,41 +10604,29 @@ function PlaceDetail(
     $scope.hasEditPermissions = true;
   }
 
-  udbApi
-    .hasPermission($scope.placeId)
-    .then(allowEditing);
-
-  var placeLoaded = udbApi.getOffer($scope.placeId);
   var language = 'nl';
   var cachedPlace;
 
-  placeLoaded.then(
-      function (place) {
-        cachedPlace = place;
+  function showOffer(place) {
+      cachedPlace = place;
 
-        /*var placeHistoryLoaded = udbApi.getEventHistoryById($scope.placeId);
+      var personalVariationLoaded = variationRepository.getPersonalVariation(place);
 
-        placeHistoryLoaded.then(function(placeHistory) {
-          $scope.placeHistory = placeHistory;
-        });*/
+      $scope.place = jsonLDLangFilter(place, language);
+      $scope.placeIdIsInvalid = false;
 
-        var personalVariationLoaded = variationRepository.getPersonalVariation(place);
+      personalVariationLoaded
+        .then(function (variation) {
+          $scope.place.description = variation.description[language];
+        })
+        .finally(function () {
+          $scope.placeIsEditable = true;
+        });
+    }
 
-        $scope.place = jsonLDLangFilter(place, language);
-        $scope.placeIdIsInvalid = false;
-
-        personalVariationLoaded
-          .then(function (variation) {
-            $scope.place.description = variation.description[language];
-          })
-          .finally(function () {
-            $scope.placeIsEditable = true;
-          });
-      },
-      function (reason) {
-        $scope.placeIdIsInvalid = true;
-      }
-  );
+  function failedToLoad(reason) {
+    $scope.placeIdIsInvalid = true;
+  }
 
   $scope.placeLocation = function (place) {
 
@@ -10680,7 +10711,7 @@ function PlaceDetail(
       });
   }
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal", "$q"];
 
 // Source: src/router/offer-locator.service.js
 /**
@@ -13960,23 +13991,23 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
-  $templateCache.put('templates/job-logger.directive.html',
-    "<div class=\"udb-job-log\" ng-class=\"{'shown': showJobLog}\">\n" +
+  $templateCache.put('templates/job-log.component.html',
+    "<div class=\"udb-job-log\" ng-class=\"{'shown': logger.isVisible()}\">\n" +
     "  <div class=\"row\">\n" +
     "    <div class=\"col-sm-12\">\n" +
     "      <div class=\"udb-job-block udb-job-block-ready\">\n" +
     "        <p class=\"udb-job-title\">Geëxporteerde documenten</p>\n" +
     "        <ul class=\"list-unstyled udb-job-messages\">\n" +
-    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in getFinishedExportJobs()\">\n" +
+    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in logger.getFinishedExportJobs()\">\n" +
     "            <udb-job></udb-job>\n" +
     "          </li>\n" +
     "        </ul>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"udb-job-block udb-job-block-errors\">\n" +
-    "        <p class=\"udb-job-title\">Meldingen <span class=\"badge\" ng-bind=\"getFailedJobs().length\"></span></p>\n" +
+    "        <p class=\"udb-job-title\">Meldingen <span class=\"badge\" ng-bind=\"logger.getFailedJobs().length\"></span></p>\n" +
     "        <ul class=\"list-unstyled udb-job-messages\">\n" +
-    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in getFailedJobs()\">\n" +
+    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in logger.getFailedJobs()\">\n" +
     "            <udb-job></udb-job>\n" +
     "          </li>\n" +
     "        </ul>\n" +
@@ -13985,7 +14016,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <div class=\"udb-job-block udb-job-block-pending\">\n" +
     "        <p class=\"udb-job-title\">Bezig</p>\n" +
     "        <ul class=\"list-unstyled udb-job-messages\">\n" +
-    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in getQueuedJobs()\">\n" +
+    "          <li class=\"alert repeat-animation\" ng-repeat=\"job in logger.getQueuedJobs()\">\n" +
     "            <udb-job></udb-job>\n" +
     "          </li>\n" +
     "        </ul>\n" +
@@ -13993,7 +14024,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </div>\n" +
     "  </div>\n" +
     "</div>\n" +
-    "<div class=\"udb-job-log-overlay\" ng-class=\"{'shown': showJobLog}\" ng-click=\"toggleJobLog()\"></div>\n"
+    "<div class=\"udb-job-log-overlay\" ng-class=\"{'shown': logger.isVisible()}\" ng-click=\"logger.hideJobLog()\"></div>\n"
   );
 
 
