@@ -28,13 +28,26 @@ function LabelEditor(LabelManager) {
 
   function loadLabelFromParams(next) {
     var id = next.params.id;
+    loadLabel(id);
+  }
 
-    editor.label = {
-      name: 'Dope',
-      id: id,
-      isPrivate: false,
-      isVisible: true
-    };
+  /**
+   *
+   * @param {Label} label
+   */
+  function showLabel(label) {
+    editor.label = label;
+  }
+
+  function loadLabel(id) {
+    editor.loadingError = false;
+    LabelManager
+      .get(id)
+      .then(showLabel, showLoadingError);
+  }
+
+  function showLoadingError () {
+    editor.loadingError = 'Label niet gevonden!';
   }
 
   function updateVisibility () {

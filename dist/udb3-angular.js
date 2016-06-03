@@ -10483,13 +10483,26 @@ function LabelEditor(LabelManager) {
 
   function loadLabelFromParams(next) {
     var id = next.params.id;
+    loadLabel(id);
+  }
 
-    editor.label = {
-      name: 'Dope',
-      id: id,
-      isPrivate: false,
-      isVisible: true
-    };
+  /**
+   *
+   * @param {Label} label
+   */
+  function showLabel(label) {
+    editor.label = label;
+  }
+
+  function loadLabel(id) {
+    editor.loadingError = false;
+    LabelManager
+      .get(id)
+      .then(showLabel, showLoadingError);
+  }
+
+  function showLoadingError () {
+    editor.loadingError = 'Label niet gevonden!';
   }
 
   function updateVisibility () {
@@ -16377,25 +16390,35 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/label-editor.html',
     "<h2>Labels</h2>\n" +
-    "<h3>Label bewerken (<span ng-bind=\"editor.label.id\"></span>)</h3>\n" +
+    "<h3>Label bewerken</h3>\n" +
     "\n" +
-    "<label for=\"label-name-field\">Naam</label>\n" +
-    "<input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\" ng-disabled=\"editor.renaming\">\n" +
-    "<button ng-disabled=\"editor.renaming\" type=\"button\" class=\"btn btn-primary\" ng-click=\"editor.rename()\">\n" +
-    "    Hernoemen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"editor.renaming\"></i>\n" +
-    "</button>\n" +
-    "<br>\n" +
-    "<label>\n" +
-    "    <input type=\"checkbox\"\n" +
-    "           ng-change=\"editor.updateVisibility()\"\n" +
-    "           ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
-    "</label>\n" +
-    "<br>\n" +
-    "<label>\n" +
-    "    <input type=\"checkbox\"\n" +
-    "           ng-change=\"editor.updatePrivacy()\"\n" +
-    "           ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
-    "</label>"
+    "<div ng-show=\"!editor.label && !editor.loadingError\">\n" +
+    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-show=\"editor.label\">\n" +
+    "    <label for=\"label-name-field\">Naam</label>\n" +
+    "    <input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\" ng-disabled=\"editor.renaming\">\n" +
+    "    <button ng-disabled=\"editor.renaming\" type=\"button\" class=\"btn btn-primary\" ng-click=\"editor.rename()\">\n" +
+    "        Hernoemen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"editor.renaming\"></i>\n" +
+    "    </button>\n" +
+    "    <br>\n" +
+    "    <label>\n" +
+    "        <input type=\"checkbox\"\n" +
+    "               ng-change=\"editor.updateVisibility()\"\n" +
+    "               ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
+    "    </label>\n" +
+    "    <br>\n" +
+    "    <label>\n" +
+    "        <input type=\"checkbox\"\n" +
+    "               ng-change=\"editor.updatePrivacy()\"\n" +
+    "               ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
+    "    </label>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-show=\"editor.loadingError\">\n" +
+    "    <span ng-bind=\"editor.loadingError\"></span>\n" +
+    "</div>\n"
   );
 
 
