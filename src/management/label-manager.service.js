@@ -45,7 +45,6 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   };
 
   /**
-   *
    * @param {Label} label
    * @return {Promise.<BaseJob>}
    */
@@ -56,7 +55,6 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   };
 
   /**
-   * 
    * @param {Label} label
    * @return {Promise.<BaseJob>}
    */
@@ -67,7 +65,6 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   };
 
   /**
-   *
    * @param {Label} label
    * @return {Promise.<BaseJob>}
    */
@@ -78,7 +75,6 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   };
 
   /**
-   *
    * @param {Label} label
    * @return {Promise.<BaseJob>}
    */
@@ -116,7 +112,7 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   function logLabelJob(commandInfo) {
     var job = new BaseJob(commandInfo.commandId);
     jobLogger.addJob(job);
-    
+
     return job;
   }
 }
