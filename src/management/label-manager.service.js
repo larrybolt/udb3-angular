@@ -41,7 +41,7 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   service.create = function (name, isVisible, isPrivate) {
     return udbApi
       .createLabel(name, isVisible, isPrivate)
-      .then(logLabelJob);
+      .then(createNewLabelJob);
   };
 
   /**
@@ -49,17 +49,9 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
    * @return {Promise.<BaseJob>}
    */
   service.copy = function (label) {
-    function logCopyLabelJob(commandInfo) {
-      var job = new BaseJob(commandInfo.commandId);
-      job.labelId = commandInfo.labelId;
-      jobLogger.addJob(job);
-
-      return job;
-    }
-
     return udbApi
       .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
-      .then(logCopyLabelJob);
+      .then(createNewLabelJob);
   };
 
   /**
@@ -119,6 +111,18 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
    */
   function logLabelJob(commandInfo) {
     var job = new BaseJob(commandInfo.commandId);
+    jobLogger.addJob(job);
+
+    return job;
+  }
+
+  /**
+   * @param {Object} commandInfo
+   * @return {BaseJob}
+   */
+  function createNewLabelJob(commandInfo) {
+    var job = new BaseJob(commandInfo.commandId);
+    job.labelId = commandInfo.labelId;
     jobLogger.addJob(job);
 
     return job;
