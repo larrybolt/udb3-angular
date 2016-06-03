@@ -10458,23 +10458,16 @@ function udbExportModalButtons() {
 angular
   .module('udb.management')
   .component('udbLabelEditor', {
-    templateUrl: 'views/label-editor.html',
-    $routeConfig: [
-      {
-        path: '/label/:id',
-        name: 'label-editor',
-        component: 'udbLabelEditor',
-        controller: LabelEditor,
-        controllerAs: 'editor'
-      }
-    ]
+    templateUrl: 'templates/label-editor.html',
+    controller: LabelEditor,
+    controllerAs: 'editor'
   });
 
 /** @ngInject */
-function LabelEditor(LabelManager) {
+function LabelEditor() {
   var editor = this;
 
-  editor.$routerOnActivate = function(next, previous) {
+  editor.$routerOnActivate = function(next) {
     var id = next.params.id;
 
     editor.label = {
@@ -10485,7 +10478,6 @@ function LabelEditor(LabelManager) {
     };
   };
 }
-LabelEditor.$inject = ["LabelManager"];
 
 // Source: src/management/label-manager.service.js
 /**
@@ -10610,14 +10602,14 @@ LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob"];
 angular
   .module('udb.management')
   .component('udbManagement', {
-    templateUrl: 'views/management.html',
+    template: '<h1>Manage</h1> <ng-outlet></ng-outlet>',
     $routeConfig: [
       {
         path: '/label/:id',
-        name: 'label-editor',
+        name: 'LabelEditor',
         component: 'udbLabelEditor'
       }
-      ]
+    ]
   });
 
 // Source: src/media/create-image-job.factory.js

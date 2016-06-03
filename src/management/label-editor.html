@@ -1,0 +1,13 @@
+<h2>Labels</h2>
+<h3>Label bewerken (<span ng-bind="editor.label.id"></span>)</h3>
+
+<label for="label-name-field"></label>
+<input id="label-name-field" type="text" ng-model="editor.label.name">
+
+<label>
+    <input type="checkbox" ng-model="editor.label.isVisible"> Tonen op publicatiekanalen
+</label>
+
+<label>
+    <input type="checkbox" ng-model="editor.label.isPrivate"> Voorbehouden aan specifieke gebruikersgroepen
+</label>
