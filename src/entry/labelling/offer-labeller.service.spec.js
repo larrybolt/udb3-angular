@@ -2,7 +2,7 @@
 
 describe('Service: Offer labeller', function () {
 
-  var logger, udbApi, labeller, $q, UdbPlace, $scope, OfferLabelJob;
+  var logger, udbApi, labeller, $q, UdbPlace, $scope, OfferLabelJob, LabelManager;
   var examplePlaceJson = {
     '@id': "http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702",
     '@context': "/api/1.0/place.jsonld",
@@ -49,7 +49,8 @@ describe('Service: Offer labeller', function () {
 
   beforeEach(module('udb.entry', function($provide){
     logger = jasmine.createSpyObj('jobLogger', ['addJob']);
-    udbApi = jasmine.createSpyObj('udbApi', ['getRecentLabels', 'labelOffer']);
+    udbApi = jasmine.createSpyObj('udbApi', ['getRecentLabels', 'labelOffer', 'labelQuery', 'labelOffers']);
+    LabelManager = jasmine.createSpyObj('LabelManager', ['create']);
 
     $provide.provider('jobLogger', {
       $get: function () {
@@ -60,6 +61,12 @@ describe('Service: Offer labeller', function () {
     $provide.provider('udbApi', {
       $get: function () {
         return udbApi;
+      }
+    });
+
+    $provide.provider('LabelManager', {
+      $get: function () {
+        return LabelManager;
       }
     });
   }));
@@ -85,6 +92,7 @@ describe('Service: Offer labeller', function () {
   it('should create a job and log it when labelling an offer', function (done) {
     var place = new UdbPlace(examplePlaceJson);
     var expectedJob = new OfferLabelJob('E53F8BAA-A640-419F-9C2A-411B86969608', place, 'awesome');
+    LabelManager.create.and.returnValue($q.resolve());
     udbApi.labelOffer.and.returnValue($q.resolve({
       data: {
         commandId: 'E53F8BAA-A640-419F-9C2A-411B86969608'
@@ -107,5 +115,23 @@ describe('Service: Offer labeller', function () {
 
     jobPromise.then(assertJob);
     $scope.$digest();
+  });
+
+  it('should try to create a label before adding it to a query', function () {
+    LabelManager.create.and.returnValue($q.resolve());
+    udbApi.labelQuery.and.returnValue($q.reject());
+
+    labeller.labelQuery('city:leuven', 'Leuven');
+    $scope.$digest();
+    expect(LabelManager.create).toHaveBeenCalledWith('Leuven', true, false);
+  });
+
+  it('should try to create a label before adding it to a selection', function () {
+    LabelManager.create.and.returnValue($q.resolve());
+    udbApi.labelOffers.and.returnValue($q.reject());
+
+    labeller.labelOffersById(['foo', 'bar'], 'Leuven');
+    $scope.$digest();
+    expect(LabelManager.create).toHaveBeenCalledWith('Leuven', true, false);
   });
 });

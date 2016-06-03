@@ -20,7 +20,7 @@ angular
   .service('LabelManager', LabelManager);
 
 /** @ngInject */
-function LabelManager(udbApi, jobLogger, BaseJob) {
+function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   var service = this;
 
   /**
@@ -107,24 +107,24 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
 
   /**
    * @param {Object} commandInfo
-   * @return {BaseJob}
+   * @return {Promise.<BaseJob>}
    */
   function logLabelJob(commandInfo) {
     var job = new BaseJob(commandInfo.commandId);
     jobLogger.addJob(job);
 
-    return job;
+    return $q.resolve(job);
   }
 
   /**
    * @param {Object} commandInfo
-   * @return {BaseJob}
+   * @return {Promise.<BaseJob>}
    */
   function createNewLabelJob(commandInfo) {
     var job = new BaseJob(commandInfo.commandId);
     job.labelId = commandInfo.labelId;
     jobLogger.addJob(job);
 
-    return job;
+    return $q.resolve(job);
   }
 }

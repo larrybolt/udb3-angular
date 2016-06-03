@@ -12,7 +12,7 @@ angular
   .service('offerLabeller', OfferLabeller);
 
 /* @ngInject */
-function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob, $q) {
+function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob, $q, LabelManager) {
 
   var offerLabeller = this;
 
@@ -58,49 +58,81 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   /**
    * Label an event with a label
    * @param {UdbEvent|UdbPlace} offer
-   * @param {string} label
+   * @param {string} labelName
    */
-  this.label = function (offer, label) {
-    offer.label(label);
+  this.label = function (offer, labelName) {
+    offer.label(labelName);
 
-    return udbApi
-      .labelOffer(offer.apiUrl, label)
-      .then(jobCreatorFactory(OfferLabelJob, offer, label));
+    function addLabel() {
+      return udbApi
+        .labelOffer(offer.apiUrl, labelName)
+        .then(jobCreatorFactory(OfferLabelJob, offer, labelName));
+    }
+
+    return touchLabel(labelName).then(addLabel);
   };
 
   /**
    * Unlabel a label from an event
    * @param {UdbEvent|UdbPlace} offer
-   * @param {string} label
+   * @param {string} labelName
    */
-  this.unlabel = function (offer, label) {
-    offer.unlabel(label);
+  this.unlabel = function (offer, labelName) {
+    offer.unlabel(labelName);
 
     return udbApi
-      .unlabelOffer(offer.apiUrl, label)
-      .then(jobCreatorFactory(OfferLabelJob, offer, label, true));
+      .unlabelOffer(offer.apiUrl, labelName)
+      .then(jobCreatorFactory(OfferLabelJob, offer, labelName, true));
   };
 
   /**
    * @param {OfferIdentifier[]} offers
-   * @param {string} label
+   * @param {string} labelName
    */
-  this.labelOffersById = function (offers, label) {
-    return udbApi
-      .labelOffers(offers, label)
-      .then(jobCreatorFactory(OfferLabelBatchJob, offers, label));
+  this.labelOffersById = function (offers, labelName) {
+
+    function addLabel() {
+      return udbApi
+        .labelOffers(offers, labelName)
+        .then(jobCreatorFactory(OfferLabelBatchJob, offers, labelName));
+    }
+
+    return touchLabel(labelName).then(addLabel);
   };
 
   /**
    *
    * @param {string} query
-   * @param {string} label
+   * @param {string} labelName
+   * @param {Number} eventCount
    */
-  this.labelQuery = function (query, label, eventCount) {
+  this.labelQuery = function (query, labelName, eventCount) {
     eventCount = eventCount || 0;
 
-    return udbApi
-      .labelQuery(query, label)
-      .then(jobCreatorFactory(QueryLabelJob, eventCount, label));
+    function addLabel () {
+      return udbApi
+        .labelQuery(query, labelName)
+        .then(jobCreatorFactory(QueryLabelJob, eventCount, labelName));
+    }
+
+    return touchLabel(labelName).then(addLabel);
   };
+
+  /**
+   * Make sure a label is created for management.
+   *
+   * @param {string} labelName
+   * @return {Promise}
+   */
+  function touchLabel(labelName) {
+    var touched = $q.defer();
+
+    LabelManager
+      .create(labelName, true, false)
+      .finally(function () {
+        touched.resolve('touché');
+      });
+
+    return touched.promise;
+  }
 }
