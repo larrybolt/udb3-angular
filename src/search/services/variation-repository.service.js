@@ -20,11 +20,13 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   this.getPersonalVariation = function (offer) {
     var deferredVariation =  $q.defer(),
-        personalVariation = personalVariationCache.get(offer.url);
+        personalVariation = personalVariationCache.get(
+          offer['@id'].toString().split('/').pop()
+        );
 
     if (personalVariation) {
       if (personalVariation === 'no-personal-variation') {
-        deferredVariation.reject('there is no personal variation for offer with url: ' + offer.url);
+        deferredVariation.reject('there is no personal variation for offer with url: ' + offer['@id']);
       } else {
         deferredVariation.resolve(personalVariation);
       }
