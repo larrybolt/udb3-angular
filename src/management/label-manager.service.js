@@ -24,14 +24,22 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   var service = this;
 
   /**
+   * @param {uuid} labelId
+   * @return {Promise.<Label>}
+   */
+  service.get = function(labelId) {
+    return udbApi.getLabelById(labelId);
+  };
+
+  /**
    * @param {string} name
    * @param {boolean} isVisible
    * @param {boolean} isPrivate
    *
-   * @return {Promise.<Label>}
+   * @return {Promise.<BaseJob>}
    */
   service.create = function (name, isVisible, isPrivate) {
-    udbApi
+    return udbApi
       .createLabel(name, isVisible, isPrivate)
       .then(logLabelJob);
   };
@@ -39,41 +47,76 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
   /**
    *
    * @param {Label} label
-   * @return {Promise.<Label>}
+   * @return {Promise.<BaseJob>}
    */
   service.copy = function (label) {
-    udbApi
+    return udbApi
       .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
       .then(logLabelJob);
   };
 
+  /**
+   * 
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
   service.delete = function (label) {
-    udbApi
+    return udbApi
       .deleteLabel(label.id)
       .then(logLabelJob);
   };
 
+  /**
+   *
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
   service.makeInvisible = function (label) {
-    udbApi
+    return udbApi
       .updateLabel(label.id, 'MakeInvisible')
       .then(logLabelJob);
   };
+
+  /**
+   *
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
   service.makeVisible = function (label) {
-    udbApi
+    return udbApi
       .updateLabel(label.id, 'MakeVisible')
       .then(logLabelJob);
   };
+
+  /**
+   *
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
   service.makePrivate = function (label) {
-    udbApi.updateLabel(label.id, 'MakePrivate');
+    return udbApi
+      .updateLabel(label.id, 'MakePrivate')
+      .then(logLabelJob);
   };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
   service.makePublic = function (label) {
-    udbApi
+    return udbApi
       .updateLabel(label.id, 'MakePublic')
       .then(logLabelJob);
   };
 
+  /**
+   * @param {Object} commandInfo
+   * @return {BaseJob}
+   */
   function logLabelJob(commandInfo) {
     var job = new BaseJob(commandInfo.commandId);
     jobLogger.addJob(job);
+    
+    return job;
   }
 }

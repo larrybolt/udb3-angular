@@ -737,9 +737,23 @@ function UdbApi(
     ).then(returnUnwrappedData);
   };
 
+  /**
+   * @param {uuid} labelId
+   * @return {Promise}
+   */
   this.deleteLabel = function (labelId) {
     return $http
       .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {uuid} labelId
+   * @return {Promise.<Label>}
+   */
+  this.getLabelById = function (labelId) {
+    return $http
+      .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 }
