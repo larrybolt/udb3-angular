@@ -61,4 +61,14 @@ describe('Controller: event form step 2', function () {
 
     expect(stepController.periodicRangeError).toEqual(true);
   });
+
+  it('should reset both activeCalendarType and calendarType when resetting the calendar', function (){
+    EventFormData.calendarType = 'periodic';
+    EventFormData.activeCalendarType = 'periodic';
+    scope.$digest();
+    scope.resetCalendar();
+
+    expect(EventFormData.calendarType).toEqual('');
+    expect(EventFormData.activeCalendarType).toEqual('');
+  });
 });

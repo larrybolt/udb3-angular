@@ -6573,7 +6573,7 @@ function EventFormImageUploadController(
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
-  $scope.modalTitle = 'Gebruiksvoorwaarden';
+  $scope.modalTitle = 'Afbeelding toevoegen';
   $scope.description = '';
   $scope.copyright = '';
   $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');
@@ -8481,8 +8481,9 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
   /**
    * Click listener to reset the calendar. User can select a new calendar type.
    */
-  function resetCalendar() {
+  function resetCalendar () {
     EventFormData.activeCalendarType = '';
+    EventFormData.calendarType = '';
   }
 
   /**
@@ -8970,6 +8971,7 @@ function EventFormStep4Controller(
 ) {
 
   var controller = this;
+  var ignoreDuplicates = _.get(appConfig, 'offerEditor.ignoreDuplicates', false);
 
   // Scope vars.
   // main storage for event form.
@@ -9000,7 +9002,7 @@ function EventFormStep4Controller(
   /**
    * Validate date after step 4 to enter step 5.
    */
-  function validateEvent(checkDuplicates) {
+  function validateEvent() {
 
     // First check if all data is correct.
     $scope.infoMissing = false;
@@ -9031,7 +9033,7 @@ function EventFormStep4Controller(
       return;
     }
 
-    if (checkDuplicates) {
+    if (!ignoreDuplicates) {
       $scope.saving = true;
       $scope.error = false;
 
@@ -14475,16 +14477,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <div class=\"form-group\">\n" +
     "        <label>Beschrijving <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"description\" required>\n" +
-    "        <p class=\"help-block\">\n" +
-    "            Deze tekst helpt zoekmachines en gebruikers met een visuele beperking.\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
     "        <label>Copyright <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"copyright\" required>\n" +
     "        <p class=\"help-block\">\n" +
-    "          Vermeld de naam van de rechtenhoudende fotograaf.</p>\n" +
+    "            Vermeld de naam van de rechtenhoudende fotograaf. Vul alleen de naam van je eigen vereniging of organisatie in als je zelf de rechten bezit.</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <p class=\"image-copyright-agreements\">\n" +
@@ -15351,8 +15350,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "      </div>\n" +
     "      <div class=\"col-xs-12 col-md-8\">\n" +
+    "       <ul>\n" +
+    "        <li><small>Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. \"Fietsen langs kappelletjes\", \"De Sage van de Eenhoorn\")</small></li>\n" +
+    "        <li><small>Gebruik de <strong>officiële benaming</strong> voor een locatie (bv. \"Gravensteen\", \"Abdijsite Herkenrode\", \"Cultuurcentrum De Werf\")</small></li>\n" +
+    "      </ul>\n" +
+    "\n" +
     "        <p class=\"text-block\">\n" +
-    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort en bondig</strong>. Een uitgebreide beschrijving vul je in stap 5 in.\n" +
+    "          <small>Een uitgebreide beschrijving kan je in stap 5 toevoegen.</small>\n" +
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
