@@ -4,12 +4,12 @@ angular
   .module('udb.management')
   .component('udbLabelEditor', {
     templateUrl: 'templates/label-editor.html',
-    controller: LabelEditor,
+    controller: LabelEditorComponent,
     controllerAs: 'editor'
   });
 
 /** @ngInject */
-function LabelEditor(LabelManager) {
+function LabelEditorComponent(LabelManager, $q) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
@@ -18,9 +18,14 @@ function LabelEditor(LabelManager) {
   editor.rename = rename;
 
   function rename() {
+    function showRenamedLabel(jobInfo) {
+      loadLabel(jobInfo.labelId);
+    }
+
     editor.renaming = true;
     LabelManager
       .copy(editor.label)
+      .then(showRenamedLabel)
       .finally(function () {
         editor.renaming = false;
       });
@@ -41,6 +46,7 @@ function LabelEditor(LabelManager) {
 
   function loadLabel(id) {
     editor.loadingError = false;
+    editor.label = false;
     LabelManager
       .get(id)
       .then(showLabel, showLoadingError);

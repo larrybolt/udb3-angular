@@ -10459,12 +10459,12 @@ angular
   .module('udb.management')
   .component('udbLabelEditor', {
     templateUrl: 'templates/label-editor.html',
-    controller: LabelEditor,
+    controller: LabelEditorComponent,
     controllerAs: 'editor'
   });
 
 /** @ngInject */
-function LabelEditor(LabelManager) {
+function LabelEditorComponent(LabelManager, $q) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
@@ -10473,9 +10473,14 @@ function LabelEditor(LabelManager) {
   editor.rename = rename;
 
   function rename() {
+    function showRenamedLabel(jobInfo) {
+      loadLabel(jobInfo.labelId);
+    }
+
     editor.renaming = true;
     LabelManager
       .copy(editor.label)
+      .then(showRenamedLabel)
       .finally(function () {
         editor.renaming = false;
       });
@@ -10496,6 +10501,7 @@ function LabelEditor(LabelManager) {
 
   function loadLabel(id) {
     editor.loadingError = false;
+    editor.label = false;
     LabelManager
       .get(id)
       .then(showLabel, showLoadingError);
@@ -10515,7 +10521,7 @@ function LabelEditor(LabelManager) {
     var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
   }
 }
-LabelEditor.$inject = ["LabelManager"];
+LabelEditorComponent.$inject = ["LabelManager", "$q"];
 
 // Source: src/management/label-manager.service.js
 /**
@@ -10567,9 +10573,17 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
    * @return {Promise.<BaseJob>}
    */
   service.copy = function (label) {
+    function logCopyLabelJob(commandInfo) {
+      var job = new BaseJob(commandInfo.commandId);
+      job.labelId = commandInfo.labelId;
+      jobLogger.addJob(job);
+
+      return job;
+    }
+
     return udbApi
       .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
-      .then(logLabelJob);
+      .then(logCopyLabelJob);
   };
 
   /**

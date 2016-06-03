@@ -49,9 +49,17 @@ function LabelManager(udbApi, jobLogger, BaseJob) {
    * @return {Promise.<BaseJob>}
    */
   service.copy = function (label) {
+    function logCopyLabelJob(commandInfo) {
+      var job = new BaseJob(commandInfo.commandId);
+      job.labelId = commandInfo.labelId;
+      jobLogger.addJob(job);
+
+      return job;
+    }
+
     return udbApi
       .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
-      .then(logLabelJob);
+      .then(logCopyLabelJob);
   };
 
   /**
