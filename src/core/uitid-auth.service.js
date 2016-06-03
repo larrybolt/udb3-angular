@@ -12,22 +12,16 @@ angular
   .service('uitidAuth', UitidAuth);
 
 /* @ngInject */
-function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
+function UitidAuth($window, $location, appConfig, $cookieStore) {
   /**
    * Log the active user out.
    */
   this.logout = function () {
-    var logoutUrl = appConfig.baseUrl + 'uitid/logout',
-      request = $http.get(logoutUrl, {
-        withCredentials: true
-      });
-
-    request.then(function () {
-      $cookieStore.remove('user');
-      $location.path('/');
-    });
-
-    return request;
+    $cookieStore.remove('token');
+    $cookieStore.remove('user');
+    // reset url
+    $location.search('');
+    $location.path('/');
   };
 
   /**
@@ -41,6 +35,14 @@ function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
     $window.location.href = authUrl;
   };
 
+  this.setToken = function (token) {
+    $cookieStore.put('token', token);
+  };
+
+  this.getToken = function () {
+    return $cookieStore.get('token');
+  };
+
   // TODO: Have this method return a promise, an event can be broadcast to keep other components updated.
   /**
    * Returns the currently logged in user
@@ -48,5 +50,4 @@ function UitidAuth($window, $location, $http, appConfig, $cookieStore) {
   this.getUser = function () {
     return $cookieStore.get('user');
   };
-
 }

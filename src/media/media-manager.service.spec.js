@@ -1,11 +1,13 @@
 'use strict';
 
 describe('Service: Media Manager', function () {
-  var mediaManager, $httpBackend, $q, CreateImageJob;
+  var mediaManager, $q, CreateImageJob;
   var appConfig = {
     baseUrl: 'http://foo.bar/'
   };
   var jobLogger = jasmine.createSpyObj('jobLogger', ['addJob']);
+  var udbApi = jasmine.createSpyObj('udbApi', ['getMedia', 'uploadMedia']);
+  var $rootScope;
 
   beforeEach(module('udb.media', function ($provide) {
     $provide.constant('appConfig', appConfig);
@@ -14,13 +16,18 @@ describe('Service: Media Manager', function () {
         return jobLogger;
       }
     });
+    $provide.provider('udbApi', {
+      $get: function () {
+        return udbApi;
+      }
+    });
   }));
 
   beforeEach(inject(function($injector){
     mediaManager = $injector.get('MediaManager');
-    $httpBackend = $injector.get('$httpBackend');
     $q = $injector.get('$q');
     CreateImageJob = $injector.get('CreateImageJob');
+    $rootScope = $injector.get('$rootScope');
   }));
 
   it('should promise a media object when getting an image', function (done) {
@@ -47,15 +54,13 @@ describe('Service: Media Manager', function () {
       done();
     }
 
-    $httpBackend
-      .expectGET('http://foo.bar/media/some-image-id')
-      .respond(200, JSON.stringify(jsonMediaObject));
+    udbApi.getMedia.and.returnValue($q.resolve(jsonMediaObject));
 
     mediaManager
       .getImage('some-image-id')
       .then(assertMediaObject);
 
-    $httpBackend.flush();
+    $rootScope.$digest();
   });
 
   it('should log the creation of an image', function (done) {
@@ -68,14 +73,12 @@ describe('Service: Media Manager', function () {
       done();
     }
 
-    $httpBackend
-      .expectPOST('http://foo.bar/images')
-      .respond(200, {commandId: '182'});
+    udbApi.uploadMedia.and.returnValue($q.resolve({'data': {'commandId': 128}}));
 
     mediaManager
       .createImage(file, description, copyrightHolder);
 
-    $httpBackend.flush();
+    $rootScope.$digest();
     assertJobLogged();
   });
 });
