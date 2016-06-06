@@ -10496,7 +10496,7 @@ angular
   });
 
 /** @ngInject */
-function LabelEditorComponent(LabelManager, $q) {
+function LabelEditorComponent(LabelManager, $uibModal) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
@@ -10512,10 +10512,26 @@ function LabelEditorComponent(LabelManager, $q) {
     editor.renaming = true;
     LabelManager
       .copy(editor.label)
-      .then(showRenamedLabel)
+      .then(showRenamedLabel, showErrorMessage)
       .finally(function () {
         editor.renaming = false;
       });
+  }
+
+  function showErrorMessage(message) {
+    loadLabel(editor.label.id);
+    var modalInstance = $uibModal.open(
+      {
+        templateUrl: 'templates/unexpected-error-modal.html',
+        controller: 'UnexpectedErrorModalController',
+        size: 'sm',
+        resolve: {
+          errorMessage: function() {
+            return typeof message === 'string' ? message : 'Aanpassen mislukt, probeer het later opnieuw!';
+          }
+        }
+      }
+    );
   }
 
   function loadLabelFromParams(next) {
@@ -10546,14 +10562,16 @@ function LabelEditorComponent(LabelManager, $q) {
   function updateVisibility () {
     var isVisible = editor.label.isVisible;
     var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
+    jobPromise.catch(showErrorMessage);
   }
 
   function updatePrivacy () {
     var isPrivate = editor.label.isPrivate;
     var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
+    jobPromise.catch(showErrorMessage);
   }
 }
-LabelEditorComponent.$inject = ["LabelManager", "$q"];
+LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
 
 // Source: src/management/label-manager.service.js
 /**
