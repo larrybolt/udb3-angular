@@ -2551,6 +2551,15 @@ UnexpectedErrorModalController.$inject = ["$scope", "$uibModalInstance", "errorM
  */
 
 /**
+ * @typedef {Object} ApiProblem
+ * @property {URL} type
+ * @property {string} title
+ * @property {string} detail
+ * @property {URL} instance
+ * @property {Number} status
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -3234,7 +3243,7 @@ function UdbApi(
    * @param {boolean} isVisible
    * @param {boolean} isPrivate
    * @param {string}  [parentId]
-   * @return {Promise.<Object>}
+   * @return {Promise.<Object|ApiProblem>}
    */
   this.createLabel = function (name, isVisible, isPrivate, parentId) {
     var labelData = {
@@ -3249,29 +3258,30 @@ function UdbApi(
 
     return $http
       .post(appConfig.baseUrl + 'label', labelData, defaultApiConfig)
-      .then(returnUnwrappedData);
+      .then(returnUnwrappedData, returnApiProblem);
   };
 
   /**
    * @param {string} labelId
    * @param {string} command
+   * @return {Promise.<Object|ApiProblem>}
    */
   this.updateLabel = function (labelId, command) {
     return $http.patch(
       appConfig.baseUrl + 'label/' + labelId,
       {'command': command},
       defaultApiConfig
-    ).then(returnUnwrappedData);
+    ).then(returnUnwrappedData, returnApiProblem);
   };
 
   /**
    * @param {uuid} labelId
-   * @return {Promise}
+   * @return {Promise.<Object|ApiProblem>}
    */
   this.deleteLabel = function (labelId) {
     return $http
       .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
-      .then(returnUnwrappedData);
+      .then(returnUnwrappedData, returnApiProblem);
   };
 
   /**
@@ -3283,6 +3293,29 @@ function UdbApi(
       .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
+
+  /**
+   * @param {Object} errorResponse
+   * @return {Promise.<ApiProblem>}
+   */
+  function returnApiProblem(errorResponse) {
+    if (errorResponse) {
+      // If the error response does not contain the proper data, make some up generic problem.
+      var error = errorResponse.data ? errorResponse.data : {
+        type: appConfig.baseUrl + 'problem',
+        title: 'Something went wrong.',
+        detail: 'We failed to perform the requested action!'
+      };
+      var problem = {
+        type: new URL(error.type),
+        title: error.title,
+        detail: error.detail,
+        status: errorResponse.status
+      };
+
+      return $q.reject(problem);
+    }
+  }
 }
 UdbApi.$inject = ["$q", "$http", "appConfig", "$cookieStore", "uitidAuth", "$cacheFactory", "UdbEvent", "UdbPlace", "UdbOrganizer", "Upload"];
 
@@ -10512,13 +10545,16 @@ function LabelEditorComponent(LabelManager, $uibModal) {
     editor.renaming = true;
     LabelManager
       .copy(editor.label)
-      .then(showRenamedLabel, showErrorMessage)
+      .then(showRenamedLabel, showProblem)
       .finally(function () {
         editor.renaming = false;
       });
   }
 
-  function showErrorMessage(message) {
+  /**
+   * @param {ApiProblem} problem
+   */
+  function showProblem(problem) {
     loadLabel(editor.label.id);
     var modalInstance = $uibModal.open(
       {
@@ -10527,7 +10563,7 @@ function LabelEditorComponent(LabelManager, $uibModal) {
         size: 'sm',
         resolve: {
           errorMessage: function() {
-            return typeof message === 'string' ? message : 'Aanpassen mislukt, probeer het later opnieuw!';
+            return problem.title + ' ' + problem.detail;
           }
         }
       }
@@ -10562,13 +10598,13 @@ function LabelEditorComponent(LabelManager, $uibModal) {
   function updateVisibility () {
     var isVisible = editor.label.isVisible;
     var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
-    jobPromise.catch(showErrorMessage);
+    jobPromise.catch(showProblem);
   }
 
   function updatePrivacy () {
     var isPrivate = editor.label.isPrivate;
     var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
-    jobPromise.catch(showErrorMessage);
+    jobPromise.catch(showProblem);
   }
 }
 LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
@@ -10602,7 +10638,14 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
    * @return {Promise.<Label>}
    */
   service.get = function(labelId) {
-    return udbApi.getLabelById(labelId);
+    return $q.resolve({
+      id: labelId,
+      name: labelId,
+      isVisible: true,
+      isPrivate: false
+    });
+
+    // return udbApi.getLabelById(labelId);
   };
 
   /**

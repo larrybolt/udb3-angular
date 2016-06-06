@@ -24,6 +24,15 @@
  */
 
 /**
+ * @typedef {Object} ApiProblem
+ * @property {URL} type
+ * @property {string} title
+ * @property {string} detail
+ * @property {URL} instance
+ * @property {Number} status
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -707,7 +716,7 @@ function UdbApi(
    * @param {boolean} isVisible
    * @param {boolean} isPrivate
    * @param {string}  [parentId]
-   * @return {Promise.<Object>}
+   * @return {Promise.<Object|ApiProblem>}
    */
   this.createLabel = function (name, isVisible, isPrivate, parentId) {
     var labelData = {
@@ -722,29 +731,30 @@ function UdbApi(
 
     return $http
       .post(appConfig.baseUrl + 'label', labelData, defaultApiConfig)
-      .then(returnUnwrappedData);
+      .then(returnUnwrappedData, returnApiProblem);
   };
 
   /**
    * @param {string} labelId
    * @param {string} command
+   * @return {Promise.<Object|ApiProblem>}
    */
   this.updateLabel = function (labelId, command) {
     return $http.patch(
       appConfig.baseUrl + 'label/' + labelId,
       {'command': command},
       defaultApiConfig
-    ).then(returnUnwrappedData);
+    ).then(returnUnwrappedData, returnApiProblem);
   };
 
   /**
    * @param {uuid} labelId
-   * @return {Promise}
+   * @return {Promise.<Object|ApiProblem>}
    */
   this.deleteLabel = function (labelId) {
     return $http
       .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
-      .then(returnUnwrappedData);
+      .then(returnUnwrappedData, returnApiProblem);
   };
 
   /**
@@ -756,4 +766,27 @@ function UdbApi(
       .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
+
+  /**
+   * @param {Object} errorResponse
+   * @return {Promise.<ApiProblem>}
+   */
+  function returnApiProblem(errorResponse) {
+    if (errorResponse) {
+      // If the error response does not contain the proper data, make some up generic problem.
+      var error = errorResponse.data ? errorResponse.data : {
+        type: appConfig.baseUrl + 'problem',
+        title: 'Something went wrong.',
+        detail: 'We failed to perform the requested action!'
+      };
+      var problem = {
+        type: new URL(error.type),
+        title: error.title,
+        detail: error.detail,
+        status: errorResponse.status
+      };
+
+      return $q.reject(problem);
+    }
+  }
 }

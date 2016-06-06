@@ -25,13 +25,16 @@ function LabelEditorComponent(LabelManager, $uibModal) {
     editor.renaming = true;
     LabelManager
       .copy(editor.label)
-      .then(showRenamedLabel, showErrorMessage)
+      .then(showRenamedLabel, showProblem)
       .finally(function () {
         editor.renaming = false;
       });
   }
 
-  function showErrorMessage(message) {
+  /**
+   * @param {ApiProblem} problem
+   */
+  function showProblem(problem) {
     loadLabel(editor.label.id);
     var modalInstance = $uibModal.open(
       {
@@ -40,7 +43,7 @@ function LabelEditorComponent(LabelManager, $uibModal) {
         size: 'sm',
         resolve: {
           errorMessage: function() {
-            return typeof message === 'string' ? message : 'Aanpassen mislukt, probeer het later opnieuw!';
+            return problem.title + ' ' + problem.detail;
           }
         }
       }
@@ -75,12 +78,12 @@ function LabelEditorComponent(LabelManager, $uibModal) {
   function updateVisibility () {
     var isVisible = editor.label.isVisible;
     var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
-    jobPromise.catch(showErrorMessage);
+    jobPromise.catch(showProblem);
   }
 
   function updatePrivacy () {
     var isPrivate = editor.label.isPrivate;
     var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
-    jobPromise.catch(showErrorMessage);
+    jobPromise.catch(showProblem);
   }
 }
