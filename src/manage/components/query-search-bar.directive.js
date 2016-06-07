@@ -15,10 +15,11 @@ function udbQuerySearchBar($rootScope) {
   return {
     templateUrl: 'templates/query-search-bar.directive.html',
     restrict: 'E',
-    link: function postLink(scope) {
+    link: function postLink(scope, element, attributes) {
 
       var searchBar = {
-        queryString: ''
+        queryString: '',
+        label: attributes.qsbLabel
       };
 
       /**

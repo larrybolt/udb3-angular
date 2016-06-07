@@ -10485,10 +10485,11 @@ function udbQuerySearchBar($rootScope) {
   return {
     templateUrl: 'templates/query-search-bar.directive.html',
     restrict: 'E',
-    link: function postLink(scope, attributes) {
-      console.log(attributes.qsbLabel);
+    link: function postLink(scope, element, attributes) {
+
       var searchBar = {
-        queryString: ''
+        queryString: '',
+        label: attributes.qsbLabel
       };
 
       /**
@@ -16832,7 +16833,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "<form class=\"form-inline\" role=\"search\"\n" +
     "      ng-class=\"{'has-errors': qsb.hasErrors, 'is-editing': qsb.isEditing}\">\n" +
     "  <div class=\"form-group\">\n" +
-    "    <label for=\"user-search-input\">Zoeken op e-mail</label>\n" +
+    "    <label for=\"user-search-input\">{{ qsb.label }}</label>\n" +
     "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"qsb.queryString\">\n" +
     "    <i ng-show=\"qsb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
     "       tooltip-placement=\"bottom\" uib-tooltip=\"{{qsb.errors}}\"></i>\n" +
@@ -16899,7 +16900,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    Gebruikers\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
-    "    <udb-query-search-bar></udb-query-search-bar>\n" +
+    "    <udb-query-search-bar qsb-label=\"Zoeken op e-mail\"></udb-query-search-bar>\n" +
     "</div>\n" +
     "<div class=\"text-center\" ng-show=\"ulc.loading\">\n" +
     "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
