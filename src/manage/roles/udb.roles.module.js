@@ -10,8 +10,8 @@ angular
   .module('udb.manage.roles', [
     'ngSanitize',
     'ui.bootstrap',
-    'udb.core',
-    'udb.manage'
+    'udb.manage',
+    'udb.manage.users'
   ])
   .component('rolesComponent', {
     controller: 'RolesListController',

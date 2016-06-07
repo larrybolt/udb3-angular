@@ -23,8 +23,6 @@ angular
     'udb.saved-searches',
     'udb.media',
     'udb.manage',
-    'udb.manage.users',
-    'udb.manage.roles',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
@@ -233,12 +231,38 @@ angular
 angular
   .module('udb.manage.users', [
     'ngSanitize',
-    'ui.bootstrap'
+    'ui.bootstrap',
+    'udb.manage',
+    'udb.manage.roles'
   ])
   .component('usersComponent', {
     controller: 'UsersListController',
     controllerAs: 'ulc',
     templateUrl: 'templates/users-list.html',
+    $canActivate: isAuthorized
+  });
+
+function isAuthorized(authorizationService) {
+  return authorizationService.isLoggedIn();
+}
+isAuthorized.$inject = ['authorizationService'];
+/**
+ * @ngdoc module
+ * @name udb.manage.roles
+ * @description
+ * The udb manage roles module
+ */
+angular
+  .module('udb.manage.roles', [
+    'ngSanitize',
+    'ui.bootstrap',
+    'udb.manage',
+    'udb.manage.users'
+  ])
+  .component('rolesComponent', {
+    controller: 'RolesListController',
+    controllerAs: 'rlc',
+    templateUrl: 'templates/roles-list.html',
     $canActivate: isAuthorized
   });
 
@@ -10461,8 +10485,8 @@ function udbQuerySearchBar($rootScope) {
   return {
     templateUrl: 'templates/query-search-bar.directive.html',
     restrict: 'E',
-    link: function postLink(scope) {
-
+    link: function postLink(scope, attributes) {
+      console.log(attributes.qsbLabel);
       var searchBar = {
         queryString: ''
       };
@@ -10796,7 +10820,7 @@ angular
   .controller('RolesListController', RolesListController);
 
 /* @ngInject */
-function RolesListController($scope, $rootScope, RolesService, QuerySearchResultViewer) {
+function RolesListController($scope, $rootScope, RoleService, QuerySearchResultViewer) {
   var rlc = this;
   rlc.loading = false;
   rlc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
@@ -10816,7 +10840,7 @@ function RolesListController($scope, $rootScope, RolesService, QuerySearchResult
       rlc.pagedItemViewer.currentPage = 1;
     }
     rlc.query = query;
-    RolesService
+    RoleService
       .find(rlc.query, rlc.pagedItemViewer.currentPage)
       .then(setRolesResults);
   };
@@ -10833,7 +10857,7 @@ function RolesListController($scope, $rootScope, RolesService, QuerySearchResult
 
   $scope.$on('$destroy', rolesSearchSubmittedListener);
 }
-RolesListController.$inject = ["$scope", "$rootScope", "RolesService", "QuerySearchResultViewer"];
+RolesListController.$inject = ["$scope", "$rootScope", "RoleService", "QuerySearchResultViewer"];
 
 // Source: src/manage/users/user.service.js
 /**
@@ -16823,7 +16847,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    Rollen\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
-    "    <udb-query-search-bar></udb-query-search-bar>\n" +
+    "    <udb-query-search-bar qsb-label=\"Zoeken op rolnaam\"></udb-query-search-bar>\n" +
     "</div>\n" +
     "<div class=\"text-center\" ng-show=\"rlc.loading\">\n" +
     "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
@@ -16841,7 +16865,17 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "            <tbody>\n" +
     "                <tr ng-repeat=\"rol in rlc.roles\">\n" +
     "                    <td>{{ rol.name }}</td>\n" +
-    "                    <td><a href=\"#\">Bewerken</a></td>\n" +
+    "                    <td>\n" +
+    "                        <div class=\"btn-group\">\n" +
+    "                            <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
+    "                                Bewerken <span class=\"caret\"></span>\n" +
+    "                            </button>\n" +
+    "                            <ul class=\"dropdown-menu\">\n" +
+    "                                <li><a href=\"#\">Bewerken</a></li>\n" +
+    "                                <li><a href=\"#\">Verwijderen</a></li>\n" +
+    "                            </ul>\n" +
+    "                        </div>\n" +
+    "                    </td>\n" +
     "                </tr>\n" +
     "            </tbody>\n" +
     "        </table>\n" +

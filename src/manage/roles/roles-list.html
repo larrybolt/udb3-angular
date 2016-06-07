@@ -20,7 +20,17 @@
             <tbody>
                 <tr ng-repeat="rol in rlc.roles">
                     <td>{{ rol.name }}</td>
-                    <td><a href="#">Bewerken</a></td>
+                    <td>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Bewerken <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">Bewerken</a></li>
+                                <li><a href="#">Verwijderen</a></li>
+                            </ul>
+                        </div>
+                    </td>
                 </tr>
             </tbody>
         </table>

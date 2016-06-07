@@ -11,7 +11,7 @@ angular
   .controller('RolesListController', RolesListController);
 
 /* @ngInject */
-function RolesListController($scope, $rootScope, RolesService, QuerySearchResultViewer) {
+function RolesListController($scope, $rootScope, RoleService, QuerySearchResultViewer) {
   var rlc = this;
   rlc.loading = false;
   rlc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
@@ -31,7 +31,7 @@ function RolesListController($scope, $rootScope, RolesService, QuerySearchResult
       rlc.pagedItemViewer.currentPage = 1;
     }
     rlc.query = query;
-    RolesService
+    RoleService
       .find(rlc.query, rlc.pagedItemViewer.currentPage)
       .then(setRolesResults);
   };

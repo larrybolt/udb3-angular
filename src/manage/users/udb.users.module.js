@@ -9,7 +9,9 @@
 angular
   .module('udb.manage.users', [
     'ngSanitize',
-    'ui.bootstrap'
+    'ui.bootstrap',
+    'udb.manage',
+    'udb.manage.roles'
   ])
   .component('usersComponent', {
     controller: 'UsersListController',
