@@ -31,7 +31,7 @@ function udbQuerySearchBar($rootScope) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        $rootScope.$emit('querySearchSubmitted', {query: query});
+        $rootScope.$emit(attributes.qsbEmit, {query: query});
       };
 
       scope.qsb = searchBar;

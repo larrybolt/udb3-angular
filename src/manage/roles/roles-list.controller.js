@@ -38,7 +38,7 @@ function RolesListController($scope, $rootScope, RoleService, QuerySearchResultV
 
   rlc.findRoles();
 
-  var rolesSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
+  var rolesSearchSubmittedListener = $rootScope.$on('roleSearchSubmitted', function(event, args) {
     rlc.findRoles(args.query);
   });
 

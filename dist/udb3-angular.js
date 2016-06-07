@@ -10501,7 +10501,7 @@ function udbQuerySearchBar($rootScope) {
         var query = typeof queryString !== 'undefined' ? queryString : searchBar.queryString;
 
         searchBar.queryString = query;
-        $rootScope.$emit('querySearchSubmitted', {query: query});
+        $rootScope.$emit(attributes.qsbEmit, {query: query});
       };
 
       scope.qsb = searchBar;
@@ -10848,7 +10848,7 @@ function RolesListController($scope, $rootScope, RoleService, QuerySearchResultV
 
   rlc.findRoles();
 
-  var rolesSearchSubmittedListener = $rootScope.$on('userSearchSubmitted', function(event, args) {
+  var rolesSearchSubmittedListener = $rootScope.$on('roleSearchSubmitted', function(event, args) {
     rlc.findRoles(args.query);
   });
 
@@ -16848,7 +16848,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    Rollen\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
-    "    <udb-query-search-bar qsb-label=\"Zoeken op rolnaam\"></udb-query-search-bar>\n" +
+    "    <udb-query-search-bar qsb-label=\"Zoeken op rolnaam\" qsb-emit=\"roleSearchSubmitted\"></udb-query-search-bar>\n" +
     "</div>\n" +
     "<div class=\"text-center\" ng-show=\"rlc.loading\">\n" +
     "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
@@ -16900,7 +16900,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    Gebruikers\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
-    "    <udb-query-search-bar qsb-label=\"Zoeken op e-mail\"></udb-query-search-bar>\n" +
+    "    <udb-query-search-bar qsb-label=\"Zoeken op e-mail\" qsb-emit=\"userSearchSubmitted\"></udb-query-search-bar>\n" +
     "</div>\n" +
     "<div class=\"text-center\" ng-show=\"ulc.loading\">\n" +
     "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
