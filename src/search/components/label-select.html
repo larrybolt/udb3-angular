@@ -1,0 +1,19 @@
+<ui-select multiple
+           tagging="select.createLabel"
+           tagging-label="false"
+           ng-model="select.labels"
+           reset-search-input="true"
+           tagging-tokens="ENTER|;"
+           on-select="select.labelAdded({label: $item})"
+           on-remove="select.labelRemoved({label: $item})">
+    <ui-select-match placeholder="Voeg een label toe...">{{$item.name}}</ui-select-match>
+    <ui-select-choices repeat="label in select.availableLabels track by label.name"
+                       refresh="select.suggestLabels($select.search)"
+                       refresh-delay="300"
+                       minimum-input-length="1">
+        <div>
+            <span ng-bind-html="label.name | highlight: $select.search"></span>
+            <span ng-if="!label.id"> (nieuw label toevoegen)</span>
+        </div>
+    </ui-select-choices>
+</ui-select>

@@ -768,6 +768,27 @@ function UdbApi(
   };
 
   /**
+   * @param {string} query
+   *  Matches case-insensitive and any part of a label.
+   * @param {Number} [limit]
+   *  The limit of results per page.
+   * @param {Number} [start]
+   * @return {Promise.<PagedCollection>}
+   */
+  this.findLabels = function (query, limit, start) {
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    requestConfig.params = {
+      query: query,
+      limit: limit ? limit : 30,
+      start: start ? start : 0
+    };
+
+    return $http
+      .get(appConfig.baseUrl + 'labels', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
    * @param {Object} errorResponse
    * @return {Promise.<ApiProblem>}
    */

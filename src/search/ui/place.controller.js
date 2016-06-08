@@ -33,7 +33,6 @@ function PlaceController(
     {'lang': 'de'}
   ];
 
-  controller.availableLabels = offerLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -44,7 +43,6 @@ function PlaceController(
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;
         cachedPlace.updateTranslationState();
-        controller.availableLabels = _.union(cachedPlace.labels, offerLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
         controller.fetching = false;
@@ -144,21 +142,27 @@ function PlaceController(
   }
 
   // Labelling
+  /**
+   * @param {Label} newLabel
+   */
   controller.labelAdded = function (newLabel) {
     var similarLabel = _.find(cachedPlace.labels, function (label) {
-      return newLabel.toUpperCase() === label.toUpperCase();
+      return newLabel.name.toUpperCase() === label.toUpperCase();
     });
     if (similarLabel) {
       $scope.$apply(function () {
         $scope.event.labels = angular.copy(cachedPlace.labels);
       });
-      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      offerLabeller.label(cachedPlace, newLabel);
+      offerLabeller.label(cachedPlace, newLabel.name);
     }
   };
 
+  /**
+   * @param {Label} label
+   */
   controller.labelRemoved = function (label) {
-    offerLabeller.unlabel(cachedPlace, label);
+    offerLabeller.unlabel(cachedPlace, label.name);
   };
 }

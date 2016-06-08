@@ -17,13 +17,15 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   var offerLabeller = this;
 
   // keep a cache of all the recently used labels
-  offerLabeller.recentLabels = ['some', 'recent', 'label'];
+  offerLabeller.recentLabels = [];
 
   function updateRecentLabels() {
     udbApi
       .getRecentLabels()
-      .then(function (labels) {
-        offerLabeller.recentLabels = labels;
+      .then(function (labelNames) {
+        offerLabeller.recentLabels = _.map(labelNames, function (labelName) {
+          return {name: labelName, id: labelName};
+        });
       });
   }
 

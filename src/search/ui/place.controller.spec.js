@@ -98,7 +98,7 @@ describe('Controller: Place', function() {
   });
 
   it('should trigger an API label action when adding a label', function () {
-    var label = 'some other label';
+    var label = {name:'some other label'};
     deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
     $scope.$digest();
 
@@ -107,7 +107,7 @@ describe('Controller: Place', function() {
   });
 
   it('should prevent any duplicate labels and warn the user when trying to add one', function () {
-    var label = 'Some Label';
+    var label = {name:'Some Label'};
     deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
     $scope.$digest();
 

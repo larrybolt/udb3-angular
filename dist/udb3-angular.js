@@ -3295,6 +3295,27 @@ function UdbApi(
   };
 
   /**
+   * @param {string} query
+   *  Matches case-insensitive and any part of a label.
+   * @param {Number} [limit]
+   *  The limit of results per page.
+   * @param {Number} [start]
+   * @return {Promise.<PagedCollection>}
+   */
+  this.findLabels = function (query, limit, start) {
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    requestConfig.params = {
+      query: query,
+      limit: limit ? limit : 30,
+      start: start ? start : 0
+    };
+
+    return $http
+      .get(appConfig.baseUrl + 'labels', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
    * @param {Object} errorResponse
    * @return {Promise.<ApiProblem>}
    */
@@ -5471,13 +5492,15 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   var offerLabeller = this;
 
   // keep a cache of all the recently used labels
-  offerLabeller.recentLabels = ['some', 'recent', 'label'];
+  offerLabeller.recentLabels = [];
 
   function updateRecentLabels() {
     udbApi
       .getRecentLabels()
-      .then(function (labels) {
-        offerLabeller.recentLabels = labels;
+      .then(function (labelNames) {
+        offerLabeller.recentLabels = _.map(labelNames, function (labelName) {
+          return {name: labelName, id: labelName};
+        });
       });
   }
 
@@ -10649,6 +10672,31 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   };
 
   /**
+   * @param {string} labelName
+   * @return {Promise.<Label[]>}
+   */
+  service.getSuggestions = function (labelName) {
+    /** @param {PagedCollection} pagedSearchResults */
+    function returnSimilarLabels(pagedSearchResults) {
+      return pagedSearchResults.member;
+    }
+
+    function returnRecentLabels() {
+      return udbApi
+        .getRecentLabels()
+        .then(function (labelNames) {
+          return _.map(labelNames, function (labelName) {
+            return {name: labelName, id: labelName};
+          });
+        });
+    }
+
+    return udbApi
+      .findLabels(labelName, 10)
+      .then(returnSimilarLabels, returnRecentLabels);
+  };
+
+  /**
    * @param {string} name
    * @param {boolean} isVisible
    * @param {boolean} isPrivate
@@ -11430,6 +11478,51 @@ function udbEventLink() {
 
   return eventLinkDirective;
 }
+
+// Source: src/search/components/label-select.component.js
+angular
+  .module('udb.search')
+  .component('udbLabelSelect', {
+    templateUrl: 'templates/label-select.html',
+    controller: LabelSelectComponent,
+    controllerAs: 'select',
+    bindings: {
+      offer: '<',
+      labelAdded: '&',
+      labelRemoved: '&'
+    }
+  });
+
+/** @ngInject */
+function LabelSelectComponent(LabelManager) {
+  var select = this;
+  select.availableLabels = [];
+  select.suggestLabels = suggestLabels;
+  select.labels = _.map(select.offer.labels, function (labelName) {
+    return {name:labelName};
+  });
+  select.createLabel = function(labelName) {
+    return {name:labelName};
+  };
+
+  function suggestLabels(name) {
+    function setAvailableLabels(labels) {
+      var newLabel = {name: name};
+      select.availableLabels = _.chain(labels)
+        .union([newLabel])
+        .reject(function(label) {
+          return _.find(select.labels, {'name': label.name});
+        })
+        .uniq('name')
+        .value();
+    }
+
+    LabelManager
+      .getSuggestions(name)
+      .then(setAvailableLabels);
+  }
+}
+LabelSelectComponent.$inject = ["LabelManager"];
 
 // Source: src/search/components/query-editor-daterangepicker.directive.js
 /**
@@ -13547,7 +13640,6 @@ function PlaceController(
     {'lang': 'de'}
   ];
 
-  controller.availableLabels = offerLabeller.recentLabels;
   initController();
 
   function initController() {
@@ -13558,7 +13650,6 @@ function PlaceController(
       placePromise.then(function (placeObject) {
         cachedPlace = placeObject;
         cachedPlace.updateTranslationState();
-        controller.availableLabels = _.union(cachedPlace.labels, offerLabeller.recentLabels);
 
         $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
         controller.fetching = false;
@@ -13658,22 +13749,28 @@ function PlaceController(
   }
 
   // Labelling
+  /**
+   * @param {Label} newLabel
+   */
   controller.labelAdded = function (newLabel) {
     var similarLabel = _.find(cachedPlace.labels, function (label) {
-      return newLabel.toUpperCase() === label.toUpperCase();
+      return newLabel.name.toUpperCase() === label.toUpperCase();
     });
     if (similarLabel) {
       $scope.$apply(function () {
         $scope.event.labels = angular.copy(cachedPlace.labels);
       });
-      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      offerLabeller.label(cachedPlace, newLabel);
+      offerLabeller.label(cachedPlace, newLabel.name);
     }
   };
 
+  /**
+   * @param {Label} label
+   */
   controller.labelRemoved = function (label) {
-    offerLabeller.unlabel(cachedPlace, label);
+    offerLabeller.unlabel(cachedPlace, label.name);
   };
 }
 PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window"];
@@ -16765,6 +16862,29 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
+  $templateCache.put('templates/label-select.html',
+    "<ui-select multiple\n" +
+    "           tagging=\"select.createLabel\"\n" +
+    "           tagging-label=\"false\"\n" +
+    "           ng-model=\"select.labels\"\n" +
+    "           reset-search-input=\"true\"\n" +
+    "           tagging-tokens=\"ENTER|;\"\n" +
+    "           on-select=\"select.labelAdded({label: $item})\"\n" +
+    "           on-remove=\"select.labelRemoved({label: $item})\">\n" +
+    "    <ui-select-match placeholder=\"Voeg een label toe...\">{{$item.name}}</ui-select-match>\n" +
+    "    <ui-select-choices repeat=\"label in select.availableLabels track by label.name\"\n" +
+    "                       refresh=\"select.suggestLabels($select.search)\"\n" +
+    "                       refresh-delay=\"300\"\n" +
+    "                       minimum-input-length=\"1\">\n" +
+    "        <div>\n" +
+    "            <span ng-bind-html=\"label.name | highlight: $select.search\"></span>\n" +
+    "            <span ng-if=\"!label.id\"> (nieuw label toevoegen)</span>\n" +
+    "        </div>\n" +
+    "    </ui-select-choices>\n" +
+    "</ui-select>"
+  );
+
+
   $templateCache.put('templates/query-editor-daterangepicker.directive.html',
     "<div>\n" +
     "  <p class=\"input-group\" ng-hide=\"field.transformer === '<'\">\n" +
@@ -17373,14 +17493,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
     "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
-    "            <ui-select multiple tagging tagging-label=\"(label toevoegen)\" ng-model=\"event.labels\"\n" +
-    "                       reset-search-input=\"true\" tagging-tokens=\"ENTER|;\"\n" +
-    "                       on-select=\"placeCtrl.labelAdded($item)\" on-remove=\"placeCtrl.labelRemoved($item)\">\n" +
-    "              <ui-select-match placeholder=\"Voeg een label toe...\">{{$item}}</ui-select-match>\n" +
-    "              <ui-select-choices repeat=\"label in availableLabels\">\n" +
-    "                <div ng-bind-html=\"label | highlight: $select.search\"></div>\n" +
-    "              </ui-select-choices>\n" +
-    "            </ui-select>\n" +
+    "          <udb-label-select offer=\"event\"\n" +
+    "                            label-added=\"placeCtrl.labelAdded(label)\"\n" +
+    "                            label-removed=\"placeCtrl.labelRemoved(label)\">\n" +
+    "          </udb-label-select>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
