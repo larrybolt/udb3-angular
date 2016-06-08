@@ -14,7 +14,7 @@ angular
 function udbDashboardEventItem() {
   var dashboardEventItemDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/dashboard-item.directive.html'
   };

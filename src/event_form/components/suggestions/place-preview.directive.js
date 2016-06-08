@@ -14,7 +14,7 @@ angular
 function udbPlacePreview() {
   var placePreviewDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place-preview.directive.html'
   };

@@ -14,7 +14,7 @@ angular
 function udbEventSuggestion() {
   var eventSuggestionDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-suggestion.directive.html'
   };

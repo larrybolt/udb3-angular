@@ -4,7 +4,7 @@
  * @ngdoc directive
  * @name udb.search.controller:OfferController
  * @description
- * # EventController
+ * # OfferController
  */
 angular
   .module('udb.search')
@@ -18,13 +18,15 @@ function OfferController(
   EventTranslationState,
   offerTranslator,
   offerLabeller,
-  $window
+  $window,
+  offerEditor,
+  variationRepository,
+  $q
 ) {
   var controller = this;
-  /* @type {UdbEvent|UdbPlace} */
   var cachedOffer;
-
   var defaultLanguage = 'nl';
+
   controller.translation = false;
   controller.activeLanguage = defaultLanguage;
   controller.languageSelector = [
@@ -33,9 +35,7 @@ function OfferController(
     {'lang': 'de'}
   ];
 
-  controller.initialized = initController();
-
-  function initController() {
+  controller.init = function () {
     if (!$scope.event.title) {
       controller.fetching = true;
 
@@ -54,18 +54,36 @@ function OfferController(
     } else {
       controller.fetching = false;
     }
+  };
 
-    function watchLabels() {
-      $scope.$watch(function () {
-        return cachedOffer.labels;
-      }, function (labels) {
-        $scope.event.labels = angular.copy(labels);
-      });
+  // initialize controller and take optional event actions
+  $q.when(controller.init())
+    .then(ifOfferIsEvent)
+    .then(translateLocation)
+    .then(fetchPersonalVariation)
+    .finally(function () {
+      controller.editable = true;
+    });
+
+  function ifOfferIsEvent(offer) {
+    if (offer && $scope.event.url.split('/').shift() === 'event') {
+      return $q.resolve(offer);
+    } else {
+      return $q.reject();
     }
   }
 
+  function watchLabels() {
+    $scope.$watch(function () {
+      return cachedOffer.labels;
+    }, function (labels) {
+      $scope.event.labels = angular.copy(labels);
+    });
+  }
+
   controller.hasActiveTranslation = function () {
-    return cachedOffer && cachedOffer.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
+    var offer = cachedOffer;
+    return offer && offer.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
   };
 
   controller.getLanguageTranslationIcon = function (lang) {
@@ -135,11 +153,9 @@ function OfferController(
         udbProperty = apiProperty || property;
 
     if (translation && translation !== cachedOffer[property][language]) {
-      var translationPromise = offerTranslator.translateProperty(cachedOffer, udbProperty, language, translation);
-
-      translationPromise.then(function () {
-        cachedOffer.updateTranslationState();
-      });
+      offerTranslator
+        .translateProperty(cachedOffer, udbProperty, language, translation)
+        .then(cachedOffer.updateTranslationState);
     }
   }
 
@@ -166,5 +182,36 @@ function OfferController(
    */
   controller.labelRemoved = function (label) {
     offerLabeller.unlabel(cachedOffer, label.name);
+  };
+
+  function fetchPersonalVariation(event) {
+    return variationRepository
+      .getPersonalVariation(event)
+      .then(function (personalVariation) {
+        $scope.event.description = personalVariation.description[defaultLanguage];
+        return personalVariation;
+      });
+  }
+
+  function translateLocation(event) {
+    if ($scope.event.location) {
+      $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
+    }
+    return $q.resolve(event);
+  }
+
+  // Editing
+  controller.updateDescription = function (description) {
+    if ($scope.event.description !== description) {
+      var updatePromise = offerEditor.editDescription(cachedOffer, description);
+
+      updatePromise.finally(function () {
+        if (!description) {
+          $scope.event.description = cachedOffer.description[defaultLanguage];
+        }
+      });
+
+      return updatePromise;
+    }
   };
 }

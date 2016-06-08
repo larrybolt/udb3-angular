@@ -4289,7 +4289,7 @@ angular
 function udbDashboardEventItem() {
   var dashboardEventItemDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/dashboard-item.directive.html'
   };
@@ -4312,7 +4312,7 @@ angular
 function udbDashboardPlaceItem() {
   var dashboardPlaceItemDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/dashboard-item.directive.html'
   };
@@ -7303,7 +7303,7 @@ angular
 function udbEventPreview() {
   var eventPreviewDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-preview.directive.html'
   };
@@ -7326,7 +7326,7 @@ angular
 function udbEventSuggestion() {
   var eventSuggestionDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-suggestion.directive.html'
   };
@@ -7349,7 +7349,7 @@ angular
 function udbPlacePreview() {
   var placePreviewDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place-preview.directive.html'
   };
@@ -7372,7 +7372,7 @@ angular
 function udbPlaceSuggestion() {
   var placeSuggestionDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place-suggestion.directive.html'
   };
@@ -11424,7 +11424,7 @@ angular
 function udbEventLink() {
   var eventLinkDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-link.directive.html'
   };
@@ -13336,78 +13336,6 @@ angular
   }
 );
 
-// Source: src/search/ui/event.controller.js
-/**
- * @ngdoc directive
- * @name udb.search.controller:EventController
- * @description
- * # EventController
- */
-angular
-  .module('udb.search')
-  .controller('EventController', EventController);
-
-/* @ngInject */
-function EventController(
-  offerEditor,
-  variationRepository,
-  $controller,
-  $scope,
-  $q,
-  jsonLDLangFilter
-) {
-  angular.extend(this, $controller('OfferController', {$scope: $scope}));
-  var offerController = this;
-  var defaultLanguage = 'nl';
-  /* @type {UdbEvent} */
-  var cachedEvent;
-
-  $q.when(offerController.initialized)
-    .then(cacheEvent)
-    .then(translateLocation)
-    .then(fetchPersonalVariation)
-    .finally(function () {
-      offerController.editable = true;
-    });
-
-  function cacheEvent(event) {
-    cachedEvent = event;
-    $q.resolve(event);
-  }
-
-  function fetchPersonalVariation(event) {
-    return variationRepository
-      .getPersonalVariation(event)
-      .then(function (personalVariation) {
-        $scope.event.description = personalVariation.description[defaultLanguage];
-        return personalVariation;
-      });
-  }
-
-  function translateLocation(event) {
-    if ($scope.event.location) {
-      $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
-    }
-    return $q.resolve(event);
-  }
-
-  // Editing
-  offerController.updateDescription = function (description) {
-    if ($scope.event.description !== description) {
-      var updatePromise = offerEditor.editDescription(cachedEvent, description);
-
-      updatePromise.finally(function () {
-        if (!description) {
-          $scope.event.description = cachedEvent.description[defaultLanguage];
-        }
-      });
-
-      return updatePromise;
-    }
-  };
-}
-EventController.$inject = ["offerEditor", "variationRepository", "$controller", "$scope", "$q", "jsonLDLangFilter"];
-
 // Source: src/search/ui/event.directive.js
 /**
  * @ngdoc directive
@@ -13423,7 +13351,7 @@ angular
 function udbEvent() {
   var eventDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event.directive.html'
   };
@@ -13436,7 +13364,7 @@ function udbEvent() {
  * @ngdoc directive
  * @name udb.search.controller:OfferController
  * @description
- * # EventController
+ * # OfferController
  */
 angular
   .module('udb.search')
@@ -13450,13 +13378,15 @@ function OfferController(
   EventTranslationState,
   offerTranslator,
   offerLabeller,
-  $window
+  $window,
+  offerEditor,
+  variationRepository,
+  $q
 ) {
   var controller = this;
-  /* @type {UdbEvent|UdbPlace} */
   var cachedOffer;
-
   var defaultLanguage = 'nl';
+
   controller.translation = false;
   controller.activeLanguage = defaultLanguage;
   controller.languageSelector = [
@@ -13465,9 +13395,7 @@ function OfferController(
     {'lang': 'de'}
   ];
 
-  controller.initialized = initController();
-
-  function initController() {
+  controller.init = function () {
     if (!$scope.event.title) {
       controller.fetching = true;
 
@@ -13486,18 +13414,36 @@ function OfferController(
     } else {
       controller.fetching = false;
     }
+  };
 
-    function watchLabels() {
-      $scope.$watch(function () {
-        return cachedOffer.labels;
-      }, function (labels) {
-        $scope.event.labels = angular.copy(labels);
-      });
+  // initialize controller and take optional event actions
+  $q.when(controller.init())
+    .then(ifOfferIsEvent)
+    .then(translateLocation)
+    .then(fetchPersonalVariation)
+    .finally(function () {
+      controller.editable = true;
+    });
+
+  function ifOfferIsEvent(offer) {
+    if (offer && $scope.event.url.split('/').shift() === 'event') {
+      return $q.resolve(offer);
+    } else {
+      return $q.reject();
     }
   }
 
+  function watchLabels() {
+    $scope.$watch(function () {
+      return cachedOffer.labels;
+    }, function (labels) {
+      $scope.event.labels = angular.copy(labels);
+    });
+  }
+
   controller.hasActiveTranslation = function () {
-    return cachedOffer && cachedOffer.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
+    var offer = cachedOffer;
+    return offer && offer.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
   };
 
   controller.getLanguageTranslationIcon = function (lang) {
@@ -13567,11 +13513,9 @@ function OfferController(
         udbProperty = apiProperty || property;
 
     if (translation && translation !== cachedOffer[property][language]) {
-      var translationPromise = offerTranslator.translateProperty(cachedOffer, udbProperty, language, translation);
-
-      translationPromise.then(function () {
-        cachedOffer.updateTranslationState();
-      });
+      offerTranslator
+        .translateProperty(cachedOffer, udbProperty, language, translation)
+        .then(cachedOffer.updateTranslationState);
     }
   }
 
@@ -13599,25 +13543,39 @@ function OfferController(
   controller.labelRemoved = function (label) {
     offerLabeller.unlabel(cachedOffer, label.name);
   };
-}
-OfferController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window"];
 
-// Source: src/search/ui/place.controller.js
-/**
- * @ngdoc directive
- * @name udb.search.controller:PlaceController
- * @description
- * # EventController
- */
-angular
-  .module('udb.search')
-  .controller('PlaceController', PlaceController);
+  function fetchPersonalVariation(event) {
+    return variationRepository
+      .getPersonalVariation(event)
+      .then(function (personalVariation) {
+        $scope.event.description = personalVariation.description[defaultLanguage];
+        return personalVariation;
+      });
+  }
 
-/* @ngInject */
-function PlaceController($controller, $scope) {
-  angular.extend(this, $controller('OfferController', {$scope: $scope}));
+  function translateLocation(event) {
+    if ($scope.event.location) {
+      $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
+    }
+    return $q.resolve(event);
+  }
+
+  // Editing
+  controller.updateDescription = function (description) {
+    if ($scope.event.description !== description) {
+      var updatePromise = offerEditor.editDescription(cachedOffer, description);
+
+      updatePromise.finally(function () {
+        if (!description) {
+          $scope.event.description = cachedOffer.description[defaultLanguage];
+        }
+      });
+
+      return updatePromise;
+    }
+  };
 }
-PlaceController.$inject = ["$controller", "$scope"];
+OfferController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window", "offerEditor", "variationRepository", "$q"];
 
 // Source: src/search/ui/place.directive.js
 /**
@@ -13634,7 +13592,7 @@ angular
 function udbPlace() {
   var placeDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place.directive.html'
   };
@@ -17110,7 +17068,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"col-sm-6\">\n" +
     "            <div class=\"form-group\">\n" +
     "              <label>Titel</label>\n" +
-    "              <input type=\"text\" class=\"form-control\" ng-model=\"eventCtrl.eventTranslation.name\"/>\n" +
+    "              <input type=\"text\" class=\"form-control\" ng-model=\"eventCtrl.translation.name\"/>\n" +
     "            </div>\n" +
     "            <div ng-show=\"eventCtrl.hasPropertyChanged('name') && eventCtrl.hasActiveTranslation()\">\n" +
     "              <button ng-disabled=\"!eventCtrl.translation.name\" class=\"btn btn-danger\" ng-click=\"eventCtrl.applyPropertyChanges('name')\">\n" +
@@ -17130,7 +17088,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"col-sm-6\">\n" +
     "            <div class=\"form-group\">\n" +
     "              <label>Beschrijving</label>\n" +
-    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"eventCtrl.eventTranslation.description\"></textarea>\n" +
+    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"eventCtrl.translation.description\"></textarea>\n" +
     "            </div>\n" +
     "            <div ng-show=\"eventCtrl.hasPropertyChanged('description') && eventCtrl.hasActiveTranslation()\">\n" +
     "              <button ng-disabled=\"!eventCtrl.translation.description\" class=\"btn btn-danger\" ng-click=\"eventCtrl.applyPropertyChanges('description')\">\n" +
@@ -17172,14 +17130,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
     "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
-    "            <ui-select multiple tagging tagging-label=\"(label toevoegen)\" ng-model=\"event.labels\"\n" +
-    "                       reset-search-input=\"true\" tagging-tokens=\"ENTER|;\"\n" +
-    "                       on-select=\"eventCtrl.labelAdded($item)\" on-remove=\"eventCtrl.labelRemoved($item)\">\n" +
-    "              <ui-select-match placeholder=\"Voeg een label toe...\">{{$item}}</ui-select-match>\n" +
-    "              <ui-select-choices repeat=\"label in availableLabels\">\n" +
-    "                <div ng-bind-html=\"label | highlight: $select.search\"></div>\n" +
-    "              </ui-select-choices>\n" +
-    "            </ui-select>\n" +
+    "          <udb-label-select offer=\"event\"\n" +
+    "                            label-added=\"eventCtrl.labelAdded(label)\"\n" +
+    "                            label-removed=\"eventCtrl.labelRemoved(label)\">\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -17336,7 +17289,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "\n" +
     "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
-    "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
+    "          <span ng-hide=\"event.labels.length\">Deze plaats is nog niet gelabeld.</span>\n" +
     "          <udb-label-select offer=\"event\"\n" +
     "                            label-added=\"placeCtrl.labelAdded(label)\"\n" +
     "                            label-removed=\"placeCtrl.labelRemoved(label)\">\n" +
