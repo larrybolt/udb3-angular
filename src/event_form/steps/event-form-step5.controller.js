@@ -550,12 +550,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function validateBookingType(type) {
 
     if (type === 'website') {
-
-      // Autoset http://.
-      if ($scope.bookingModel.url.substring(0, 7) !== 'http://') {
-        $scope.bookingModel.url = 'http://' + $scope.bookingModel.url;
-      }
-
       // Valid url?
       $scope.step5TicketsForm.url.$setValidity('url', true);
       if (!URL_REGEXP.test($scope.bookingModel.url)) {

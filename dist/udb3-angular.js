@@ -5069,14 +5069,6 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
       deferredUpdate.resolve(false);
     }
 
-    var createVariation = function () {
-      purpose = purpose || 'personal';
-
-      udbApi
-        .createVariation(offer.apiUrl, description, purpose)
-        .then(handleCreationJob, rejectUpdate);
-    };
-
     var handleCreationJob = function (jobData) {
       var variation = angular.copy(offer);
       variation.description.nl = description;
@@ -5088,6 +5080,14 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
         variationRepository.save(offer.id, variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
+    };
+
+    var createVariation = function () {
+      purpose = purpose || 'personal';
+
+      udbApi
+        .createVariation(offer.apiUrl, description, purpose)
+        .then(handleCreationJob, rejectUpdate);
     };
 
     var editDescription = function (variation) {
@@ -7368,13 +7368,7 @@ function UdbContactInfoValidationDirective() {
 
         }
         else if (ngModel.$modelValue.type === 'url') {
-
           var viewValue = ngModel.$viewValue;
-          // Autoset http://.
-          if (ngModel.$modelValue.value.substring(0, 7) !== 'http://') {
-            viewValue.value = 'http://' + viewValue.value;
-            ngModel.$setViewValue(viewValue);
-          }
 
           if (!URL_REGEXP.test(viewValue.value)) {
             scope.infoErrorMessage = 'Gelieve een geldige url in te vullen';
@@ -8161,6 +8155,38 @@ function EventFormStep5Directive() {
   return {
     templateUrl: 'templates/event-form-step5.html',
     restrict: 'EA',
+  };
+}
+
+// Source: src/event_form/http-prefix.directive.js
+angular
+  .module('udb.event-form')
+  .directive('udbHttpPrefix', HttpPrefixDirective);
+
+function HttpPrefixDirective() {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, element, attrs, controller) {
+      function ensureHttpPrefix(value) {
+        // Need to add prefix if we don't have http:// prefix already AND we don't have part of it
+        if (value && !/^(https?):\/\//i.test(value) && !isPrefixed(value)) {
+          controller.$setViewValue('http://' + value);
+          controller.$render();
+          return 'http://' + value;
+        }
+        else {
+          return value;
+        }
+      }
+
+      function isPrefixed(value) {
+        return 'http://'.indexOf(value) === 0 || 'https://'.indexOf(value) === 0;
+      }
+
+      controller.$formatters.push(ensureHttpPrefix);
+      controller.$parsers.splice(0, 0, ensureHttpPrefix);
+    }
   };
 }
 
@@ -9730,12 +9756,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function validateBookingType(type) {
 
     if (type === 'website') {
-
-      // Autoset http://.
-      if ($scope.bookingModel.url.substring(0, 7) !== 'http://') {
-        $scope.bookingModel.url = 'http://' + $scope.bookingModel.url;
-      }
-
       // Valid url?
       $scope.step5TicketsForm.url.$setValidity('url', true);
       if (!URL_REGEXP.test($scope.bookingModel.url)) {
@@ -13382,25 +13402,6 @@ function Search(
   $scope.currentPage = getCurrentPage();
 
   /**
-   * @param {Query} query A query object used to update the interface and result viewer.
-   */
-  var updateQuery = function (query) {
-    $scope.activeQuery = query;
-
-    if (queryBuilder.isValid(query)) {
-      var realQuery = queryBuilder.unparse(query);
-      $scope.resultViewer.queryChanged(realQuery);
-      findEvents(realQuery);
-
-      if (realQuery !== query.originalQueryString) {
-        $scope.realQuery = realQuery;
-      } else {
-        $scope.realQuery = false;
-      }
-    }
-  };
-
-  /**
    * Fires off a search for events using a plain query string or a query object.
    * @param {String|Query} query A query string or object to search with.
    */
@@ -13424,13 +13425,22 @@ function Search(
     });
   };
 
-  var label = function () {
-    var labellingQuery = $scope.resultViewer.querySelected;
+  /**
+   * @param {Query} query A query object used to update the interface and result viewer.
+   */
+  var updateQuery = function (query) {
+    $scope.activeQuery = query;
 
-    if (labellingQuery) {
-      labelActiveQuery();
-    } else {
-      labelSelection();
+    if (queryBuilder.isValid(query)) {
+      var realQuery = queryBuilder.unparse(query);
+      $scope.resultViewer.queryChanged(realQuery);
+      findEvents(realQuery);
+
+      if (realQuery !== query.originalQueryString) {
+        $scope.realQuery = realQuery;
+      } else {
+        $scope.realQuery = false;
+      }
     }
   };
 
@@ -13468,7 +13478,7 @@ function Search(
 
   function labelActiveQuery() {
     var query = $scope.activeQuery,
-        eventCount = $scope.resultViewer.totalItems;
+      eventCount = $scope.resultViewer.totalItems;
 
     if (queryBuilder.isValid(query)) {
       var modal = $uibModal.open({
@@ -13495,6 +13505,16 @@ function Search(
       $window.alert('provide a valid query to label');
     }
   }
+
+  var label = function () {
+    var labellingQuery = $scope.resultViewer.querySelected;
+
+    if (labellingQuery) {
+      labelActiveQuery();
+    } else {
+      labelSelection();
+    }
+  };
 
   function exportEvents() {
     var exportingQuery = $scope.resultViewer.querySelected,
@@ -14701,12 +14721,21 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "              <option value=\"email\">E-mailadres</option>\n" +
     "            </select>\n" +
     "          </td>\n" +
-    "          <td>\n" +
+    "          <td ng-switch=\"info.type\">\n" +
     "            <input type=\"text\"\n" +
+    "                   ng-switch-when=\"url\"\n" +
+    "                   udb-http-prefix\n" +
     "                   class=\"form-control\"\n" +
     "                   ng-model=\"info.value\"\n" +
     "                   name=\"contact[{{key}}]\"\n" +
-    "                   ng-change=\"validateInfo(key)\"\n" +
+    "                   ng-change=\"validateInfo()\"\n" +
+    "                   ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
+    "            <input type=\"text\"\n" +
+    "                   ng-switch-default\n" +
+    "                   class=\"form-control\"\n" +
+    "                   ng-model=\"info.value\"\n" +
+    "                   name=\"contact[{{key}}]\"\n" +
+    "                   ng-change=\"validateInfo()\"\n" +
     "                   ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
     "            <span class=\"help-block\" ng-if=\"infoErrorMessage\" ng-bind=\"::infoErrorMessage\"></span>\n" +
     "          </td>\n" +
@@ -15639,7 +15668,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                          <input type=\"text\"\n" +
     "                                 class=\"form-control\"\n" +
     "                                 ng-model-options=\"{ updateOn: 'blur' }\"\n" +
-    "                                 ng-change=\"validateUrl()\"\n" +
+    "                                 udb-http-prefix\n" +
     "                                 name=\"url\"\n" +
     "                                 ng-model=\"bookingModel.url\"\n" +
     "                                 ng-required=\"viaWebsite\">\n" +
@@ -15863,12 +15892,21 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                          <option value=\"email\">E-mailadres</option>\n" +
     "                        </select>\n" +
     "                      </td>\n" +
-    "                      <td>\n" +
+    "                      <td ng-switch=\"info.type\">\n" +
     "                        <input type=\"text\"\n" +
+    "                               ng-switch-when=\"url\"\n" +
+    "                               udb-http-prefix\n" +
     "                               class=\"form-control\"\n" +
     "                               ng-model=\"info.value\"\n" +
     "                               name=\"contact[{{key}}]\"\n" +
-    "                               ng-change=\"validateInfo(key); saveContactInfo();\"\n" +
+    "                               ng-change=\"validateInfo(); saveContactInfo();\"\n" +
+    "                               ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
+    "                        <input type=\"text\"\n" +
+    "                               ng-switch-default\n" +
+    "                               class=\"form-control\"\n" +
+    "                               ng-model=\"info.value\"\n" +
+    "                               name=\"contact[{{key}}]\"\n" +
+    "                               ng-change=\"validateInfo(); saveContactInfo();\"\n" +
     "                               ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
     "                        <span class=\"help-block\" ng-hide=\"infoErrorMessage === ''\" ng-bind=\"infoErrorMessage\"></span>\n" +
     "                      </td>\n" +
