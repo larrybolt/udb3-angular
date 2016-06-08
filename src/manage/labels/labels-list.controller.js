@@ -19,13 +19,13 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   /**
    * @param {PagedCollection} data
    */
-  function setRolesResults(data) {
+  function setLabelsResults(data) {
     llc.pagedItemViewer.loading = true;
     llc.pagedItemViewer.setResults(data);
-    llc.roles = data.roles;
+    llc.labels = data.labels;
   }
 
-  llc.findRoles = function(query) {
+  llc.findLabels = function(query) {
     // Reset the pager when search query is changed.
     if (query !== llc.query) {
       llc.pagedItemViewer.currentPage = 1;
@@ -33,18 +33,18 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
     llc.query = query;
     LabelService
       .find(llc.query, llc.pagedItemViewer.currentPage)
-      .then(setRolesResults);
+      .then(setLabelsResults);
   };
 
-  llc.findRoles();
+  llc.findLabels();
 
-  var rolesSearchSubmittedListener = $rootScope.$on('roleSearchSubmitted', function(event, args) {
-    llc.findRoles(args.query);
+  var labelsSearchSubmittedListener = $rootScope.$on('labelSearchSubmitted', function(event, args) {
+    llc.findLabels(args.query);
   });
 
   llc.pageChanged = function() {
-    llc.findRoles(llc.query);
+    llc.findLabels(llc.query);
   };
 
-  $scope.$on('$destroy', rolesSearchSubmittedListener);
+  $scope.$on('$destroy', labelsSearchSubmittedListener);
 }

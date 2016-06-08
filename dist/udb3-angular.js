@@ -276,6 +276,29 @@ function isAuthorized(authorizationService) {
   return authorizationService.isLoggedIn();
 }
 isAuthorized.$inject = ['authorizationService'];
+/**
+ * @ngdoc module
+ * @name udb.manage.labels
+ * @description
+ * The udb manage labels module
+ */
+angular
+  .module('udb.manage.labels', [
+    'ngSanitize',
+    'ui.bootstrap',
+    'udb.manage'
+  ])
+  .component('labelsComponent', {
+    controller: 'LabelsListController',
+    controllerAs: 'llc',
+    templateUrl: 'templates/labels-list.html',
+    $canActivate: isAuthorized
+  });
+
+function isAuthorized(authorizationService) {
+  return authorizationService.isLoggedIn();
+}
+isAuthorized.$inject = ['authorizationService'];
 angular.module('peg', []).factory('LuceneQueryParser', function () {
  return (function() {
   /*
@@ -10592,7 +10615,58 @@ function QuerySearchResultViewerFactory() {
   return (QuerySearchResultViewer);
 }
 
-// Source: src/manage/labels/label.service.js
+// Source: src/manage/labels/labels-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelsListController
+ * @description
+ * # LabelsListController
+ */
+angular
+  .module('udb.manage.labels')
+  .controller('LabelsListController', LabelsListController);
+
+/* @ngInject */
+function LabelsListController($scope, $rootScope, LabelService, QuerySearchResultViewer) {
+  var llc = this;
+  llc.loading = false;
+  llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+
+  /**
+   * @param {PagedCollection} data
+   */
+  function setLabelsResults(data) {
+    llc.pagedItemViewer.loading = true;
+    llc.pagedItemViewer.setResults(data);
+    llc.labels = data.labels;
+  }
+
+  llc.findLabels = function(query) {
+    // Reset the pager when search query is changed.
+    if (query !== llc.query) {
+      llc.pagedItemViewer.currentPage = 1;
+    }
+    llc.query = query;
+    LabelService
+      .find(llc.query, llc.pagedItemViewer.currentPage)
+      .then(setLabelsResults);
+  };
+
+  llc.findLabels();
+
+  var labelsSearchSubmittedListener = $rootScope.$on('labelSearchSubmitted', function(event, args) {
+    llc.findLabels(args.query);
+  });
+
+  llc.pageChanged = function() {
+    llc.findLabels(llc.query);
+  };
+
+  $scope.$on('$destroy', labelsSearchSubmittedListener);
+}
+LabelsListController.$inject = ["$scope", "$rootScope", "LabelService", "QuerySearchResultViewer"];
+
+// Source: src/manage/labels/labels.service.js
 /**
  * @ngdoc service
  * @name udb.manage.labels
@@ -10601,7 +10675,7 @@ function QuerySearchResultViewerFactory() {
  * Service in the udb.manage.labels.
  */
 angular
-  .module('udb.manage.label')
+  .module('udb.manage.labels')
   .service('LabelService', LabelService);
 
 /* @ngInject */
@@ -10611,177 +10685,87 @@ function LabelService($q) {
   var jsonLabels = [
     {
       'id': '1',
-      'name': 'admin',
-      'permissions': [
-        {
-          'id': '1',
-          'name': 'abc'
-        },
-        {
-          'id': '2',
-          'name': 'def'
-        },
-        {
-          'id': '3',
-          'name': 'ghi'
-        }
-      ],
-      'users':[
-      {
-        'id': '1',
-        'email': 'info@mail.com',
-        'nick': 'nickname'
-      },
-      {
-        'id': '2',
-        'email': 'info@mail.com',
-        'nick': 'nickname'
-      },
-      {
-        'id': '3',
-        'email': 'info@mail.com',
-        'nick': 'nickname'
-      },
-      {
-        'id': '4',
-        'email': 'info@mail.com',
-        'nick': 'nickname'
-      },
-      {
-        'id': '5',
-        'email': 'info@mail.com',
-        'nick': 'nickname'
-      }],
-      'labels': [
-        {
-          'id': '1',
-          'name': 'label 1'
-        },
-        {
-          'id': '2',
-          'name': 'label 2'
-        },
-        {
-          'id': '3',
-          'name': 'label 3'
-        }
-      ]
+      'name': 'label 1'
     },
     {
       'id': '2',
-      'name': 'moderator',
-      'permissions': [
-        {
-          'id': '1',
-          'name': 'abc'
-        },
-        {
-          'id': '2',
-          'name': 'def'
-        },
-        {
-          'id': '3',
-          'name': 'ghi'
-        }
-      ],
-      'users':[
-        {
-          'id': '1',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '2',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '3',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '4',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '5',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        }],
-      'labels': [
-        {
-          'id': '1',
-          'name': 'label 1'
-        },
-        {
-          'id': '2',
-          'name': 'label 2'
-        },
-        {
-          'id': '3',
-          'name': 'label 3'
-        }
-      ]
+      'name': 'label 2'
     },
     {
       'id': '3',
-      'name': 'wannabe admin',
-      'permissions': [
-        {
-          'id': '1',
-          'name': 'abc'
-        },
-        {
-          'id': '2',
-          'name': 'def'
-        },
-        {
-          'id': '3',
-          'name': 'ghi'
-        }
-      ],
-      'users':[
-        {
-          'id': '1',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '2',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '3',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '4',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        },
-        {
-          'id': '5',
-          'email': 'info@mail.com',
-          'nick': 'nickname'
-        }],
-      'labels': [
-        {
-          'id': '1',
-          'name': 'label 1'
-        },
-        {
-          'id': '2',
-          'name': 'label 2'
-        },
-        {
-          'id': '3',
-          'name': 'label 3'
-        }
-      ]
+      'name': 'label 3'
+    },
+    {
+      'id': '4',
+      'name': 'label 4'
+    },
+    {
+      'id': '5',
+      'name': 'label 5'
+    },
+    {
+      'id': '6',
+      'name': 'label 6'
+    },
+    {
+      'id': '7',
+      'name': 'label 7'
+    },
+    {
+      'id': '8',
+      'name': 'label 8'
+    },
+    {
+      'id': '9',
+      'name': 'label 9'
+    },
+    {
+      'id': '10',
+      'name': 'label 10'
+    },
+    {
+      'id': '11',
+      'name': 'label 11'
+    },
+    {
+      'id': '12',
+      'name': 'label 12'
+    },
+    {
+      'id': '13',
+      'name': 'label 13'
+    },
+    {
+      'id': '14',
+      'name': 'label 14'
+    },
+    {
+      'id': '15',
+      'name': 'label 15'
+    },
+    {
+      'id': '16',
+      'name': 'label 16'
+    },
+    {
+      'id': '17',
+      'name': 'label 17'
+    },
+    {
+      'id': '18',
+      'name': 'label 18'
+    },
+    {
+      'id': '19',
+      'name': 'label 19'
+    },
+    {
+      'id': '20',
+      'name': 'label 20'
+    },
+    {
+      'id': '21',
+      'name': 'label 21'
     }
   ];
 
@@ -10792,12 +10776,12 @@ function LabelService($q) {
           colIndex = index % itemsPerPage;
       if (!result[rowIndex]) {
         result[rowIndex] = [];
-        result[rowIndex].roles = [];
+        result[rowIndex].labels = [];
         result[rowIndex].itemsPerPage = itemsPerPage;
         result[rowIndex].totalItems = items.length;
       }
 
-      result[rowIndex].roles[colIndex] = item;
+      result[rowIndex].labels[colIndex] = item;
     });
 
     return result;
@@ -10820,57 +10804,6 @@ function LabelService($q) {
   };
 }
 LabelService.$inject = ["$q"];
-
-// Source: src/manage/labels/labels-list.controller.js
-/**
- * @ngdoc function
- * @name udbApp.controller:LabelsListController
- * @description
- * # LabelsListController
- */
-angular
-  .module('udb.manage.labels')
-  .controller('LabelsListController', LabelsListController);
-
-/* @ngInject */
-function LabelsListController($scope, $rootScope, LabelService, QuerySearchResultViewer) {
-  var llc = this;
-  llc.loading = false;
-  llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
-
-  /**
-   * @param {PagedCollection} data
-   */
-  function setRolesResults(data) {
-    llc.pagedItemViewer.loading = true;
-    llc.pagedItemViewer.setResults(data);
-    llc.roles = data.roles;
-  }
-
-  llc.findRoles = function(query) {
-    // Reset the pager when search query is changed.
-    if (query !== llc.query) {
-      llc.pagedItemViewer.currentPage = 1;
-    }
-    llc.query = query;
-    LabelService
-      .find(llc.query, llc.pagedItemViewer.currentPage)
-      .then(setRolesResults);
-  };
-
-  llc.findRoles();
-
-  var rolesSearchSubmittedListener = $rootScope.$on('roleSearchSubmitted', function(event, args) {
-    llc.findRoles(args.query);
-  });
-
-  llc.pageChanged = function() {
-    llc.findRoles(llc.query);
-  };
-
-  $scope.$on('$destroy', rolesSearchSubmittedListener);
-}
-LabelsListController.$inject = ["$scope", "$rootScope", "LabelService", "QuerySearchResultViewer"];
 
 // Source: src/manage/manage.controller.js
 /**
@@ -17173,7 +17106,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/labels-list.html',
     "<h1 class=\"title\" id=\"page-title\">\n" +
-    "    Rollen\n" +
+    "    Labels\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
     "    <udb-query-search-bar qsb-label=\"Zoeken op labelnaam\" qsb-emit=\"labelSearchSubmitted\"></udb-query-search-bar>\n" +
