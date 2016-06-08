@@ -39,31 +39,6 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   };
 
   /**
-   * @param {string} labelName
-   * @return {Promise.<Label[]>}
-   */
-  service.getSuggestions = function (labelName) {
-    /** @param {PagedCollection} pagedSearchResults */
-    function returnSimilarLabels(pagedSearchResults) {
-      return pagedSearchResults.member;
-    }
-
-    function returnRecentLabels() {
-      return udbApi
-        .getRecentLabels()
-        .then(function (labelNames) {
-          return _.map(labelNames, function (labelName) {
-            return {name: labelName, id: labelName};
-          });
-        });
-    }
-
-    return udbApi
-      .findLabels(labelName, 10)
-      .then(returnSimilarLabels, returnRecentLabels);
-  };
-
-  /**
    * @param {string} name
    * @param {boolean} isVisible
    * @param {boolean} isPrivate

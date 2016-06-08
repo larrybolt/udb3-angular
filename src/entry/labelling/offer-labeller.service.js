@@ -12,25 +12,8 @@ angular
   .service('offerLabeller', OfferLabeller);
 
 /* @ngInject */
-function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob, $q, LabelManager) {
-
+function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob, $q) {
   var offerLabeller = this;
-
-  // keep a cache of all the recently used labels
-  offerLabeller.recentLabels = [];
-
-  function updateRecentLabels() {
-    udbApi
-      .getRecentLabels()
-      .then(function (labelNames) {
-        offerLabeller.recentLabels = _.map(labelNames, function (labelName) {
-          return {name: labelName, id: labelName};
-        });
-      });
-  }
-
-  // warm up the cache
-  updateRecentLabels();
 
   /**
    * A helper function to create and log jobs
@@ -65,13 +48,9 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   this.label = function (offer, labelName) {
     offer.label(labelName);
 
-    function addLabel() {
-      return udbApi
-        .labelOffer(offer.apiUrl, labelName)
-        .then(jobCreatorFactory(OfferLabelJob, offer, labelName));
-    }
-
-    return touchLabel(labelName).then(addLabel);
+    return udbApi
+      .labelOffer(offer.apiUrl, labelName)
+      .then(jobCreatorFactory(OfferLabelJob, offer, labelName));
   };
 
   /**
@@ -92,14 +71,9 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
    * @param {string} labelName
    */
   this.labelOffersById = function (offers, labelName) {
-
-    function addLabel() {
-      return udbApi
-        .labelOffers(offers, labelName)
-        .then(jobCreatorFactory(OfferLabelBatchJob, offers, labelName));
-    }
-
-    return touchLabel(labelName).then(addLabel);
+    return udbApi
+      .labelOffers(offers, labelName)
+      .then(jobCreatorFactory(OfferLabelBatchJob, offers, labelName));
   };
 
   /**
@@ -111,30 +85,33 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   this.labelQuery = function (query, labelName, eventCount) {
     eventCount = eventCount || 0;
 
-    function addLabel () {
-      return udbApi
-        .labelQuery(query, labelName)
-        .then(jobCreatorFactory(QueryLabelJob, eventCount, labelName));
-    }
-
-    return touchLabel(labelName).then(addLabel);
+    return udbApi
+      .labelQuery(query, labelName)
+      .then(jobCreatorFactory(QueryLabelJob, eventCount, labelName));
   };
 
   /**
-   * Make sure a label is created for management.
-   *
    * @param {string} labelName
-   * @return {Promise}
+   * @return {Promise.<Label[]>}
    */
-  function touchLabel(labelName) {
-    var touched = $q.defer();
+  offerLabeller.getSuggestions = function (labelName) {
+    /** @param {PagedCollection} pagedSearchResults */
+    function returnSimilarLabels(pagedSearchResults) {
+      return pagedSearchResults.member;
+    }
 
-    LabelManager
-      .create(labelName, true, false)
-      .finally(function () {
-        touched.resolve('touché');
-      });
+    function returnRecentLabels() {
+      return udbApi
+        .getRecentLabels()
+        .then(function (labelNames) {
+          return _.map(labelNames, function (labelName) {
+            return {name: labelName, id: labelName};
+          });
+        });
+    }
 
-    return touched.promise;
-  }
+    return udbApi
+      .findLabels(labelName, 10)
+      .then(returnSimilarLabels, returnRecentLabels);
+  };
 }

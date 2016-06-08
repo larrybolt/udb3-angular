@@ -1,8 +1,8 @@
 'use strict';
 
-describe('Controller: Place', function() {
+describe('Controller: Offer', function() {
   var $scope,
-      placeController,
+      offerController,
       udbApi,
       UdbPlace,
       jsonLDLangFilter,
@@ -75,8 +75,8 @@ describe('Controller: Place', function() {
     $scope.event = {};
     $scope.event['@id'] = examplePlaceEventJson['@id'];
 
-    placeController = $controller(
-      'PlaceController', {
+    offerController = $controller(
+      'OfferController', {
         udbApi: udbApi,
         $scope: $scope,
         jsonLDLangFilter: jsonLDLangFilter,
@@ -102,7 +102,7 @@ describe('Controller: Place', function() {
     deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
     $scope.$digest();
 
-    placeController.labelAdded(label);
+    offerController.labelAdded(label);
     expect(offerLabeller.label).toHaveBeenCalled();
   });
 
@@ -113,7 +113,7 @@ describe('Controller: Place', function() {
 
     spyOn($window, 'alert');
 
-    placeController.labelAdded(label);
+    offerController.labelAdded(label);
 
     var expectedLabels = ['some label'];
     expect($scope.event.labels).toEqual(expectedLabels);

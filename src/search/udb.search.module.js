@@ -15,6 +15,7 @@ angular
     'udb.core',
     'udb.config',
     'udb.router',
+    'udb.entry',
     'btford.socket-io',
     'pascalprecht.translate',
     'xeditable'

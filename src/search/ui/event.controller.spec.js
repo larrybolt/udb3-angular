@@ -4,10 +4,7 @@ describe('Controller: Event', function() {
   var $scope,
       eventController,
       jsonLDLangFilter,
-      offerTranslator,
-      offerLabeller,
       offerEditor,
-      EventTranslationState,
       udbApi,
       UdbEvent,
       $q,
@@ -140,10 +137,7 @@ describe('Controller: Event', function() {
     $scope = $rootScope.$new();
     udbApi = $injector.get('udbApi');
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
-    offerTranslator = $injector.get('offerTranslator');
-    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
     offerEditor = $injector.get('offerEditor');
-    EventTranslationState = $injector.get('EventTranslationState');
     UdbEvent = $injector.get('UdbEvent');
     variationRepository = $injector.get('variationRepository');
     $q = _$q_;
@@ -156,40 +150,14 @@ describe('Controller: Event', function() {
 
     eventController = $controller(
       'EventController', {
-        udbApi: udbApi,
-        jsonLDLangFilter: jsonLDLangFilter,
-        offerTranslator: offerTranslator,
-        offerLabeller: offerLabeller,
         offerEditor: offerEditor,
-        EventTranslationState: EventTranslationState,
-        $scope: $scope
+        variationRepository: variationRepository,
+        $scope: $scope,
+        udbApi: udbApi,
+        jsonLDLangFilter: jsonLDLangFilter
       }
     );
   }));
-
-  it('should trigger an API label action when adding a label', function () {
-    var label = 'some other label';
-    deferredEvent.resolve(new UdbEvent(exampleEventJson));
-    $scope.$digest();
-
-    eventController.labelAdded(label);
-    expect(offerLabeller.label).toHaveBeenCalled();
-  });
-
-  it('should prevent any duplicate labels and warn the user when trying to add one', function () {
-    var label = 'Some Label';
-    deferredEvent.resolve(new UdbEvent(exampleEventJson));
-    $scope.$digest();
-
-    spyOn($window, 'alert');
-
-    eventController.labelAdded(label);
-
-    var expectedLabels = ['some label'];
-    expect($scope.event.labels).toEqual(expectedLabels);
-    expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
-    expect(offerLabeller.label).not.toHaveBeenCalled();
-  });
 
   describe('variations: ', function () {
     beforeEach(function () {

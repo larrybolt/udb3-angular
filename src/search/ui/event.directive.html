@@ -76,7 +76,7 @@
     </div>
   </div>
 
-  <div class="col-sm-12" ng-show="eventCtrl.eventTranslation">
+  <div class="col-sm-12" ng-show="eventCtrl.translation">
     <div class="udb-details row">
 
       <button type="button" class="close" ng-click="eventCtrl.stopTranslating()">
@@ -101,7 +101,7 @@
               <input type="text" class="form-control" ng-model="eventCtrl.eventTranslation.name"/>
             </div>
             <div ng-show="eventCtrl.hasPropertyChanged('name') && eventCtrl.hasActiveTranslation()">
-              <button ng-disabled="!eventCtrl.eventTranslation.name" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('name')">
+              <button ng-disabled="!eventCtrl.translation.name" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('name')">
                 Opslaan
               </button>
               <button class="btn btn-default" ng-click="eventCtrl.undoPropertyChanges('name')">Annuleren</button>
@@ -121,7 +121,7 @@
               <textarea class="form-control resize-vertical" rows="3" ng-model="eventCtrl.eventTranslation.description"></textarea>
             </div>
             <div ng-show="eventCtrl.hasPropertyChanged('description') && eventCtrl.hasActiveTranslation()">
-              <button ng-disabled="!eventCtrl.eventTranslation.description" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('description')">
+              <button ng-disabled="!eventCtrl.translation.description" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('description')">
                 Opslaan
               </button>
               <button class="btn btn-default" ng-click="eventCtrl.undoPropertyChanges('description')">Annuleren</button>
@@ -134,7 +134,7 @@
         </div>
 
         <div ng-hide="eventCtrl.hasActiveTranslation()">
-          <button ng-disabled="!eventCtrl.eventTranslation.name" class="btn btn-danger" ng-click="eventCtrl.translate()">Opslaan</button>
+          <button ng-disabled="!eventCtrl.translation.name" class="btn btn-danger" ng-click="eventCtrl.translate()">Opslaan</button>
           <button class="btn btn-default" ng-click="eventCtrl.stopTranslating()">Annuleren</button>
         </div>
       </div>

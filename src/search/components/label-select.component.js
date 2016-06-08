@@ -14,7 +14,7 @@ angular
   });
 
 /** @ngInject */
-function LabelSelectComponent(LabelManager) {
+function LabelSelectComponent(offerLabeller) {
   var select = this;
   select.availableLabels = [];
   select.suggestLabels = suggestLabels;
@@ -37,7 +37,7 @@ function LabelSelectComponent(LabelManager) {
         .value();
     }
 
-    LabelManager
+    offerLabeller
       .getSuggestions(name)
       .then(setAvailableLabels);
   }

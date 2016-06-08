@@ -62,7 +62,7 @@
     </div>
   </div>
 
-  <div class="col-sm-12" ng-show="placeCtrl.placeTranslation">
+  <div class="col-sm-12" ng-show="placeCtrl.translation">
     <div class="udb-details row">
 
       <button type="button" class="close" ng-click="placeCtrl.stopTranslating()">
@@ -84,10 +84,10 @@
           <div class="col-sm-6">
             <div class="form-group">
               <label>Titel</label>
-              <input type="text" class="form-control" ng-model="placeCtrl.placeTranslation.name"/>
+              <input type="text" class="form-control" ng-model="placeCtrl.translation.name"/>
             </div>
             <div ng-show="placeCtrl.hasPropertyChanged('name') && placeCtrl.hasActiveTranslation()">
-              <button ng-disabled="!placeCtrl.placeTranslation.name" class="btn btn-danger" ng-click="placeCtrl.applyPropertyChanges('name')">
+              <button ng-disabled="!placeCtrl.translation.name" class="btn btn-danger" ng-click="placeCtrl.applyPropertyChanges('name')">
                 Opslaan
               </button>
               <button class="btn btn-default" ng-click="placeCtrl.undoPropertyChanges('name')">Annuleren</button>
@@ -104,10 +104,10 @@
           <div class="col-sm-6">
             <div class="form-group">
               <label>Beschrijving</label>
-              <textarea class="form-control resize-vertical" rows="3" ng-model="placeCtrl.placeTranslation.description"></textarea>
+              <textarea class="form-control resize-vertical" rows="3" ng-model="placeCtrl.translation.description"></textarea>
             </div>
             <div ng-show="placeCtrl.hasPropertyChanged('description') && placeCtrl.hasActiveTranslation()">
-              <button ng-disabled="!placeCtrl.placeTranslation.description" class="btn btn-danger" ng-click="placeCtrl.applyPropertyChanges('description')">
+              <button ng-disabled="!placeCtrl.translation.description" class="btn btn-danger" ng-click="placeCtrl.applyPropertyChanges('description')">
                 Opslaan
               </button>
               <button class="btn btn-default" ng-click="placeCtrl.undoPropertyChanges('description')">Annuleren</button>
@@ -120,7 +120,7 @@
         </div>
 
         <div ng-hide="placeCtrl.hasActiveTranslation()">
-          <button ng-disabled="!placeCtrl.placeTranslation.name" class="btn btn-danger" ng-click="placeCtrl.translate()">Opslaan</button>
+          <button ng-disabled="!placeCtrl.translation.name" class="btn btn-danger" ng-click="placeCtrl.translate()">Opslaan</button>
           <button class="btn btn-default" ng-click="placeCtrl.stopTranslating()">Annuleren</button>
         </div>
       </div>
