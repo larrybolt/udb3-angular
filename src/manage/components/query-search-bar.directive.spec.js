@@ -12,7 +12,7 @@ describe('Directive: Query Search Bar', function () {
     $scope = $rootScope.$new();
 
     $rootScope.queryString = 'info';
-    $compile('<udb-query-search-bar></udb-query-search-bar>')($scope);
+    $compile('<udb-query-search-bar qsb-emit="userSearchSubmitted"></udb-query-search-bar>')($scope);
     $scope.$digest();
 
     searchBar = $scope.qsb;
@@ -24,6 +24,6 @@ describe('Directive: Query Search Bar', function () {
     searchBar.find('foo:bar');
 
     expect(searchBar.queryString).toEqual('foo:bar');
-    expect($rootScope.$emit).toHaveBeenCalledWith('querySearchSubmitted', {query: 'foo:bar'});
+    expect($rootScope.$emit).toHaveBeenCalledWith('userSearchSubmitted', {query: 'foo:bar'});
   });
 });

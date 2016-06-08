@@ -7,7 +7,7 @@
  * # RolesListController
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.roles')
   .controller('RolesListController', RolesListController);
 
 /* @ngInject */
