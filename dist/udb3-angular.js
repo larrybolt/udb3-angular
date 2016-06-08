@@ -10611,7 +10611,7 @@ function ManageController() {
  * Service in the udb.manage.roles.
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.roles')
   .service('RoleService', RoleService);
 
 /* @ngInject */
@@ -10839,7 +10839,7 @@ RoleService.$inject = ["$q"];
  * # RolesListController
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.roles')
   .controller('RolesListController', RolesListController);
 
 /* @ngInject */

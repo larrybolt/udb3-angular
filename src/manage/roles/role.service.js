@@ -8,7 +8,7 @@
  * Service in the udb.manage.roles.
  */
 angular
-  .module('udb.manage')
+  .module('udb.manage.roles')
   .service('RoleService', RoleService);
 
 /* @ngInject */
