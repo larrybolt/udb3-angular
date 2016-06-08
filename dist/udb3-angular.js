@@ -202,7 +202,8 @@ angular
     'ui.bootstrap',
     'udb.core',
     'udb.manage.users',
-    'udb.manage.roles'
+    'udb.manage.roles',
+    'udb.manage.labels'
   ])
   .component('manageComponent', {
     controller: 'ManageController',
@@ -219,6 +220,11 @@ angular
         path: '/roles/list',
         name: 'RolesList',
         component: 'rolesComponent'
+      },
+      {
+        path: '/labels/overview',
+        name: 'LabelsList',
+        component: 'labelsComponent'
       }
     ]
   });
@@ -10586,6 +10592,286 @@ function QuerySearchResultViewerFactory() {
   return (QuerySearchResultViewer);
 }
 
+// Source: src/manage/labels/label.service.js
+/**
+ * @ngdoc service
+ * @name udb.manage.labels
+ * @description
+ * # user
+ * Service in the udb.manage.labels.
+ */
+angular
+  .module('udb.manage.label')
+  .service('LabelService', LabelService);
+
+/* @ngInject */
+function LabelService($q) {
+  var service = this;
+
+  var jsonLabels = [
+    {
+      'id': '1',
+      'name': 'admin',
+      'permissions': [
+        {
+          'id': '1',
+          'name': 'abc'
+        },
+        {
+          'id': '2',
+          'name': 'def'
+        },
+        {
+          'id': '3',
+          'name': 'ghi'
+        }
+      ],
+      'users':[
+      {
+        'id': '1',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '2',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '3',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '4',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      },
+      {
+        'id': '5',
+        'email': 'info@mail.com',
+        'nick': 'nickname'
+      }],
+      'labels': [
+        {
+          'id': '1',
+          'name': 'label 1'
+        },
+        {
+          'id': '2',
+          'name': 'label 2'
+        },
+        {
+          'id': '3',
+          'name': 'label 3'
+        }
+      ]
+    },
+    {
+      'id': '2',
+      'name': 'moderator',
+      'permissions': [
+        {
+          'id': '1',
+          'name': 'abc'
+        },
+        {
+          'id': '2',
+          'name': 'def'
+        },
+        {
+          'id': '3',
+          'name': 'ghi'
+        }
+      ],
+      'users':[
+        {
+          'id': '1',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '2',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '3',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '4',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '5',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        }],
+      'labels': [
+        {
+          'id': '1',
+          'name': 'label 1'
+        },
+        {
+          'id': '2',
+          'name': 'label 2'
+        },
+        {
+          'id': '3',
+          'name': 'label 3'
+        }
+      ]
+    },
+    {
+      'id': '3',
+      'name': 'wannabe admin',
+      'permissions': [
+        {
+          'id': '1',
+          'name': 'abc'
+        },
+        {
+          'id': '2',
+          'name': 'def'
+        },
+        {
+          'id': '3',
+          'name': 'ghi'
+        }
+      ],
+      'users':[
+        {
+          'id': '1',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '2',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '3',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '4',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        },
+        {
+          'id': '5',
+          'email': 'info@mail.com',
+          'nick': 'nickname'
+        }],
+      'labels': [
+        {
+          'id': '1',
+          'name': 'label 1'
+        },
+        {
+          'id': '2',
+          'name': 'label 2'
+        },
+        {
+          'id': '3',
+          'name': 'label 3'
+        }
+      ]
+    }
+  ];
+
+  function pageArray(items, itemsPerPage) {
+    var result = [];
+    angular.forEach(items, function(item, index) {
+      var rowIndex = Math.floor(index / itemsPerPage),
+          colIndex = index % itemsPerPage;
+      if (!result[rowIndex]) {
+        result[rowIndex] = [];
+        result[rowIndex].roles = [];
+        result[rowIndex].itemsPerPage = itemsPerPage;
+        result[rowIndex].totalItems = items.length;
+      }
+
+      result[rowIndex].roles[colIndex] = item;
+    });
+
+    return result;
+  }
+
+  service.find = function(query, page) {
+    var deferredLabels = $q.defer();
+
+    var labelsArray;
+    if (query) {
+      labelsArray = _.shuffle(jsonLabels);
+    }
+    else {
+      labelsArray = jsonLabels;
+    }
+    labelsArray = pageArray(labelsArray, 10);
+
+    deferredLabels.resolve(labelsArray[page - 1]);
+    return deferredLabels.promise;
+  };
+}
+LabelService.$inject = ["$q"];
+
+// Source: src/manage/labels/labels-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelsListController
+ * @description
+ * # LabelsListController
+ */
+angular
+  .module('udb.manage.labels')
+  .controller('LabelsListController', LabelsListController);
+
+/* @ngInject */
+function LabelsListController($scope, $rootScope, LabelService, QuerySearchResultViewer) {
+  var llc = this;
+  llc.loading = false;
+  llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+
+  /**
+   * @param {PagedCollection} data
+   */
+  function setRolesResults(data) {
+    llc.pagedItemViewer.loading = true;
+    llc.pagedItemViewer.setResults(data);
+    llc.roles = data.roles;
+  }
+
+  llc.findRoles = function(query) {
+    // Reset the pager when search query is changed.
+    if (query !== llc.query) {
+      llc.pagedItemViewer.currentPage = 1;
+    }
+    llc.query = query;
+    LabelService
+      .find(llc.query, llc.pagedItemViewer.currentPage)
+      .then(setRolesResults);
+  };
+
+  llc.findRoles();
+
+  var rolesSearchSubmittedListener = $rootScope.$on('roleSearchSubmitted', function(event, args) {
+    llc.findRoles(args.query);
+  });
+
+  llc.pageChanged = function() {
+    llc.findRoles(llc.query);
+  };
+
+  $scope.$on('$destroy', rolesSearchSubmittedListener);
+}
+LabelsListController.$inject = ["$scope", "$rootScope", "LabelService", "QuerySearchResultViewer"];
+
 // Source: src/manage/manage.controller.js
 /**
  * @ngdoc function
@@ -16882,6 +17168,58 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  </div>\n" +
     "  <button type=\"submit\" class=\"btn\" ng-click=\"qsb.find()\">Zoeken</button>\n" +
     "</form>\n"
+  );
+
+
+  $templateCache.put('templates/labels-list.html',
+    "<h1 class=\"title\" id=\"page-title\">\n" +
+    "    Rollen\n" +
+    "</h1>\n" +
+    "<div class=\"row\">\n" +
+    "    <udb-query-search-bar qsb-label=\"Zoeken op labelnaam\" qsb-emit=\"labelSearchSubmitted\"></udb-query-search-bar>\n" +
+    "</div>\n" +
+    "<div class=\"text-center\" ng-show=\"llc.loading\">\n" +
+    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"row\" ng-cloak ng-show=\"!llc.loading\">\n" +
+    "    <div class=\"table-responsive\">\n" +
+    "        <table class=\"table table-hover table-striped\">\n" +
+    "            <thead>\n" +
+    "                <tr>\n" +
+    "                    <th>Naam</th>\n" +
+    "                    <th>Opties</th>\n" +
+    "                </tr>\n" +
+    "            </thead>\n" +
+    "            <tbody>\n" +
+    "                <tr ng-repeat=\"label in llc.labels\">\n" +
+    "                    <td>{{ label.name }}</td>\n" +
+    "                    <td>\n" +
+    "                        <div class=\"btn-group\">\n" +
+    "                            <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
+    "                                Bewerken <span class=\"caret\"></span>\n" +
+    "                            </button>\n" +
+    "                            <ul class=\"dropdown-menu\">\n" +
+    "                                <li><a href=\"#\">Bewerken</a></li>\n" +
+    "                                <li><a href=\"#\">Verwijderen</a></li>\n" +
+    "                            </ul>\n" +
+    "                        </div>\n" +
+    "                    </td>\n" +
+    "                </tr>\n" +
+    "            </tbody>\n" +
+    "        </table>\n" +
+    "    </div>\n" +
+    "    <div class=\"panel-footer\">\n" +
+    "        <uib-pagination\n" +
+    "                total-items=\"llc.pagedItemViewer.totalItems\"\n" +
+    "                ng-model=\"llc.pagedItemViewer.currentPage\"\n" +
+    "                items-per-page=\"llc.pagedItemViewer.pageSize\"\n" +
+    "                ng-show=\"llc.pagedItemViewer.totalItems > 0\"\n" +
+    "                max-size=\"10\"\n" +
+    "                ng-change=\"llc.pageChanged()\">\n" +
+    "        </uib-pagination>\n" +
+    "    </div>\n" +
+    "</div>\n"
   );
 
 

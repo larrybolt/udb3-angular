@@ -12,7 +12,8 @@ angular
     'ui.bootstrap',
     'udb.core',
     'udb.manage.users',
-    'udb.manage.roles'
+    'udb.manage.roles',
+    'udb.manage.labels'
   ])
   .component('manageComponent', {
     controller: 'ManageController',
@@ -29,6 +30,11 @@ angular
         path: '/roles/list',
         name: 'RolesList',
         component: 'rolesComponent'
+      },
+      {
+        path: '/labels/overview',
+        name: 'LabelsList',
+        component: 'labelsComponent'
       }
     ]
   });
