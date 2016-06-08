@@ -28,14 +28,7 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
    * @return {Promise.<Label>}
    */
   service.get = function(labelId) {
-    return $q.resolve({
-      id: labelId,
-      name: labelId,
-      isVisible: true,
-      isPrivate: false
-    });
-
-    // return udbApi.getLabelById(labelId);
+    return udbApi.getLabelById(labelId);
   };
 
   /**
