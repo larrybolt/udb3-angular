@@ -24,6 +24,7 @@ function EventFormStep4Controller(
 ) {
 
   var controller = this;
+  var ignoreDuplicates = _.get(appConfig, 'offerEditor.ignoreDuplicates', false);
 
   // Scope vars.
   // main storage for event form.
@@ -54,7 +55,7 @@ function EventFormStep4Controller(
   /**
    * Validate date after step 4 to enter step 5.
    */
-  function validateEvent(checkDuplicates) {
+  function validateEvent() {
 
     // First check if all data is correct.
     $scope.infoMissing = false;
@@ -85,7 +86,7 @@ function EventFormStep4Controller(
       return;
     }
 
-    if (checkDuplicates) {
+    if (!ignoreDuplicates) {
       $scope.saving = true;
       $scope.error = false;
 

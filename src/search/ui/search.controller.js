@@ -51,25 +51,6 @@ function Search(
   $scope.currentPage = getCurrentPage();
 
   /**
-   * @param {Query} query A query object used to update the interface and result viewer.
-   */
-  var updateQuery = function (query) {
-    $scope.activeQuery = query;
-
-    if (queryBuilder.isValid(query)) {
-      var realQuery = queryBuilder.unparse(query);
-      $scope.resultViewer.queryChanged(realQuery);
-      findEvents(realQuery);
-
-      if (realQuery !== query.originalQueryString) {
-        $scope.realQuery = realQuery;
-      } else {
-        $scope.realQuery = false;
-      }
-    }
-  };
-
-  /**
    * Fires off a search for events using a plain query string or a query object.
    * @param {String|Query} query A query string or object to search with.
    */
@@ -93,13 +74,22 @@ function Search(
     });
   };
 
-  var label = function () {
-    var labellingQuery = $scope.resultViewer.querySelected;
+  /**
+   * @param {Query} query A query object used to update the interface and result viewer.
+   */
+  var updateQuery = function (query) {
+    $scope.activeQuery = query;
 
-    if (labellingQuery) {
-      labelActiveQuery();
-    } else {
-      labelSelection();
+    if (queryBuilder.isValid(query)) {
+      var realQuery = queryBuilder.unparse(query);
+      $scope.resultViewer.queryChanged(realQuery);
+      findEvents(realQuery);
+
+      if (realQuery !== query.originalQueryString) {
+        $scope.realQuery = realQuery;
+      } else {
+        $scope.realQuery = false;
+      }
     }
   };
 
@@ -137,7 +127,7 @@ function Search(
 
   function labelActiveQuery() {
     var query = $scope.activeQuery,
-        eventCount = $scope.resultViewer.totalItems;
+      eventCount = $scope.resultViewer.totalItems;
 
     if (queryBuilder.isValid(query)) {
       var modal = $uibModal.open({
@@ -164,6 +154,16 @@ function Search(
       $window.alert('provide a valid query to label');
     }
   }
+
+  var label = function () {
+    var labellingQuery = $scope.resultViewer.querySelected;
+
+    if (labellingQuery) {
+      labelActiveQuery();
+    } else {
+      labelSelection();
+    }
+  };
 
   function exportEvents() {
     var exportingQuery = $scope.resultViewer.querySelected,
