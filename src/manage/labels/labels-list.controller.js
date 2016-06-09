@@ -15,6 +15,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   var llc = this;
   llc.loading = false;
   llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+  llc.query = '';
 
   /**
    * @param {PagedCollection} data

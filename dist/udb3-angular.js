@@ -10631,6 +10631,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   var llc = this;
   llc.loading = false;
   llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+  llc.query = '';
 
   /**
    * @param {PagedCollection} data
@@ -10679,8 +10680,22 @@ angular
   .service('LabelService', LabelService);
 
 /* @ngInject */
-function LabelService($q) {
+function LabelService(
+  $q,
+  $http,
+  appConfig,
+  uitidAuth
+) {
   var service = this;
+  var apiUrl = appConfig.baseApiUrl;
+  var defaultApiConfig = {
+    withCredentials: true,
+    headers: {
+      'Content-Type': 'application/json'
+      //'Authorization': 'Bearer ' + uitidAuth.getToken()
+    },
+    params: {}
+  };
 
   var jsonLabels = [
     {
@@ -10787,11 +10802,16 @@ function LabelService($q) {
     return result;
   }
 
-  service.find = function(query, page) {
+  /*function returnUnwrappedData(response) {
+    console.log(response);
+    return $q.resolve(response.data);
+  }*/
+
+  service.find = function(queryString, page) {
     var deferredLabels = $q.defer();
 
     var labelsArray;
-    if (query) {
+    if (queryString) {
       labelsArray = _.shuffle(jsonLabels);
     }
     else {
@@ -10801,9 +10821,23 @@ function LabelService($q) {
 
     deferredLabels.resolve(labelsArray[page - 1]);
     return deferredLabels.promise;
+    /*var offset = page || 0,
+      searchParams = {
+        //start: offset
+      };
+    var requestOptions = _.cloneDeep(defaultApiConfig);
+    requestOptions.params = searchParams;
+
+    if (queryString) {
+      searchParams.query = queryString;
+    }
+
+    return $http
+      .get(apiUrl + 'labels/search', requestOptions)
+      .then(returnUnwrappedData);*/
   };
 }
-LabelService.$inject = ["$q"];
+LabelService.$inject = ["$q", "$http", "appConfig", "uitidAuth"];
 
 // Source: src/manage/manage.controller.js
 /**
