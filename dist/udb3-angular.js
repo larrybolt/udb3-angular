@@ -13437,9 +13437,9 @@ function OfferController(
 
   // initialize controller and take optional event actions
   $q.when(controller.init())
+    .then(fetchPersonalVariation)
     .then(ifOfferIsEvent)
     .then(translateLocation)
-    .then(fetchPersonalVariation)
     .finally(function () {
       controller.editable = true;
     });
@@ -13563,15 +13563,23 @@ function OfferController(
     offerLabeller.unlabel(cachedOffer, label.name);
   };
 
-  function fetchPersonalVariation(event) {
+  /**
+   * @param {(UdbPlace|UdbEvent)}offer
+   * @return {Promise}
+   */
+  function fetchPersonalVariation(offer) {
     return variationRepository
-      .getPersonalVariation(event)
+      .getPersonalVariation(offer)
       .then(function (personalVariation) {
         $scope.event.description = personalVariation.description[defaultLanguage];
         return personalVariation;
       });
   }
 
+  /**
+   * @param {UdbEvent} event
+   * @return {Promise}
+   */
   function translateLocation(event) {
     if ($scope.event.location) {
       $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
