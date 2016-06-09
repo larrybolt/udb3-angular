@@ -49,7 +49,13 @@ describe('Service: Offer labeller', function () {
 
   beforeEach(module('udb.entry', function($provide){
     logger = jasmine.createSpyObj('jobLogger', ['addJob']);
-    udbApi = jasmine.createSpyObj('udbApi', ['getRecentLabels', 'labelOffer', 'labelQuery', 'labelOffers']);
+    udbApi = jasmine.createSpyObj('udbApi', [
+      'getRecentLabels',
+      'labelOffer',
+      'labelQuery',
+      'labelOffers',
+      'findLabels'
+    ]);
 
     $provide.provider('jobLogger', {
       $get: function () {
@@ -106,6 +112,62 @@ describe('Service: Offer labeller', function () {
     }
 
     jobPromise.then(assertJob);
+    $scope.$digest();
+  });
+
+  it('should search for similar labels when asking for suggestions', function (done) {
+    var similarLabels = [
+      {name: 'biceps', id:'5AAAEB67-A418-42DD-A202-483D2AA537F5'},
+      {name: 'bicycle', id:'5CEE3B87-A208-474C-9301-F1CB997A0871'},
+      {name: 'bier', id:'4BA4A0C1-1854-4B62-8E0A-2CB2D09C0058'},
+      {name: 'bambi', id:'CECB9FBF-5E60-4495-8C5A-50CF8575ECDA'},
+      {name: 'barbie', id:'4457F37F-A9D7-4EA5-83BC-74797F5B6E2A'}
+    ];
+    function assertSuggestions(labels) {
+      expect(udbApi.findLabels).toHaveBeenCalledWith('bi', 5);
+      expect(labels).toEqual(similarLabels);
+      done();
+    }
+    udbApi.findLabels.and.returnValue($q.resolve({
+      member: similarLabels
+    }));
+
+    labeller
+      .getSuggestions('bi')
+      .then(assertSuggestions);
+
+    $scope.$digest();
+  });
+
+  it('should suggest the last labels used when no similar labels exist', function (done) {
+    var lastUsedLabels = [
+      {name: 'biceps', id:'5AAAEB67-A418-42DD-A202-483D2AA537F5'},
+      {name: 'bicycle', id:'5CEE3B87-A208-474C-9301-F1CB997A0871'},
+      {name: 'bier', id:'4BA4A0C1-1854-4B62-8E0A-2CB2D09C0058'},
+      {name: 'bambi', id:'CECB9FBF-5E60-4495-8C5A-50CF8575ECDA'},
+      {name: 'barbie', id:'4457F37F-A9D7-4EA5-83BC-74797F5B6E2A'},
+      {name: 'dat', id: '0E39BF5C-84FA-4467-9A75-AF6C66CB5010'},
+      {name: 'boi', id: '0E39BF5C-84FA-4467-9A75-AF6C66CB5010'}
+    ];
+    var expectedLabels = [
+      {name: 'biceps', id:'biceps'},
+      {name: 'bicycle', id:'bicycle'},
+      {name: 'bier', id:'bier'},
+      {name: 'bambi', id:'bambi'},
+      {name: 'barbie', id:'barbie'}
+    ];
+    function assertSuggestions(labels) {
+      expect(udbApi.getRecentLabels).toHaveBeenCalled();
+      expect(labels).toEqual(expectedLabels);
+      done();
+    }
+    udbApi.findLabels.and.returnValue($q.resolve({totalItems: 0}));
+    udbApi.getRecentLabels.and.returnValue($q.resolve(_.map(lastUsedLabels, 'name')));
+
+    labeller
+      .getSuggestions('waddap')
+      .then(assertSuggestions);
+
     $scope.$digest();
   });
 });

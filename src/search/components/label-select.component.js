@@ -16,16 +16,21 @@ angular
 /** @ngInject */
 function LabelSelectComponent(offerLabeller) {
   var select = this;
+  /** @type {Label[]} */
   select.availableLabels = [];
   select.suggestLabels = suggestLabels;
+  select.createLabel = createLabel;
+  /** @type {Label[]} */
   select.labels = _.map(select.offer.labels, function (labelName) {
     return {name:labelName};
   });
-  select.createLabel = function(labelName) {
+
+  function createLabel(labelName) {
     return {name:labelName};
-  };
+  }
 
   function suggestLabels(name) {
+    /** @param {string[]} labels */
     function setAvailableLabels(labels) {
       var newLabel = {name: name};
       select.availableLabels = _.chain(labels)
@@ -38,7 +43,7 @@ function LabelSelectComponent(offerLabeller) {
     }
 
     offerLabeller
-      .getSuggestions(name)
+      .getSuggestions(name, 6)
       .then(setAvailableLabels);
   }
 }

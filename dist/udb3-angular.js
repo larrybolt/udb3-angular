@@ -5568,9 +5568,11 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
 
   /**
    * @param {string} labelName
+   * @param {Number} [maxItems]
    * @return {Promise.<Label[]>}
    */
-  offerLabeller.getSuggestions = function (labelName) {
+  offerLabeller.getSuggestions = function (labelName, maxItems) {
+    var max = typeof maxItems !== 'undefined' ?  maxItems : 5;
     /** @param {PagedCollection} pagedSearchResults */
     function returnSimilarLabels(pagedSearchResults) {
       return pagedSearchResults.member;
@@ -5580,15 +5582,27 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
       return udbApi
         .getRecentLabels()
         .then(function (labelNames) {
-          return _.map(labelNames, function (labelName) {
-            return {name: labelName, id: labelName};
-          });
+          return _.chain(labelNames)
+            .map(function (labelName) {
+              return {name: labelName, id: labelName};
+            })
+            .take(max)
+            .value();
         });
     }
 
+    function returnSuggestions(pagedSearchResults) {
+      if (pagedSearchResults.totalItems === 0) {
+        return returnRecentLabels();
+      } else {
+        return returnSimilarLabels(pagedSearchResults);
+
+      }
+    }
+
     return udbApi
-      .findLabels(labelName, 10)
-      .then(returnSimilarLabels, returnRecentLabels);
+      .findLabels(labelName, max)
+      .then(returnSuggestions, returnRecentLabels);
   };
 }
 OfferLabeller.$inject = ["jobLogger", "udbApi", "OfferLabelJob", "OfferLabelBatchJob", "QueryLabelJob", "$q"];
@@ -11442,16 +11456,21 @@ angular
 /** @ngInject */
 function LabelSelectComponent(offerLabeller) {
   var select = this;
+  /** @type {Label[]} */
   select.availableLabels = [];
   select.suggestLabels = suggestLabels;
+  select.createLabel = createLabel;
+  /** @type {Label[]} */
   select.labels = _.map(select.offer.labels, function (labelName) {
     return {name:labelName};
   });
-  select.createLabel = function(labelName) {
+
+  function createLabel(labelName) {
     return {name:labelName};
-  };
+  }
 
   function suggestLabels(name) {
+    /** @param {string[]} labels */
     function setAvailableLabels(labels) {
       var newLabel = {name: name};
       select.availableLabels = _.chain(labels)
@@ -11464,7 +11483,7 @@ function LabelSelectComponent(offerLabeller) {
     }
 
     offerLabeller
-      .getSuggestions(name)
+      .getSuggestions(name, 6)
       .then(setAvailableLabels);
   }
 }
