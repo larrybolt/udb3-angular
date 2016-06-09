@@ -11466,7 +11466,12 @@ function LabelSelectComponent(offerLabeller) {
   });
 
   function createLabel(labelName) {
-    return {name:labelName};
+    var similarLabel = _.find(select.labels, function (existingLabel) {
+      return existingLabel.name.toUpperCase() === labelName.toUpperCase();
+    });
+    if (!similarLabel) {
+      return {name:labelName};
+    }
   }
 
   function suggestLabels(name) {
@@ -11478,7 +11483,9 @@ function LabelSelectComponent(offerLabeller) {
         .reject(function(label) {
           return _.find(select.labels, {'name': label.name});
         })
-        .uniq('name')
+        .uniq(function (label) {
+          return label.name.toUpperCase();
+        })
         .value();
     }
 
