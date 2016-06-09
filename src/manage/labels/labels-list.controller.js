@@ -23,7 +23,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   function setLabelsResults(data) {
     llc.pagedItemViewer.loading = true;
     llc.pagedItemViewer.setResults(data);
-    llc.labels = data.labels;
+    llc.labels = data;
   }
 
   llc.findLabels = function(query) {
