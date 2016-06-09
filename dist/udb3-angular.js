@@ -10722,7 +10722,7 @@ function LabelService(
   service.find = function(queryString, page) {
     var offset = page || 0,
       searchParams = {
-        start: offset
+        //start: offset
       };
     var requestOptions = _.cloneDeep(defaultApiConfig);
     requestOptions.params = searchParams;
