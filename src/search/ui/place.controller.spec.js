@@ -9,12 +9,17 @@ describe('Controller: Place', function() {
       EventTranslationState,
       offerTranslator,
       offerLabeller,
+      offerEditor,
+      variationRepository,
       $window,
       $q,
       examplePlaceEventJson = {
         '@id': "http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702",
         '@context': "/api/1.0/place.jsonld",
         name: "Villa 99, een art deco pareltje",
+        description: {
+          'nl': 'Een korte beschrijving voor dit evenement'
+        },
         creator: "christophe.vanthuyne@ronse.be",
         created: "2015-06-14T15:22:33+02:00",
         modified: "2015-12-15T14:08:06+01:00",
@@ -65,12 +70,15 @@ describe('Controller: Place', function() {
     jsonLDLangFilter = $injector.get('jsonLDLangFilter');
     EventTranslationState = $injector.get('EventTranslationState');
     offerTranslator = $injector.get('offerTranslator');
+    variationRepository = $injector.get('variationRepository');
     offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
+    offerEditor = $injector.get('offerEditor');
     $window = $injector.get('$window');
     $q = _$q_;
 
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     spyOn(udbApi, 'getOffer').and.returnValue(deferredEvent.promise);
+    spyOn(variationRepository, 'getPersonalVariation').and.returnValue(deferredVariation.promise);
 
     $scope.event = {};
     $scope.event['@id'] = examplePlaceEventJson['@id'];
@@ -83,6 +91,8 @@ describe('Controller: Place', function() {
         EventTranslationState: EventTranslationState,
         offerTranslator: offerTranslator,
         offerLabeller: offerLabeller,
+        offerEditor: offerEditor,
+        variationRepository: variationRepository,
         $window: $window
       }
     );
@@ -119,5 +129,39 @@ describe('Controller: Place', function() {
     expect($scope.event.labels).toEqual(expectedLabels);
     expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
     expect(offerLabeller.label).not.toHaveBeenCalled();
+  });
+
+  describe('variations: ', function () {
+    beforeEach(function () {
+      deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
+    });
+
+    it('displays the original place description when no personal variation is found', function () {
+      deferredVariation.reject();
+      $scope.$digest();
+      expect($scope.event.description).toEqual('Een korte beschrijving voor dit evenement');
+    });
+
+    it('displays a custom description when a personal variation of a place is available', function () {
+      var variation = new UdbPlace(examplePlaceEventJson);
+      variation.description.nl = 'Een variatie van de originele beschrijving';
+      deferredVariation.resolve(variation);
+      $scope.$digest();
+      expect($scope.event.description).toEqual('Een variatie van de originele beschrijving');
+    });
+
+    it('reverts back to the original place description when deleting the personal description', function() {
+      var variation = new UdbPlace(examplePlaceEventJson);
+      variation.description.nl = 'Een variatie van de originele beschrijving';
+      deferredVariation.resolve(variation);
+      $scope.$digest();
+      var deferredDeletion = $q.defer();
+      spyOn(offerEditor, 'deleteVariation').and.returnValue(deferredDeletion.promise);
+      placeController.updateDescription('');
+
+      deferredDeletion.resolve();
+      $scope.$digest();
+      expect($scope.event.description).toEqual('Een korte beschrijving voor dit evenement');
+    });
   });
 });
