@@ -78,12 +78,21 @@
               <option value="email">E-mailadres</option>
             </select>
           </td>
-          <td>
+          <td ng-switch="info.type">
             <input type="text"
+                   ng-switch-when="url"
+                   udb-http-prefix
                    class="form-control"
                    ng-model="info.value"
                    name="contact[{{key}}]"
-                   ng-change="validateInfo(key)"
+                   ng-change="validateInfo()"
+                   ng-model-options="{ updateOn: 'blur' }"/>
+            <input type="text"
+                   ng-switch-default
+                   class="form-control"
+                   ng-model="info.value"
+                   name="contact[{{key}}]"
+                   ng-change="validateInfo()"
                    ng-model-options="{ updateOn: 'blur' }"/>
             <span class="help-block" ng-if="infoErrorMessage" ng-bind="::infoErrorMessage"></span>
           </td>
