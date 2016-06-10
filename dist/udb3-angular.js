@@ -13188,8 +13188,6 @@ function PlaceController(
   EventTranslationState,
   offerTranslator,
   offerLabeller,
-  offerEditor,
-  variationRepository,
   $window
 ) {
   var controller = this;
@@ -13222,23 +13220,9 @@ function PlaceController(
         controller.fetching = false;
 
         watchLabels();
-
-        // Try to fetch a personal variation for the event
-        fetchPersonalVariation();
       });
     } else {
       controller.fetching = false;
-    }
-
-    function fetchPersonalVariation() {
-      var personalVariationPromise = variationRepository.getPersonalVariation(cachedPlace);
-      personalVariationPromise
-        .then(function (personalVariation) {
-          $scope.event.description = personalVariation.description[defaultLanguage];
-        })
-        .finally(function () {
-          controller.editable = true;
-        });
     }
 
     function watchLabels() {
@@ -13347,23 +13331,8 @@ function PlaceController(
   controller.labelRemoved = function (label) {
     offerLabeller.unlabel(cachedPlace, label);
   };
-
-  // Editing
-  controller.updateDescription = function (description) {
-    if ($scope.event.description !== description) {
-      var updatePromise = offerEditor.editDescription(cachedPlace, description);
-
-      updatePromise.finally(function () {
-        if (!description) {
-          $scope.event.description = cachedPlace.description[defaultLanguage];
-        }
-      });
-
-      return updatePromise;
-    }
-  };
 }
-PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "offerEditor", "variationRepository", "$window"];
+PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window"];
 
 // Source: src/search/ui/place.directive.js
 /**
