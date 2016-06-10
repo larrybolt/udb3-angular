@@ -14,7 +14,7 @@ angular
 function udbPlaceSuggestion() {
   var placeSuggestionDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place-suggestion.directive.html'
   };

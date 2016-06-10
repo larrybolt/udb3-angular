@@ -1,18 +1,18 @@
 'use strict';
 
-describe('Controller: Event', function() {
+describe('Controller: Offer', function() {
   var $scope,
-      eventController,
+      offerController,
+      udbApi,
+      UdbEvent,
       jsonLDLangFilter,
+      EventTranslationState,
       offerTranslator,
       offerLabeller,
       offerEditor,
-      EventTranslationState,
-      udbApi,
-      UdbEvent,
-      $q,
       variationRepository,
       $window,
+      $q,
       exampleEventJson = {
         "@id": "http://culudb-silex.dev:8080/event/1111be8c-a412-488d-9ecc-8fdf9e52edbc",
         "@context": "/api/1.0/event.jsonld",
@@ -139,51 +139,64 @@ describe('Controller: Event', function() {
   beforeEach(inject(function($injector, $rootScope, $controller, _$q_) {
     $scope = $rootScope.$new();
     udbApi = $injector.get('udbApi');
-    jsonLDLangFilter = $injector.get('jsonLDLangFilter');
-    offerTranslator = $injector.get('offerTranslator');
-    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
-    offerEditor = $injector.get('offerEditor');
-    EventTranslationState = $injector.get('EventTranslationState');
     UdbEvent = $injector.get('UdbEvent');
+    jsonLDLangFilter = $injector.get('jsonLDLangFilter');
+    EventTranslationState = $injector.get('EventTranslationState');
+    offerTranslator = $injector.get('offerTranslator');
+    offerEditor = $injector.get('offerEditor');
+    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label']);
     variationRepository = $injector.get('variationRepository');
-    $q = _$q_;
     $window = $injector.get('$window');
+    $q = _$q_;
 
-    $scope.event = {};
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     spyOn(udbApi, 'getOffer').and.returnValue(deferredEvent.promise);
     spyOn(variationRepository, 'getPersonalVariation').and.returnValue(deferredVariation.promise);
 
-    eventController = $controller(
-      'EventController', {
+    $scope.event = {};
+    $scope.event['@id'] = exampleEventJson['@id'];
+
+    offerController = $controller(
+      'OfferController', {
         udbApi: udbApi,
+        $scope: $scope,
         jsonLDLangFilter: jsonLDLangFilter,
+        EventTranslationState: EventTranslationState,
         offerTranslator: offerTranslator,
         offerLabeller: offerLabeller,
+        $window: $window,
         offerEditor: offerEditor,
-        EventTranslationState: EventTranslationState,
-        $scope: $scope
+        variationRepository: variationRepository
       }
     );
   }));
 
-  it('should trigger an API label action when adding a label', function () {
-    var label = 'some other label';
+  it('should fetch the place information if not present', function () {
     deferredEvent.resolve(new UdbEvent(exampleEventJson));
     $scope.$digest();
 
-    eventController.labelAdded(label);
+    expect(udbApi.getOffer).toHaveBeenCalledWith(
+      'http://culudb-silex.dev:8080/event/1111be8c-a412-488d-9ecc-8fdf9e52edbc'
+    );
+  });
+
+  it('should trigger an API label action when adding a label', function () {
+    var label = {name:'some other label'};
+    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+    $scope.$digest();
+
+    offerController.labelAdded(label);
     expect(offerLabeller.label).toHaveBeenCalled();
   });
 
   it('should prevent any duplicate labels and warn the user when trying to add one', function () {
-    var label = 'Some Label';
+    var label = {name:'Some Label'};
     deferredEvent.resolve(new UdbEvent(exampleEventJson));
     $scope.$digest();
 
     spyOn($window, 'alert');
 
-    eventController.labelAdded(label);
+    offerController.labelAdded(label);
 
     var expectedLabels = ['some label'];
     expect($scope.event.labels).toEqual(expectedLabels);
@@ -217,7 +230,7 @@ describe('Controller: Event', function() {
       $scope.$digest();
       var deferredDeletion = $q.defer();
       spyOn(offerEditor, 'deleteVariation').and.returnValue(deferredDeletion.promise);
-      eventController.updateDescription('');
+      offerController.updateDescription('');
 
       deferredDeletion.resolve();
       $scope.$digest();

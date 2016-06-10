@@ -14,7 +14,7 @@ angular
 function udbDashboardPlaceItem() {
   var dashboardPlaceItemDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/dashboard-item.directive.html'
   };

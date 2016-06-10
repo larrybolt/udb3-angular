@@ -14,7 +14,7 @@ angular
 function udbPlace() {
   var placeDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place.directive.html'
   };
