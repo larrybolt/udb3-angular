@@ -14154,11 +14154,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                <span ng-switch-when=\"unknown\">Geen prijsinformatie</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
-    "            <tr ng-class=\"{muted: !event.typicalAgeRange}\">\n" +
+    "            <tr>\n" +
     "              <td><strong>Geschikt voor</strong></td>\n" +
     "              <td>\n" +
     "                <span ng-if=\"event.typicalAgeRange\">{{event.typicalAgeRange}}</span>\n" +
-    "                <span ng-if=\"!event.typicalAgeRange\">Geen leeftijdsinformatie</span>\n" +
+    "                <span ng-if=\"!event.typicalAgeRange\">Alle leeftijden</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
     "            <tr ng-class=\"{muted: !event.image}\">\n" +
