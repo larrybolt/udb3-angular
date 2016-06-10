@@ -25,6 +25,7 @@ function LabelSelectComponent(offerLabeller) {
     return {name:labelName};
   });
   select.minimumInputLength = 2;
+  select.findDelay = 300;
 
   function createLabel(labelName) {
     var similarLabel = _.find(select.labels, function (existingLabel) {
@@ -35,23 +36,35 @@ function LabelSelectComponent(offerLabeller) {
     }
   }
 
-  function suggestLabels(name) {
-    /** @param {string[]} labels */
-    function setAvailableLabels(labels) {
-      var newLabel = {name: name};
-      select.availableLabels = _.chain(labels)
-        .union([newLabel])
-        .reject(function(label) {
-          return _.find(select.labels, {'name': label.name});
-        })
-        .uniq(function (label) {
-          return label.name.toUpperCase();
-        })
-        .value();
-    }
-
+  function findSuggestions(name) {
     offerLabeller
       .getSuggestions(name, 6)
-      .then(setAvailableLabels);
+      .then(function(labels) {
+        labels.push({name: name});
+        setAvailableLabels(labels);
+      })
+      .finally(function () {
+        select.refreshing = false;
+      });
+  }
+
+  var delayedFindSuggestions = _.debounce(findSuggestions, select.findDelay);
+
+  function suggestLabels(name) {
+    select.refreshing = true;
+    setAvailableLabels([]);
+    delayedFindSuggestions(name);
+  }
+
+  /** @param {Label[]} labels */
+  function setAvailableLabels(labels) {
+    select.availableLabels = _.chain(labels)
+      .reject(function(label) {
+        return _.find(select.labels, {'name': label.name});
+      })
+      .uniq(function (label) {
+        return label.name.toUpperCase();
+      })
+      .value();
   }
 }

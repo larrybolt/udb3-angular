@@ -11465,6 +11465,7 @@ function LabelSelectComponent(offerLabeller) {
     return {name:labelName};
   });
   select.minimumInputLength = 2;
+  select.findDelay = 300;
 
   function createLabel(labelName) {
     var similarLabel = _.find(select.labels, function (existingLabel) {
@@ -11475,24 +11476,36 @@ function LabelSelectComponent(offerLabeller) {
     }
   }
 
-  function suggestLabels(name) {
-    /** @param {string[]} labels */
-    function setAvailableLabels(labels) {
-      var newLabel = {name: name};
-      select.availableLabels = _.chain(labels)
-        .union([newLabel])
-        .reject(function(label) {
-          return _.find(select.labels, {'name': label.name});
-        })
-        .uniq(function (label) {
-          return label.name.toUpperCase();
-        })
-        .value();
-    }
-
+  function findSuggestions(name) {
     offerLabeller
       .getSuggestions(name, 6)
-      .then(setAvailableLabels);
+      .then(function(labels) {
+        labels.push({name: name});
+        setAvailableLabels(labels);
+      })
+      .finally(function () {
+        select.refreshing = false;
+      });
+  }
+
+  var delayedFindSuggestions = _.debounce(findSuggestions, select.findDelay);
+
+  function suggestLabels(name) {
+    select.refreshing = true;
+    setAvailableLabels([]);
+    delayedFindSuggestions(name);
+  }
+
+  /** @param {Label[]} labels */
+  function setAvailableLabels(labels) {
+    select.availableLabels = _.chain(labels)
+      .reject(function(label) {
+        return _.find(select.labels, {'name': label.name});
+      })
+      .uniq(function (label) {
+        return label.name.toUpperCase();
+      })
+      .value();
   }
 }
 LabelSelectComponent.$inject = ["offerLabeller"];
@@ -16702,10 +16715,16 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "           on-select=\"select.labelAdded({label: $item})\"\n" +
     "           on-remove=\"select.labelRemoved({label: $item})\">\n" +
     "    <ui-select-match placeholder=\"Voeg een label toe...\">{{$item.name}}</ui-select-match>\n" +
+    "    <ui-select-no-choice ng-show=\"$select.search.length >= select.minimumInputLength &&\">\n" +
+    "        <div class=\"udb-label-select-refreshing\" style=\"padding: 3px 20px\">\n" +
+    "            <i class=\"fa fa-circle-o-notch fa-spin\"></i> Suggesties laden\n" +
+    "        </div>\n" +
+    "    </ui-select-no-choice>\n" +
     "    <ui-select-choices repeat=\"label in select.availableLabels track by label.name\"\n" +
     "                       ng-show=\"$select.search.length >= select.minimumInputLength &&\"\n" +
+    "                       ui-disable-choice=\"select.refreshing\"\n" +
     "                       refresh=\"select.suggestLabels($select.search)\"\n" +
-    "                       refresh-delay=\"300\"\n" +
+    "                       refresh-delay=\"0\"\n" +
     "                       minimum-input-length=\"{{select.minimumInputLength}}\">\n" +
     "        <div>\n" +
     "            <span ng-bind-html=\"label.name | highlight: $select.search\"></span>\n" +
