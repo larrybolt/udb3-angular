@@ -9397,9 +9397,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     $scope.minAge = null;
     $scope.ageCssClass = 'state-complete';
 
-    if (ageRange === AgeRangeEnum.ALL) {
-      $scope.saveAgeRange();
-    }
+    $scope.saveAgeRange();
   }
 
   /**
@@ -9446,20 +9444,19 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function saveAgeRange() {
 
     $scope.invalidAgeRange = false;
-    //$scope.minAge = parseInt($scope.minAge); // should already be a number!
-    if ($scope.ageRange !== AgeRangeEnum.ALL) {
 
-      if (isNaN($scope.minAge)) {
-        $scope.invalidAgeRange = true;
-      }
-      else {
-        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
-        EventFormData.typicalAgeRange = formatTypicalAgeRange($scope.minAge, $scope.ageRange.max);
-      }
-
+    if ($scope.ageRange === AgeRangeEnum.ALL) {
+      EventFormData.typicalAgeRange = null;
     }
     else {
-      EventFormData.typicalAgeRange = null;
+      if ($scope.minAge) {
+        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
+      }
+
+      EventFormData.typicalAgeRange = formatTypicalAgeRange(
+        $scope.minAge || $scope.ageRange.min,
+        $scope.ageRange.max
+      );
     }
 
     // Save to db if valid age entered.
