@@ -226,6 +226,11 @@ angular
         path: '/labels/overview',
         name: 'LabelsList',
         component: 'labelsComponent'
+      },
+      {
+        path: '/label/:id',
+        name: 'LabelEditor',
+        component: 'udbLabelEditor'
       }
     ]
   });
@@ -300,17 +305,6 @@ function isAuthorized(authorizationService) {
   return authorizationService.isLoggedIn();
 }
 isAuthorized.$inject = ['authorizationService'];
-/**
- * @ngdoc module
- * @name udb.management
- * @description
- * The udb management module
- */
-angular
-  .module('udb.management', [
-    'udb.core'
-  ]);
-
 angular.module('peg', []).factory('LuceneQueryParser', function () {
  return (function() {
   /*
@@ -10761,6 +10755,96 @@ function QuerySearchResultViewerFactory() {
   return (QuerySearchResultViewer);
 }
 
+// Source: src/manage/labels/label-editor.component.js
+angular
+  .module('udb.manage.labels')
+  .component('udbLabelEditor', {
+    templateUrl: 'templates/label-editor.html',
+    controller: LabelEditorComponent,
+    controllerAs: 'editor'
+  });
+
+/** @ngInject */
+function LabelEditorComponent(LabelService, $uibModal) {
+  var editor = this;
+  editor.updateVisibility = updateVisibility;
+  editor.updatePrivacy = updatePrivacy;
+  editor.$routerOnActivate = loadLabelFromParams;
+  editor.renaming = false;
+  editor.rename = rename;
+
+  function rename() {
+    function showRenamedLabel(jobInfo) {
+      loadLabel(jobInfo.labelId);
+    }
+
+    editor.renaming = true;
+    LabelService
+      .copy(editor.label)
+      .then(showRenamedLabel, showProblem)
+      .finally(function () {
+        editor.renaming = false;
+      });
+  }
+
+  /**
+   * @param {ApiProblem} problem
+   */
+  function showProblem(problem) {
+    loadLabel(editor.label.id);
+    var modalInstance = $uibModal.open(
+      {
+        templateUrl: 'templates/unexpected-error-modal.html',
+        controller: 'UnexpectedErrorModalController',
+        size: 'sm',
+        resolve: {
+          errorMessage: function() {
+            return problem.title + ' ' + problem.detail;
+          }
+        }
+      }
+    );
+  }
+
+  function loadLabelFromParams(next) {
+    var id = next.params.id;
+    loadLabel(id);
+  }
+
+  /**
+   *
+   * @param {Label} label
+   */
+  function showLabel(label) {
+    editor.label = label;
+  }
+
+  function loadLabel(id) {
+    editor.loadingError = false;
+    editor.label = false;
+    LabelService
+      .get(id)
+      .then(showLabel, showLoadingError);
+  }
+
+  function showLoadingError () {
+    editor.loadingError = 'Label niet gevonden!';
+  }
+
+  function updateVisibility () {
+    var isVisible = editor.label.isVisible;
+    var jobPromise = isVisible ? LabelService.makeVisible(editor.label) : LabelService.makeInvisible(editor.label);
+    jobPromise.catch(showProblem);
+  }
+
+  function updatePrivacy () {
+    var isPrivate = editor.label.isPrivate;
+    var jobPromise = isPrivate ? LabelService.makePrivate(editor.label) : LabelService.makePublic(editor.label);
+    jobPromise.catch(showProblem);
+  }
+}
+LabelEditorComponent.$inject = ["LabelService", "$uibModal"];
+
 // Source: src/manage/labels/labels-list.controller.js
 /**
  * @ngdoc function
@@ -10775,8 +10859,9 @@ angular
 /* @ngInject */
 function LabelsListController($scope, $rootScope, LabelService, QuerySearchResultViewer) {
   var llc = this;
+  var labelsPerPage = 10;
   llc.loading = false;
-  llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+  llc.pagedItemViewer = new QuerySearchResultViewer(labelsPerPage, 1);
   llc.query = '';
 
   /**
@@ -10785,7 +10870,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   function setLabelsResults(data) {
     llc.pagedItemViewer.loading = true;
     llc.pagedItemViewer.setResults(data);
-    llc.labels = data;
+    llc.labels = data.member;
   }
 
   llc.findLabels = function(query) {
@@ -10795,7 +10880,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
     }
     llc.query = query;
     LabelService
-      .find(llc.query, llc.pagedItemViewer.currentPage)
+      .find(llc.query, labelsPerPage, llc.pagedItemViewer.currentPage)
       .then(setLabelsResults);
   };
 
@@ -10826,66 +10911,126 @@ angular
   .service('LabelService', LabelService);
 
 /* @ngInject */
-function LabelService(
-  $q,
-  $http,
-  appConfig,
-  uitidAuth
-) {
+function LabelService(udbApi, jobLogger, BaseJob, $q) {
   var service = this;
-  var apiUrl = appConfig.baseApiUrl;
-  var defaultApiConfig = {
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + uitidAuth.getToken()
-    },
-    params: {}
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return udbApi.findLabels(query, limit, start);
   };
 
-  function pageArray(items, itemsPerPage) {
-    var result = [];
-    angular.forEach(items, function(item, index) {
-      var rowIndex = Math.floor(index / itemsPerPage),
-          colIndex = index % itemsPerPage;
-      if (!result[rowIndex]) {
-        result[rowIndex] = [];
-        result[rowIndex].labels = [];
-        result[rowIndex].itemsPerPage = itemsPerPage;
-        result[rowIndex].totalItems = items.length;
-      }
-
-      result[rowIndex].labels[colIndex] = item;
-    });
-
-    return result;
-  }
-
-  function returnUnwrappedData(response) {
-    return $q.resolve(response.data);
-  }
-
-  service.find = function(queryString, page) {
-    var offset = page || 0,
-      searchParams = {
-        //start: offset
-      };
-    var requestOptions = _.cloneDeep(defaultApiConfig);
-    requestOptions.params = searchParams;
-
-    if (queryString) {
-      searchParams.query = queryString;
-    }
-    else {
-      searchParams.query = '';
-    }
-
-    return $http
-      .get(apiUrl + 'labels', requestOptions)
-      .then(returnUnwrappedData);
+  /**
+   * @param {uuid} labelId
+   * @return {Promise.<Label>}
+   */
+  service.get = function(labelId) {
+    return udbApi.getLabelById(labelId);
   };
+
+  /**
+   * @param {string} name
+   * @param {boolean} isVisible
+   * @param {boolean} isPrivate
+   *
+   * @return {Promise.<BaseJob>}
+   */
+  service.create = function (name, isVisible, isPrivate) {
+    return udbApi
+      .createLabel(name, isVisible, isPrivate)
+      .then(createNewLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.copy = function (label) {
+    return udbApi
+      .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
+      .then(createNewLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.delete = function (label) {
+    return udbApi
+      .deleteLabel(label.id)
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makeInvisible = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakeInvisible')
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makeVisible = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakeVisible')
+      .then(logLabelJob);
+  };
+
+  /**
+   *
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makePrivate = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakePrivate')
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makePublic = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakePublic')
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Object} commandInfo
+   * @return {Promise.<BaseJob>}
+   */
+  function logLabelJob(commandInfo) {
+    var job = new BaseJob(commandInfo.commandId);
+    jobLogger.addJob(job);
+
+    return $q.resolve(job);
+  }
+
+  /**
+   * @param {Object} commandInfo
+   * @return {Promise.<BaseJob>}
+   */
+  function createNewLabelJob(commandInfo) {
+    var job = new BaseJob(commandInfo.commandId);
+    job.labelId = commandInfo.labelId;
+    jobLogger.addJob(job);
+
+    return $q.resolve(job);
+  }
 }
-LabelService.$inject = ["$q", "$http", "appConfig", "uitidAuth"];
+LabelService.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
 
 // Source: src/manage/manage.controller.js
 /**
@@ -11413,241 +11558,6 @@ function UsersListController($scope, $rootScope, UserService, QuerySearchResultV
   $scope.$on('$destroy', userSearchSubmittedListener);
 }
 UsersListController.$inject = ["$scope", "$rootScope", "UserService", "QuerySearchResultViewer"];
-
-// Source: src/management/label-editor.component.js
-angular
-  .module('udb.management')
-  .component('udbLabelEditor', {
-    templateUrl: 'templates/label-editor.html',
-    controller: LabelEditorComponent,
-    controllerAs: 'editor'
-  });
-
-/** @ngInject */
-function LabelEditorComponent(LabelManager, $uibModal) {
-  var editor = this;
-  editor.updateVisibility = updateVisibility;
-  editor.updatePrivacy = updatePrivacy;
-  editor.$routerOnActivate = loadLabelFromParams;
-  editor.renaming = false;
-  editor.rename = rename;
-
-  function rename() {
-    function showRenamedLabel(jobInfo) {
-      loadLabel(jobInfo.labelId);
-    }
-
-    editor.renaming = true;
-    LabelManager
-      .copy(editor.label)
-      .then(showRenamedLabel, showProblem)
-      .finally(function () {
-        editor.renaming = false;
-      });
-  }
-
-  /**
-   * @param {ApiProblem} problem
-   */
-  function showProblem(problem) {
-    loadLabel(editor.label.id);
-    var modalInstance = $uibModal.open(
-      {
-        templateUrl: 'templates/unexpected-error-modal.html',
-        controller: 'UnexpectedErrorModalController',
-        size: 'sm',
-        resolve: {
-          errorMessage: function() {
-            return problem.title + ' ' + problem.detail;
-          }
-        }
-      }
-    );
-  }
-
-  function loadLabelFromParams(next) {
-    var id = next.params.id;
-    loadLabel(id);
-  }
-
-  /**
-   *
-   * @param {Label} label
-   */
-  function showLabel(label) {
-    editor.label = label;
-  }
-
-  function loadLabel(id) {
-    editor.loadingError = false;
-    editor.label = false;
-    LabelManager
-      .get(id)
-      .then(showLabel, showLoadingError);
-  }
-
-  function showLoadingError () {
-    editor.loadingError = 'Label niet gevonden!';
-  }
-
-  function updateVisibility () {
-    var isVisible = editor.label.isVisible;
-    var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
-    jobPromise.catch(showProblem);
-  }
-
-  function updatePrivacy () {
-    var isPrivate = editor.label.isPrivate;
-    var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
-    jobPromise.catch(showProblem);
-  }
-}
-LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
-
-// Source: src/management/label-manager.service.js
-/**
- * @typedef {Object} Label
- * @property {string}   id
- * @property {string}   name
- * @property {boolean}  isVisible
- * @property {boolean}  isPrivate
- */
-
-/**
- * @ngdoc function
- * @name udb.management.service:LabelManager
- * @description
- * # LabelManager
- * Service to manage labels.
- */
-angular
-  .module('udb.management')
-  .service('LabelManager', LabelManager);
-
-/** @ngInject */
-function LabelManager(udbApi, jobLogger, BaseJob, $q) {
-  var service = this;
-
-  /**
-   * @param {uuid} labelId
-   * @return {Promise.<Label>}
-   */
-  service.get = function(labelId) {
-    return udbApi.getLabelById(labelId);
-  };
-
-  /**
-   * @param {string} name
-   * @param {boolean} isVisible
-   * @param {boolean} isPrivate
-   *
-   * @return {Promise.<BaseJob>}
-   */
-  service.create = function (name, isVisible, isPrivate) {
-    return udbApi
-      .createLabel(name, isVisible, isPrivate)
-      .then(createNewLabelJob);
-  };
-
-  /**
-   * @param {Label} label
-   * @return {Promise.<BaseJob>}
-   */
-  service.copy = function (label) {
-    return udbApi
-      .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
-      .then(createNewLabelJob);
-  };
-
-  /**
-   * @param {Label} label
-   * @return {Promise.<BaseJob>}
-   */
-  service.delete = function (label) {
-    return udbApi
-      .deleteLabel(label.id)
-      .then(logLabelJob);
-  };
-
-  /**
-   * @param {Label} label
-   * @return {Promise.<BaseJob>}
-   */
-  service.makeInvisible = function (label) {
-    return udbApi
-      .updateLabel(label.id, 'MakeInvisible')
-      .then(logLabelJob);
-  };
-
-  /**
-   * @param {Label} label
-   * @return {Promise.<BaseJob>}
-   */
-  service.makeVisible = function (label) {
-    return udbApi
-      .updateLabel(label.id, 'MakeVisible')
-      .then(logLabelJob);
-  };
-
-  /**
-   *
-   * @param {Label} label
-   * @return {Promise.<BaseJob>}
-   */
-  service.makePrivate = function (label) {
-    return udbApi
-      .updateLabel(label.id, 'MakePrivate')
-      .then(logLabelJob);
-  };
-
-  /**
-   * @param {Label} label
-   * @return {Promise.<BaseJob>}
-   */
-  service.makePublic = function (label) {
-    return udbApi
-      .updateLabel(label.id, 'MakePublic')
-      .then(logLabelJob);
-  };
-
-  /**
-   * @param {Object} commandInfo
-   * @return {Promise.<BaseJob>}
-   */
-  function logLabelJob(commandInfo) {
-    var job = new BaseJob(commandInfo.commandId);
-    jobLogger.addJob(job);
-
-    return $q.resolve(job);
-  }
-
-  /**
-   * @param {Object} commandInfo
-   * @return {Promise.<BaseJob>}
-   */
-  function createNewLabelJob(commandInfo) {
-    var job = new BaseJob(commandInfo.commandId);
-    job.labelId = commandInfo.labelId;
-    jobLogger.addJob(job);
-
-    return $q.resolve(job);
-  }
-}
-LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
-
-// Source: src/management/management.component.js
-angular
-  .module('udb.management')
-  .component('udbManagement', {
-    template: '<h1>Manage</h1> <ng-outlet></ng-outlet>',
-    $routeConfig: [
-      {
-        path: '/label/:id',
-        name: 'LabelEditor',
-        component: 'udbLabelEditor'
-      }
-    ]
-  });
 
 // Source: src/media/create-image-job.factory.js
 /**
@@ -17353,6 +17263,40 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
+  $templateCache.put('templates/label-editor.html',
+    "<h2>Labels</h2>\n" +
+    "<h3>Label bewerken</h3>\n" +
+    "\n" +
+    "<div ng-show=\"!editor.label && !editor.loadingError\">\n" +
+    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-show=\"editor.label\">\n" +
+    "    <label for=\"label-name-field\">Naam</label>\n" +
+    "    <input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\" ng-disabled=\"editor.renaming\">\n" +
+    "    <button ng-disabled=\"editor.renaming\" type=\"button\" class=\"btn btn-primary\" ng-click=\"editor.rename()\">\n" +
+    "        Hernoemen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"editor.renaming\"></i>\n" +
+    "    </button>\n" +
+    "    <br>\n" +
+    "    <label>\n" +
+    "        <input type=\"checkbox\"\n" +
+    "               ng-change=\"editor.updateVisibility()\"\n" +
+    "               ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
+    "    </label>\n" +
+    "    <br>\n" +
+    "    <label>\n" +
+    "        <input type=\"checkbox\"\n" +
+    "               ng-change=\"editor.updatePrivacy()\"\n" +
+    "               ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
+    "    </label>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-show=\"editor.loadingError\">\n" +
+    "    <span ng-bind=\"editor.loadingError\"></span>\n" +
+    "</div>\n"
+  );
+
+
   $templateCache.put('templates/labels-list.html',
     "<h1 class=\"title\" id=\"page-title\">\n" +
     "    Labels\n" +
@@ -17503,40 +17447,6 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                ng-change=\"ulc.pageChanged()\">\n" +
     "        </uib-pagination>\n" +
     "    </div>\n" +
-    "</div>\n"
-  );
-
-
-  $templateCache.put('templates/label-editor.html',
-    "<h2>Labels</h2>\n" +
-    "<h3>Label bewerken</h3>\n" +
-    "\n" +
-    "<div ng-show=\"!editor.label && !editor.loadingError\">\n" +
-    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
-    "</div>\n" +
-    "\n" +
-    "<div ng-show=\"editor.label\">\n" +
-    "    <label for=\"label-name-field\">Naam</label>\n" +
-    "    <input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\" ng-disabled=\"editor.renaming\">\n" +
-    "    <button ng-disabled=\"editor.renaming\" type=\"button\" class=\"btn btn-primary\" ng-click=\"editor.rename()\">\n" +
-    "        Hernoemen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"editor.renaming\"></i>\n" +
-    "    </button>\n" +
-    "    <br>\n" +
-    "    <label>\n" +
-    "        <input type=\"checkbox\"\n" +
-    "               ng-change=\"editor.updateVisibility()\"\n" +
-    "               ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
-    "    </label>\n" +
-    "    <br>\n" +
-    "    <label>\n" +
-    "        <input type=\"checkbox\"\n" +
-    "               ng-change=\"editor.updatePrivacy()\"\n" +
-    "               ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
-    "    </label>\n" +
-    "</div>\n" +
-    "\n" +
-    "<div ng-show=\"editor.loadingError\">\n" +
-    "    <span ng-bind=\"editor.loadingError\"></span>\n" +
     "</div>\n"
   );
 

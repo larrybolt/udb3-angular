@@ -13,8 +13,9 @@ angular
 /* @ngInject */
 function LabelsListController($scope, $rootScope, LabelService, QuerySearchResultViewer) {
   var llc = this;
+  var labelsPerPage = 10;
   llc.loading = false;
-  llc.pagedItemViewer = new QuerySearchResultViewer(10, 1);
+  llc.pagedItemViewer = new QuerySearchResultViewer(labelsPerPage, 1);
   llc.query = '';
 
   /**
@@ -23,7 +24,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   function setLabelsResults(data) {
     llc.pagedItemViewer.loading = true;
     llc.pagedItemViewer.setResults(data);
-    llc.labels = data;
+    llc.labels = data.member;
   }
 
   llc.findLabels = function(query) {
@@ -33,7 +34,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
     }
     llc.query = query;
     LabelService
-      .find(llc.query, llc.pagedItemViewer.currentPage)
+      .find(llc.query, labelsPerPage, llc.pagedItemViewer.currentPage)
       .then(setLabelsResults);
   };
 

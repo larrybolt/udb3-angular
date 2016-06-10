@@ -35,6 +35,11 @@ angular
         path: '/labels/overview',
         name: 'LabelsList',
         component: 'labelsComponent'
+      },
+      {
+        path: '/label/:id',
+        name: 'LabelEditor',
+        component: 'udbLabelEditor'
       }
     ]
   });
