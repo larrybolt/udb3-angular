@@ -55,7 +55,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
       variationCreationJob.task.promise.then(function (jobInfo) {
         variation.id = jobInfo['offer_variation_id']; // jshint ignore:line
-        variationRepository.save(offer.id, variation);
+        variationRepository.save(offer['@id'], variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
     };
@@ -86,7 +86,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
     deletePromise.success(function (jobData) {
       jobLogger.addJob(new BaseJob(jobData.commandId));
-      variationRepository.remove(offer.id);
+      variationRepository.remove(offer['@id']);
     });
 
     return deletePromise;
