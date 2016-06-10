@@ -4591,7 +4591,7 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     BaseJob.prototype.finish.call(this);
 
     if (this.state !== JobStates.FAILED) {
-      this.task.resolve(this.item.id);
+      this.task.resolve(this.item.apiUrl);
     }
   };
 
@@ -4965,8 +4965,8 @@ function EventCrud(
     jobLogger.addJob(job);
 
     // unvalidate cache on success
-    job.task.promise.then(function (itemId) {
-      udbApi.removeItemFromCache(itemId);
+    job.task.promise.then(function (offerLocation) {
+      udbApi.removeItemFromCache(offerLocation.toString());
     }, function() {});
   }
 
