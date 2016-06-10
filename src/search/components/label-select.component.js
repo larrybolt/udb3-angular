@@ -24,6 +24,7 @@ function LabelSelectComponent(offerLabeller) {
   select.labels = _.map(select.offer.labels, function (labelName) {
     return {name:labelName};
   });
+  select.minimumInputLength = 2;
 
   function createLabel(labelName) {
     var similarLabel = _.find(select.labels, function (existingLabel) {

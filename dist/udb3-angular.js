@@ -11464,6 +11464,7 @@ function LabelSelectComponent(offerLabeller) {
   select.labels = _.map(select.offer.labels, function (labelName) {
     return {name:labelName};
   });
+  select.minimumInputLength = 2;
 
   function createLabel(labelName) {
     var similarLabel = _.find(select.labels, function (existingLabel) {
@@ -16702,9 +16703,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "           on-remove=\"select.labelRemoved({label: $item})\">\n" +
     "    <ui-select-match placeholder=\"Voeg een label toe...\">{{$item.name}}</ui-select-match>\n" +
     "    <ui-select-choices repeat=\"label in select.availableLabels track by label.name\"\n" +
+    "                       ng-show=\"$select.search.length >= select.minimumInputLength &&\"\n" +
     "                       refresh=\"select.suggestLabels($select.search)\"\n" +
     "                       refresh-delay=\"300\"\n" +
-    "                       minimum-input-length=\"1\">\n" +
+    "                       minimum-input-length=\"{{select.minimumInputLength}}\">\n" +
     "        <div>\n" +
     "            <span ng-bind-html=\"label.name | highlight: $select.search\"></span>\n" +
     "            <span ng-if=\"!label.id\"> (nieuw label toevoegen)</span>\n" +

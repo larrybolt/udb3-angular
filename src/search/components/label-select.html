@@ -8,9 +8,10 @@
            on-remove="select.labelRemoved({label: $item})">
     <ui-select-match placeholder="Voeg een label toe...">{{$item.name}}</ui-select-match>
     <ui-select-choices repeat="label in select.availableLabels track by label.name"
+                       ng-show="$select.search.length >= select.minimumInputLength &&"
                        refresh="select.suggestLabels($select.search)"
                        refresh-delay="300"
-                       minimum-input-length="1">
+                       minimum-input-length="{{select.minimumInputLength}}">
         <div>
             <span ng-bind-html="label.name | highlight: $select.search"></span>
             <span ng-if="!label.id"> (nieuw label toevoegen)</span>
