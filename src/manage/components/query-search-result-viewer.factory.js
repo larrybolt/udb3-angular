@@ -28,7 +28,7 @@ function QuerySearchResultViewerFactory() {
    */
   var QuerySearchResultViewer = function (pageSize, activePage) {
     this.pageSize = pageSize || 30;
-    this.users = [];
+    this.members = [];
     this.totalItems = 0;
     this.currentPage = activePage || 1;
     this.loading = true;
@@ -42,7 +42,7 @@ function QuerySearchResultViewerFactory() {
       var viewer = this;
 
       viewer.pageSize = pagedResults.itemsPerPage || 30;
-      viewer.users = pagedResults.users || [];
+      viewer.members = pagedResults.members || [];
       viewer.totalItems = pagedResults.totalItems || 0;
 
       viewer.loading = false;
