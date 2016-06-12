@@ -10719,19 +10719,18 @@ function QuerySearchResultViewerFactory() {
   /**
    * @class SearchResultViewer
    * @constructor
-   * @param    {number}     pageSize        The number of items shown per page
+   * @param    {Number}     itemsPerPage        The number of items shown per page
    *
-   * @property {object[]}   events          A list of json-LD event objects
-   * @property {number}     pageSize        The current page size
-   * @property {number}     totalItems      The total items found
-   * @property {number}     currentPage     The index of the current page without zeroing
+   * @property {Object[]}   events          A list of json-LD event objects
+   * @property {Number}     itemsPerPage    The current page size
+   * @property {Number}     totalItems      The total items found
+   * @property {Number}     currentPage     The index of the current page without zeroing
    * @property {boolean}    loading         A flag to indicate the period between changing of the query and
    *                                        receiving of the results.
-   * @property {SelectionState} selectionState Enum that keeps the state of selected results
    */
-  var QuerySearchResultViewer = function (pageSize, activePage) {
-    this.pageSize = pageSize || 30;
-    this.members = [];
+  var QuerySearchResultViewer = function (itemsPerPage, activePage) {
+    this.itemsPerPage = itemsPerPage || 30;
+    this.items = [];
     this.totalItems = 0;
     this.currentPage = activePage || 1;
     this.loading = true;
@@ -10744,9 +10743,9 @@ function QuerySearchResultViewerFactory() {
     setResults: function (pagedResults) {
       var viewer = this;
 
-      viewer.pageSize = pagedResults.itemsPerPage || 30;
-      viewer.members = pagedResults.members || [];
-      viewer.totalItems = pagedResults.totalItems || 0;
+      viewer.itemsPerPage = pagedResults.itemsPerPage;
+      viewer.items = pagedResults.member;
+      viewer.totalItems = pagedResults.totalItems;
 
       viewer.loading = false;
     }
@@ -10865,15 +10864,6 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   llc.pagedItemViewer = new QuerySearchResultViewer(labelsPerPage, 1);
   llc.query = '';
 
-  /**
-   * @param {PagedCollection} data
-   */
-  function setLabelsResults(data) {
-    llc.pagedItemViewer.loading = true;
-    llc.pagedItemViewer.setResults(data);
-    llc.labels = data.member;
-  }
-
   llc.findLabels = function(query) {
     // Reset the pager when search query is changed.
     if (query !== llc.query) {
@@ -10883,15 +10873,17 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
     // Calculate the offset for the pager
     offset = (llc.pagedItemViewer.currentPage - 1) * labelsPerPage;
     llc.query = query;
+    llc.loading = true;
     LabelService
       .find(llc.query, labelsPerPage, offset)
-      .then(setLabelsResults);
+      .then(llc.pagedItemViewer.setResults)
+      .finally(function () {
+        llc.loading = false;
+      });
   };
 
-  llc.findLabels();
-
   var labelsSearchSubmittedListener = $rootScope.$on('labelSearchSubmitted', function(event, args) {
-    llc.findLabels(args.query);
+    llc.findLabels(args.query || '');
   });
 
   llc.pageChanged = function() {
@@ -17258,7 +17250,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      ng-class=\"{'has-errors': qsb.hasErrors, 'is-editing': qsb.isEditing}\">\n" +
     "  <div class=\"form-group\">\n" +
     "    <label for=\"user-search-input\">{{ qsb.label }}</label>\n" +
-    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"qsb.queryString\">\n" +
+    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"qsb.queryString\" autocomplete=\"off\">\n" +
     "    <i ng-show=\"qsb.hasErrors\" class=\"fa fa-warning warning-icon\" tooltip-append-to-body=\"true\"\n" +
     "       tooltip-placement=\"bottom\" uib-tooltip=\"{{qsb.errors}}\"></i>\n" +
     "  </div>\n" +
@@ -17306,52 +17298,64 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    Labels\n" +
     "</h1>\n" +
     "<div class=\"row\">\n" +
-    "    <udb-query-search-bar qsb-label=\"Zoeken op labelnaam\" qsb-emit=\"labelSearchSubmitted\"></udb-query-search-bar>\n" +
-    "</div>\n" +
-    "<div class=\"text-center\" ng-show=\"llc.loading\">\n" +
-    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "    <div class=\"col-md-11\">\n" +
+    "        <udb-query-search-bar qsb-label=\"Zoeken op labelnaam\" qsb-emit=\"labelSearchSubmitted\"></udb-query-search-bar>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-1\">\n" +
+    "        <i ng-show=\"llc.loading\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "    </div>\n" +
     "</div>\n" +
     "\n" +
     "<div class=\"row\" ng-cloak ng-show=\"!llc.loading\">\n" +
-    "    <div class=\"table-responsive\">\n" +
-    "        <table class=\"table table-hover table-striped\">\n" +
-    "            <thead>\n" +
-    "                <tr>\n" +
-    "                    <th>Naam</th>\n" +
-    "                    <th>Verborgen</th>\n" +
-    "                    <th>Voorbehouden</th>\n" +
-    "                    <th>Opties</th>\n" +
-    "                </tr>\n" +
-    "            </thead>\n" +
-    "            <tbody>\n" +
-    "                <tr ng-repeat=\"label in llc.labels\">\n" +
-    "                    <td>{{ label.name }}</td>\n" +
-    "                    <td>{{ label.visibility === \"invisible\" ? \"Verborgen\" : \"\"}}</td>\n" +
-    "                    <td>{{ label.privacy === \"private\" ? \"Voorbehouden\" : \"\"}}</td>\n" +
-    "                    <td>\n" +
-    "                        <div class=\"btn-group\">\n" +
-    "                            <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
-    "                                Bewerken <span class=\"caret\"></span>\n" +
-    "                            </button>\n" +
-    "                            <ul class=\"dropdown-menu\">\n" +
-    "                                <li><a href=\"/manage/label/{{ label.id }}\">Bewerken</a></li>\n" +
-    "                                <li><a href=\"#\">Verwijderen</a></li>\n" +
-    "                            </ul>\n" +
-    "                        </div>\n" +
-    "                    </td>\n" +
-    "                </tr>\n" +
-    "            </tbody>\n" +
-    "        </table>\n" +
-    "    </div>\n" +
-    "    <div class=\"panel-footer\">\n" +
-    "        <uib-pagination\n" +
-    "                total-items=\"llc.pagedItemViewer.totalItems\"\n" +
-    "                ng-model=\"llc.pagedItemViewer.currentPage\"\n" +
-    "                items-per-page=\"llc.pagedItemViewer.pageSize\"\n" +
-    "                ng-show=\"llc.pagedItemViewer.totalItems > 0\"\n" +
-    "                max-size=\"10\"\n" +
-    "                ng-change=\"llc.pageChanged()\">\n" +
-    "        </uib-pagination>\n" +
+    "    <div class=\"col-md-12\">\n" +
+    "        <p ng-show=\"llc.query.length === 0\">\n" +
+    "            Schrijf een zoekopdracht in het veld hierboven om labels te tonen.\n" +
+    "        </p>\n" +
+    "        <p ng-show=\"llc.query.length && llc.pagedItemViewer.totalItems === 0\">\n" +
+    "            Geen labels gevonden.\n" +
+    "        </p>\n" +
+    "        <div class=\"manage-labels-search-results\" ng-show=\"llc.pagedItemViewer.totalItems > 0\">\n" +
+    "            <div class=\"table-responsive\" >\n" +
+    "                <table class=\"table table-hover table-striped\">\n" +
+    "                    <thead>\n" +
+    "                    <tr>\n" +
+    "                        <th>Naam</th>\n" +
+    "                        <th>Verborgen</th>\n" +
+    "                        <th>Voorbehouden</th>\n" +
+    "                        <th>Opties</th>\n" +
+    "                    </tr>\n" +
+    "                    </thead>\n" +
+    "                    <tbody>\n" +
+    "                    <tr ng-repeat=\"label in llc.pagedItemViewer.items\">\n" +
+    "                        <td>{{ label.name }}</td>\n" +
+    "                        <td>{{ label.visibility === \"invisible\" ? \"Verborgen\" : \"\"}}</td>\n" +
+    "                        <td>{{ label.privacy === \"private\" ? \"Voorbehouden\" : \"\"}}</td>\n" +
+    "                        <td>\n" +
+    "                            <div class=\"btn-group\">\n" +
+    "                                <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
+    "                                    Bewerken <span class=\"caret\"></span>\n" +
+    "                                </button>\n" +
+    "                                <ul class=\"dropdown-menu\">\n" +
+    "                                    <li><a href=\"/manage/label/{{ label.id }}\">Bewerken</a></li>\n" +
+    "                                    <li><a href=\"#\">Verwijderen</a></li>\n" +
+    "                                </ul>\n" +
+    "                            </div>\n" +
+    "                        </td>\n" +
+    "                    </tr>\n" +
+    "                    </tbody>\n" +
+    "                </table>\n" +
+    "            </div>\n" +
+    "            <div class=\"panel-footer\">\n" +
+    "                <uib-pagination\n" +
+    "                        total-items=\"llc.pagedItemViewer.totalItems\"\n" +
+    "                        ng-model=\"llc.pagedItemViewer.currentPage\"\n" +
+    "                        items-per-page=\"llc.pagedItemViewer.itemsPerPage\"\n" +
+    "                        ng-show=\"llc.pagedItemViewer.totalItems > 0\"\n" +
+    "                        max-size=\"10\"\n" +
+    "                        ng-change=\"llc.pageChanged()\">\n" +
+    "                </uib-pagination>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
     "    </div>\n" +
     "</div>\n"
   );

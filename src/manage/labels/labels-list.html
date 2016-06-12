@@ -2,51 +2,63 @@
     Labels
 </h1>
 <div class="row">
-    <udb-query-search-bar qsb-label="Zoeken op labelnaam" qsb-emit="labelSearchSubmitted"></udb-query-search-bar>
-</div>
-<div class="text-center" ng-show="llc.loading">
-    <i class="fa fa-circle-o-notch fa-spin"></i>
+    <div class="col-md-11">
+        <udb-query-search-bar qsb-label="Zoeken op labelnaam" qsb-emit="labelSearchSubmitted"></udb-query-search-bar>
+    </div>
+    <div class="col-md-1">
+        <i ng-show="llc.loading" class="fa fa-circle-o-notch fa-spin"></i>
+    </div>
 </div>
 
 <div class="row" ng-cloak ng-show="!llc.loading">
-    <div class="table-responsive">
-        <table class="table table-hover table-striped">
-            <thead>
-                <tr>
-                    <th>Naam</th>
-                    <th>Verborgen</th>
-                    <th>Voorbehouden</th>
-                    <th>Opties</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="label in llc.labels">
-                    <td>{{ label.name }}</td>
-                    <td>{{ label.visibility === "invisible" ? "Verborgen" : ""}}</td>
-                    <td>{{ label.privacy === "private" ? "Voorbehouden" : ""}}</td>
-                    <td>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Bewerken <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a href="/manage/label/{{ label.id }}">Bewerken</a></li>
-                                <li><a href="#">Verwijderen</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="panel-footer">
-        <uib-pagination
-                total-items="llc.pagedItemViewer.totalItems"
-                ng-model="llc.pagedItemViewer.currentPage"
-                items-per-page="llc.pagedItemViewer.pageSize"
-                ng-show="llc.pagedItemViewer.totalItems > 0"
-                max-size="10"
-                ng-change="llc.pageChanged()">
-        </uib-pagination>
+    <div class="col-md-12">
+        <p ng-show="llc.query.length === 0">
+            Schrijf een zoekopdracht in het veld hierboven om labels te tonen.
+        </p>
+        <p ng-show="llc.query.length && llc.pagedItemViewer.totalItems === 0">
+            Geen labels gevonden.
+        </p>
+        <div class="manage-labels-search-results" ng-show="llc.pagedItemViewer.totalItems > 0">
+            <div class="table-responsive" >
+                <table class="table table-hover table-striped">
+                    <thead>
+                    <tr>
+                        <th>Naam</th>
+                        <th>Verborgen</th>
+                        <th>Voorbehouden</th>
+                        <th>Opties</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="label in llc.pagedItemViewer.items">
+                        <td>{{ label.name }}</td>
+                        <td>{{ label.visibility === "invisible" ? "Verborgen" : ""}}</td>
+                        <td>{{ label.privacy === "private" ? "Voorbehouden" : ""}}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Bewerken <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a href="/manage/label/{{ label.id }}">Bewerken</a></li>
+                                    <li><a href="#">Verwijderen</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-footer">
+                <uib-pagination
+                        total-items="llc.pagedItemViewer.totalItems"
+                        ng-model="llc.pagedItemViewer.currentPage"
+                        items-per-page="llc.pagedItemViewer.itemsPerPage"
+                        ng-show="llc.pagedItemViewer.totalItems > 0"
+                        max-size="10"
+                        ng-change="llc.pageChanged()">
+                </uib-pagination>
+            </div>
+        </div>
     </div>
 </div>

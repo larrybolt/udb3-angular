@@ -19,15 +19,6 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   llc.pagedItemViewer = new QuerySearchResultViewer(labelsPerPage, 1);
   llc.query = '';
 
-  /**
-   * @param {PagedCollection} data
-   */
-  function setLabelsResults(data) {
-    llc.pagedItemViewer.loading = true;
-    llc.pagedItemViewer.setResults(data);
-    llc.labels = data.member;
-  }
-
   llc.findLabels = function(query) {
     // Reset the pager when search query is changed.
     if (query !== llc.query) {
@@ -37,15 +28,17 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
     // Calculate the offset for the pager
     offset = (llc.pagedItemViewer.currentPage - 1) * labelsPerPage;
     llc.query = query;
+    llc.loading = true;
     LabelService
       .find(llc.query, labelsPerPage, offset)
-      .then(setLabelsResults);
+      .then(llc.pagedItemViewer.setResults)
+      .finally(function () {
+        llc.loading = false;
+      });
   };
 
-  llc.findLabels();
-
   var labelsSearchSubmittedListener = $rootScope.$on('labelSearchSubmitted', function(event, args) {
-    llc.findLabels(args.query);
+    llc.findLabels(args.query || '');
   });
 
   llc.pageChanged = function() {

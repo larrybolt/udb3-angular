@@ -16,19 +16,18 @@ function QuerySearchResultViewerFactory() {
   /**
    * @class SearchResultViewer
    * @constructor
-   * @param    {number}     pageSize        The number of items shown per page
+   * @param    {Number}     itemsPerPage        The number of items shown per page
    *
-   * @property {object[]}   events          A list of json-LD event objects
-   * @property {number}     pageSize        The current page size
-   * @property {number}     totalItems      The total items found
-   * @property {number}     currentPage     The index of the current page without zeroing
+   * @property {Object[]}   events          A list of json-LD event objects
+   * @property {Number}     itemsPerPage    The current page size
+   * @property {Number}     totalItems      The total items found
+   * @property {Number}     currentPage     The index of the current page without zeroing
    * @property {boolean}    loading         A flag to indicate the period between changing of the query and
    *                                        receiving of the results.
-   * @property {SelectionState} selectionState Enum that keeps the state of selected results
    */
-  var QuerySearchResultViewer = function (pageSize, activePage) {
-    this.pageSize = pageSize || 30;
-    this.members = [];
+  var QuerySearchResultViewer = function (itemsPerPage, activePage) {
+    this.itemsPerPage = itemsPerPage || 30;
+    this.items = [];
     this.totalItems = 0;
     this.currentPage = activePage || 1;
     this.loading = true;
@@ -41,9 +40,9 @@ function QuerySearchResultViewerFactory() {
     setResults: function (pagedResults) {
       var viewer = this;
 
-      viewer.pageSize = pagedResults.itemsPerPage || 30;
-      viewer.members = pagedResults.members || [];
-      viewer.totalItems = pagedResults.totalItems || 0;
+      viewer.itemsPerPage = pagedResults.itemsPerPage;
+      viewer.items = pagedResults.member;
+      viewer.totalItems = pagedResults.totalItems;
 
       viewer.loading = false;
     }
