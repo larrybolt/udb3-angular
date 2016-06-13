@@ -48,7 +48,7 @@ describe('Controller: Labels List', function() {
   it('should look for the first page of items when the search query changes', function() {
     var controller = getLabelListController();
     spyOn(controller, 'findLabels');
-    $rootScope.$emit('labelSearchSubmitted', {query: 'asdf'});
+    controller.queryChanged('asdf');
 
     expect(controller.findLabels).toHaveBeenCalledWith('asdf', 0);
   });
@@ -56,7 +56,7 @@ describe('Controller: Labels List', function() {
   it('should look for the items at the right offset when the page for the active query changes', function() {
     var controller = getLabelListController();
     controller.query = 'asdf';
-    $rootScope.$emit('labelSearchSubmitted', {query: 'asdf'});
+    controller.queryChanged('asdf');
 
     spyOn(controller, 'findLabels');
     controller.page = 2;
@@ -75,7 +75,7 @@ describe('Controller: Labels List', function() {
     expect(controller.loading = false);
 
     // When the query changes the controller start looking for items
-    $rootScope.$emit('labelSearchSubmitted', {query: 'dirk'});
+    controller.queryChanged('dirk');
     $scope.$digest();
     expect(controller.loading = true);
 

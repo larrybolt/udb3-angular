@@ -11,7 +11,7 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController($scope, $rootScope, LabelService, QuerySearchResultViewer) {
+function LabelsListController(LabelService, QuerySearchResultViewer) {
   var llc = this;
   var labelsPerPage = 10;
   var offset;
@@ -19,6 +19,7 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   llc.pagedItemViewer = undefined;
   llc.query = '';
   llc.page = 0;
+  llc.queryChanged = queryChanged;
 
   llc.findLabels = function(query, offset) {
     llc.loading = true;
@@ -40,14 +41,15 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
       });
   };
 
-  var labelsSearchSubmittedListener = $rootScope.$on('labelSearchSubmitted', function(event, args) {
-    llc.findLabels(args.query || '', 0);
-  });
+  /**
+   * @param {string} queryString
+   */
+  function queryChanged(queryString) {
+    llc.findLabels(queryString, 0);
+  }
 
   llc.pageChanged = function() {
     offset = (llc.page - 1) * labelsPerPage;
     llc.findLabels(llc.query, offset);
   };
-
-  $scope.$on('$destroy', labelsSearchSubmittedListener);
 }

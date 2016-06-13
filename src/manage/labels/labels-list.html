@@ -3,7 +3,9 @@
 </h1>
 <div class="row">
     <div class="col-md-11">
-        <udb-query-search-bar qsb-label="Zoeken op labelnaam" qsb-emit="labelSearchSubmitted"></udb-query-search-bar>
+        <udb-query-search-bar search-label="Zoeken op labelnaam"
+                              on-update="llc.queryChanged(query)"
+        ></udb-query-search-bar>
     </div>
     <div class="col-md-1">
         <i ng-show="llc.loading" class="fa fa-circle-o-notch fa-spin"></i>
