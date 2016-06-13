@@ -214,7 +214,7 @@ describe('Controller: event form step 5', function () {
     EventFormData.contactPoint = {
       email: ['foo@bar.com'],
       phone: ['016985682'],
-      url: ['http://foo.com', 'http://bar.com'],
+      url: ['http://foo.com', 'http://bar.com', 'https://foobar.com'],
       dude: ['sweet']
     };
     EventFormData.id = 1;
@@ -223,7 +223,8 @@ describe('Controller: event form step 5', function () {
       {type:'email', value:'foo@bar.com'},
       {type:'phone', value:'016985682'},
       {type:'url', value:'http://foo.com'},
-      {type:'url', value:'http://bar.com'}
+      {type:'url', value:'http://bar.com'},
+      {type:'url', value:'https://foobar.com'}
     ];
 
     expect(scope.contactInfo).toEqual(expectedContactInfo);

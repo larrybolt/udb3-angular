@@ -5190,14 +5190,6 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
       deferredUpdate.resolve(false);
     }
 
-    var createVariation = function () {
-      purpose = purpose || 'personal';
-
-      udbApi
-        .createVariation(offer.apiUrl, description, purpose)
-        .then(handleCreationJob, rejectUpdate);
-    };
-
     var handleCreationJob = function (jobData) {
       var variation = angular.copy(offer);
       variation.description.nl = description;
@@ -5206,9 +5198,17 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
       variationCreationJob.task.promise.then(function (jobInfo) {
         variation.id = jobInfo['offer_variation_id']; // jshint ignore:line
-        variationRepository.save(offer.id, variation);
+        variationRepository.save(offer['@id'], variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
+    };
+
+    var createVariation = function () {
+      purpose = purpose || 'personal';
+
+      udbApi
+        .createVariation(offer.apiUrl, description, purpose)
+        .then(handleCreationJob, rejectUpdate);
     };
 
     var editDescription = function (variation) {
@@ -5237,7 +5237,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
     deletePromise.success(function (jobData) {
       jobLogger.addJob(new BaseJob(jobData.commandId));
-      variationRepository.remove(offer.id);
+      variationRepository.remove(offer['@id']);
     });
 
     return deletePromise;
@@ -6719,7 +6719,7 @@ function EventFormImageUploadController(
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
-  $scope.modalTitle = 'Gebruiksvoorwaarden';
+  $scope.modalTitle = 'Afbeelding toevoegen';
   $scope.description = '';
   $scope.copyright = '';
   $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');
@@ -7514,13 +7514,7 @@ function UdbContactInfoValidationDirective() {
 
         }
         else if (ngModel.$modelValue.type === 'url') {
-
           var viewValue = ngModel.$viewValue;
-          // Autoset http://.
-          if (ngModel.$modelValue.value.substring(0, 7) !== 'http://') {
-            viewValue.value = 'http://' + viewValue.value;
-            ngModel.$setViewValue(viewValue);
-          }
 
           if (!URL_REGEXP.test(viewValue.value)) {
             scope.infoErrorMessage = 'Gelieve een geldige url in te vullen';
@@ -8310,6 +8304,38 @@ function EventFormStep5Directive() {
   };
 }
 
+// Source: src/event_form/http-prefix.directive.js
+angular
+  .module('udb.event-form')
+  .directive('udbHttpPrefix', HttpPrefixDirective);
+
+function HttpPrefixDirective() {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, element, attrs, controller) {
+      function ensureHttpPrefix(value) {
+        // Need to add prefix if we don't have http:// prefix already AND we don't have part of it
+        if (value && !/^(https?):\/\//i.test(value) && !isPrefixed(value)) {
+          controller.$setViewValue('http://' + value);
+          controller.$render();
+          return 'http://' + value;
+        }
+        else {
+          return value;
+        }
+      }
+
+      function isPrefixed(value) {
+        return 'http://'.indexOf(value) === 0 || 'https://'.indexOf(value) === 0;
+      }
+
+      controller.$formatters.push(ensureHttpPrefix);
+      controller.$parsers.splice(0, 0, ensureHttpPrefix);
+    }
+  };
+}
+
 // Source: src/event_form/steps/event-form-step1.controller.js
 /**
  * @ngdoc function
@@ -8627,8 +8653,9 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
   /**
    * Click listener to reset the calendar. User can select a new calendar type.
    */
-  function resetCalendar() {
+  function resetCalendar () {
     EventFormData.activeCalendarType = '';
+    EventFormData.calendarType = '';
   }
 
   /**
@@ -9116,6 +9143,7 @@ function EventFormStep4Controller(
 ) {
 
   var controller = this;
+  var ignoreDuplicates = _.get(appConfig, 'offerEditor.ignoreDuplicates', false);
 
   // Scope vars.
   // main storage for event form.
@@ -9146,7 +9174,7 @@ function EventFormStep4Controller(
   /**
    * Validate date after step 4 to enter step 5.
    */
-  function validateEvent(checkDuplicates) {
+  function validateEvent() {
 
     // First check if all data is correct.
     $scope.infoMissing = false;
@@ -9177,7 +9205,7 @@ function EventFormStep4Controller(
       return;
     }
 
-    if (checkDuplicates) {
+    if (!ignoreDuplicates) {
       $scope.saving = true;
       $scope.error = false;
 
@@ -9874,12 +9902,6 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function validateBookingType(type) {
 
     if (type === 'website') {
-
-      // Autoset http://.
-      if ($scope.bookingModel.url.substring(0, 7) !== 'http://') {
-        $scope.bookingModel.url = 'http://' + $scope.bookingModel.url;
-      }
-
       // Valid url?
       $scope.step5TicketsForm.url.$setValidity('url', true);
       if (!URL_REGEXP.test($scope.bookingModel.url)) {
@@ -13268,11 +13290,11 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   this.getPersonalVariation = function (offer) {
     var deferredVariation =  $q.defer(),
-        personalVariation = personalVariationCache.get(offer.url);
+        personalVariation = personalVariationCache.get(offer['@id']);
 
     if (personalVariation) {
       if (personalVariation === 'no-personal-variation') {
-        deferredVariation.reject('there is no personal variation for offer with url: ' + offer.url);
+        deferredVariation.reject('there is no personal variation for offer with url: ' + offer['@id']);
       } else {
         deferredVariation.resolve(personalVariation);
       }
@@ -13282,7 +13304,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
       userPromise
         .then(function(user) {
           requestChain = requestChain.then(
-            requestVariation(user.id, 'personal', offer.apiUrl, deferredVariation)
+            requestVariation(user.id, 'personal', offer['@id'], deferredVariation)
           );
         });
     }
@@ -13292,10 +13314,10 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   function requestVariation(userId, purpose, offerUrl, deferredVariation) {
     return function () {
-      var offerId = offerUrl.toString().split('/').pop();
+      var offerLocation = offerUrl.toString();
 
       if (interruptRequestChain) {
-        deferredVariation.reject('navigating away, interrupting request for variation for offer with id: ' + offerId);
+        deferredVariation.reject('interrupting request for offer variation located at: ' + offerLocation);
         return deferredVariation;
       }
 
@@ -13310,28 +13332,35 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
           } else if (jsonPersonalVariation['@context'] === '/api/1.0/place.jsonld') {
             variation = new UdbPlace(jsonPersonalVariation);
           }
-          personalVariationCache.put(offerId, variation);
+          personalVariationCache.put(offerLocation, variation);
           deferredVariation.resolve(variation);
         } else {
-          personalVariationCache.put(offerId, 'no-personal-variation');
-          deferredVariation.reject('there is no personal variation for event with id: ' + offerId);
+          personalVariationCache.put(offerLocation, 'no-personal-variation');
+          deferredVariation.reject('there is no personal variation for the offer located at: ' + offerLocation);
         }
       });
 
       personalVariationRequest.error(function () {
-        deferredVariation.reject('no variations found for event with id: ' + offerId);
+        deferredVariation.reject('no variations found for offer located at: ' + offerLocation);
       });
 
       return personalVariationRequest.then();
     };
   }
 
-  this.save = function (offerId, variation) {
-    personalVariationCache.put(offerId, variation);
+  /**
+   * @param {string} offerLocation
+   * @param {(UdbPlace|UdbEvent)} variation
+   */
+  this.save = function (offerLocation, variation) {
+    personalVariationCache.put(offerLocation, variation);
   };
 
-  this.remove = function (offerId) {
-    personalVariationCache.remove(offerId);
+  /**
+   * @param {string} offerLocation
+   */
+  this.remove = function (offerLocation) {
+    personalVariationCache.remove(offerLocation);
   };
 
   $rootScope.$on('$locationChangeStart', function() {
@@ -13693,25 +13722,6 @@ function Search(
   $scope.currentPage = getCurrentPage();
 
   /**
-   * @param {Query} query A query object used to update the interface and result viewer.
-   */
-  var updateQuery = function (query) {
-    $scope.activeQuery = query;
-
-    if (queryBuilder.isValid(query)) {
-      var realQuery = queryBuilder.unparse(query);
-      $scope.resultViewer.queryChanged(realQuery);
-      findEvents(realQuery);
-
-      if (realQuery !== query.originalQueryString) {
-        $scope.realQuery = realQuery;
-      } else {
-        $scope.realQuery = false;
-      }
-    }
-  };
-
-  /**
    * Fires off a search for events using a plain query string or a query object.
    * @param {String|Query} query A query string or object to search with.
    */
@@ -13735,13 +13745,22 @@ function Search(
     });
   };
 
-  var label = function () {
-    var labellingQuery = $scope.resultViewer.querySelected;
+  /**
+   * @param {Query} query A query object used to update the interface and result viewer.
+   */
+  var updateQuery = function (query) {
+    $scope.activeQuery = query;
 
-    if (labellingQuery) {
-      labelActiveQuery();
-    } else {
-      labelSelection();
+    if (queryBuilder.isValid(query)) {
+      var realQuery = queryBuilder.unparse(query);
+      $scope.resultViewer.queryChanged(realQuery);
+      findEvents(realQuery);
+
+      if (realQuery !== query.originalQueryString) {
+        $scope.realQuery = realQuery;
+      } else {
+        $scope.realQuery = false;
+      }
     }
   };
 
@@ -13779,7 +13798,7 @@ function Search(
 
   function labelActiveQuery() {
     var query = $scope.activeQuery,
-        eventCount = $scope.resultViewer.totalItems;
+      eventCount = $scope.resultViewer.totalItems;
 
     if (queryBuilder.isValid(query)) {
       var modal = $uibModal.open({
@@ -13806,6 +13825,16 @@ function Search(
       $window.alert('provide a valid query to label');
     }
   }
+
+  var label = function () {
+    var labellingQuery = $scope.resultViewer.querySelected;
+
+    if (labellingQuery) {
+      labelActiveQuery();
+    } else {
+      labelSelection();
+    }
+  };
 
   function exportEvents() {
     var exportingQuery = $scope.resultViewer.querySelected,
@@ -14788,16 +14817,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "      <div class=\"form-group\">\n" +
     "        <label>Beschrijving <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"description\" required>\n" +
-    "        <p class=\"help-block\">\n" +
-    "            Deze tekst helpt zoekmachines en gebruikers met een visuele beperking.\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "\n" +
     "      <div class=\"form-group\">\n" +
     "        <label>Copyright <strong class=\"text-danger\">*</strong></label>\n" +
     "        <input type=\"text\" class=\"form-control\" ng-model=\"copyright\" required>\n" +
     "        <p class=\"help-block\">\n" +
-    "          Vermeld de naam van de rechtenhoudende fotograaf.</p>\n" +
+    "            Vermeld de naam van de rechtenhoudende fotograaf. Vul alleen de naam van je eigen vereniging of organisatie in als je zelf de rechten bezit.</p>\n" +
     "      </div>\n" +
     "\n" +
     "      <p class=\"image-copyright-agreements\">\n" +
@@ -15015,12 +15041,21 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "              <option value=\"email\">E-mailadres</option>\n" +
     "            </select>\n" +
     "          </td>\n" +
-    "          <td>\n" +
+    "          <td ng-switch=\"info.type\">\n" +
     "            <input type=\"text\"\n" +
+    "                   ng-switch-when=\"url\"\n" +
+    "                   udb-http-prefix\n" +
     "                   class=\"form-control\"\n" +
     "                   ng-model=\"info.value\"\n" +
     "                   name=\"contact[{{key}}]\"\n" +
-    "                   ng-change=\"validateInfo(key)\"\n" +
+    "                   ng-change=\"validateInfo()\"\n" +
+    "                   ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
+    "            <input type=\"text\"\n" +
+    "                   ng-switch-default\n" +
+    "                   class=\"form-control\"\n" +
+    "                   ng-model=\"info.value\"\n" +
+    "                   name=\"contact[{{key}}]\"\n" +
+    "                   ng-change=\"validateInfo()\"\n" +
     "                   ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
     "            <span class=\"help-block\" ng-if=\"infoErrorMessage\" ng-bind=\"::infoErrorMessage\"></span>\n" +
     "          </td>\n" +
@@ -15664,8 +15699,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "      </div>\n" +
     "      <div class=\"col-xs-12 col-md-8\">\n" +
+    "       <ul>\n" +
+    "        <li><small>Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. \"Fietsen langs kappelletjes\", \"De Sage van de Eenhoorn\")</small></li>\n" +
+    "        <li><small>Gebruik de <strong>officiële benaming</strong> voor een locatie (bv. \"Gravensteen\", \"Abdijsite Herkenrode\", \"Cultuurcentrum De Werf\")</small></li>\n" +
+    "      </ul>\n" +
+    "\n" +
     "        <p class=\"text-block\">\n" +
-    "          Gebruik een <strong>sprekende titel</strong> voor een activiteit (bv. 'Fietsen langs kapelletjes', 'Ontdek het Fort') en de <strong>officiële benaming</strong> voor een plaats (bv. 'Kalmthoutse Heide', 'Gravensteen'...). Begin met een <strong>hoofdletter</strong> en hou het <strong>kort en bondig</strong>. Een uitgebreide beschrijving vul je in stap 5 in.\n" +
+    "          <small>Een uitgebreide beschrijving kan je in stap 5 toevoegen.</small>\n" +
     "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -15948,7 +15988,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                          <input type=\"text\"\n" +
     "                                 class=\"form-control\"\n" +
     "                                 ng-model-options=\"{ updateOn: 'blur' }\"\n" +
-    "                                 ng-change=\"validateUrl()\"\n" +
+    "                                 udb-http-prefix\n" +
     "                                 name=\"url\"\n" +
     "                                 ng-model=\"bookingModel.url\"\n" +
     "                                 ng-required=\"viaWebsite\">\n" +
@@ -16172,12 +16212,21 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                          <option value=\"email\">E-mailadres</option>\n" +
     "                        </select>\n" +
     "                      </td>\n" +
-    "                      <td>\n" +
+    "                      <td ng-switch=\"info.type\">\n" +
     "                        <input type=\"text\"\n" +
+    "                               ng-switch-when=\"url\"\n" +
+    "                               udb-http-prefix\n" +
     "                               class=\"form-control\"\n" +
     "                               ng-model=\"info.value\"\n" +
     "                               name=\"contact[{{key}}]\"\n" +
-    "                               ng-change=\"validateInfo(key); saveContactInfo();\"\n" +
+    "                               ng-change=\"validateInfo(); saveContactInfo();\"\n" +
+    "                               ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
+    "                        <input type=\"text\"\n" +
+    "                               ng-switch-default\n" +
+    "                               class=\"form-control\"\n" +
+    "                               ng-model=\"info.value\"\n" +
+    "                               name=\"contact[{{key}}]\"\n" +
+    "                               ng-change=\"validateInfo(); saveContactInfo();\"\n" +
     "                               ng-model-options=\"{ updateOn: 'blur' }\"/>\n" +
     "                        <span class=\"help-block\" ng-hide=\"infoErrorMessage === ''\" ng-bind=\"infoErrorMessage\"></span>\n" +
     "                      </td>\n" +

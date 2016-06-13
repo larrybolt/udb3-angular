@@ -29,7 +29,7 @@ function EventFormImageUploadController(
   $scope.saving = false;
   $scope.error = false;
   $scope.showAgreements = !copyrightNegotiator.confirmed();
-  $scope.modalTitle = 'Gebruiksvoorwaarden';
+  $scope.modalTitle = 'Afbeelding toevoegen';
   $scope.description = '';
   $scope.copyright = '';
   $scope.maxFileSize = _.get(appConfig, 'media.fileSizeLimit', '1MB');

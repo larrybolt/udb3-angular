@@ -39,14 +39,6 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
       deferredUpdate.resolve(false);
     }
 
-    var createVariation = function () {
-      purpose = purpose || 'personal';
-
-      udbApi
-        .createVariation(offer.apiUrl, description, purpose)
-        .then(handleCreationJob, rejectUpdate);
-    };
-
     var handleCreationJob = function (jobData) {
       var variation = angular.copy(offer);
       variation.description.nl = description;
@@ -55,9 +47,17 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
       variationCreationJob.task.promise.then(function (jobInfo) {
         variation.id = jobInfo['offer_variation_id']; // jshint ignore:line
-        variationRepository.save(offer.id, variation);
+        variationRepository.save(offer['@id'], variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
+    };
+
+    var createVariation = function () {
+      purpose = purpose || 'personal';
+
+      udbApi
+        .createVariation(offer.apiUrl, description, purpose)
+        .then(handleCreationJob, rejectUpdate);
     };
 
     var editDescription = function (variation) {
@@ -86,7 +86,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
     deletePromise.success(function (jobData) {
       jobLogger.addJob(new BaseJob(jobData.commandId));
-      variationRepository.remove(offer.id);
+      variationRepository.remove(offer['@id']);
     });
 
     return deletePromise;
