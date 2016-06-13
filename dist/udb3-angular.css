@@ -2132,7 +2132,7 @@ body {
   border-bottom: 2px solid #cccccc;
   overflow: hidden;
   display: block;
-  background-color: #F0F0F0;
+  background-color: #ffffff;
 }
 .rv-item.selected {
   background: #dae1e8;
@@ -2979,6 +2979,48 @@ body {
 }
 .offer-form .main-image .select-main-image {
   display: none;
+}
+.offer-form a {
+  text-decoration: underline;
+}
+.event-type-choser-label {
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: auto 60px;
+  padding-top: 75px;
+  position: relative;
+  text-align: center;
+  width: 100%;
+  z-index: 0;
+}
+.event-type-choser-label > span {
+  background-color: #ffffff;
+  padding: .2em 1em;
+}
+.event-type-choser-label:before {
+  border-top: 1px solid #cccccc;
+  bottom: 12px;
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: -1;
+}
+.event-type-choser-label.event {
+  background-image: url('../images/icons/icon-event.svg');
+}
+.event-type-choser-label.place {
+  background-image: url('../images/icons/icon-place.svg');
+}
+.event-type-splitter {
+  display: block;
+  margin-bottom: 1em;
+  margin-top: 1em;
+}
+@media (min-width: 480px) {
+  .event-type-splitter {
+    margin-top: 75px;
+  }
 }
 .image-copyright-agreements {
   font-size: 0.85em;

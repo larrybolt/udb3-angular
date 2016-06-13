@@ -15135,36 +15135,36 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </section>\n" +
     "\n" +
     "    <div class=\"row\" ng-show=\"!activeEventType\">\n" +
-    "      <div ng-class=\"splitTypes ? 'col-xs-6': 'col-xs-12'\"\n" +
+    "      <div ng-class=\"splitTypes ? 'col-sm-5': ''\"\n" +
     "           ng-show=\"splitTypes || eventFormData.getType() === 'event'\">\n" +
-    "        <label class=\"event-type-choser-label\">Een activiteit of evenement</label>\n" +
+    "        <label class=\"event-type-choser-label event\"><span>Een evenement</span></label>\n" +
     "        <ul class=\"list-inline\" id=\"step1-events\">\n" +
     "          <li ng-repeat=\"eventType in ::eventTypeLabels | orderBy:'label'\" ng-show=\"eventType.primary === true || showAllEventTypes\">\n" +
     "            <button ng-bind=\"::eventType.label\" class=\"btn btn-default\"\n" +
     "                    ng-click=\"setEventType(eventType, true)\"></button>\n" +
     "          </li>\n" +
+    "          <li ng-hide=\"showAllEventTypes\">\n" +
+    "            <a href=\"\" ng-click=\"toggleEventTypes()\">Toon alles</a>\n" +
+    "          </li>\n" +
     "        </ul>\n" +
-    "        <p ng-hide=\"showAllEventTypes\">\n" +
-    "          Niet gevonden wat je zocht? <a href=\"\" ng-click=\"toggleEventTypes()\">Toon alle mogelijkheden</a>\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "\n" +
-    "      <div class=\"col-xs-1 col-xs-12\" ng-show=\"splitTypes\">\n" +
-    "        <p class=\"text-center\"><em>of</em></p>\n" +
+    "      <div class=\"col-sm-2\" ng-show=\"splitTypes\">\n" +
+    "        <p class=\"text-center event-type-splitter\"><em>of</em></p>\n" +
     "      </div>\n" +
     "\n" +
-    "      <div ng-class=\"splitTypes ? 'col-xs-5': 'col-xs-12'\"\n" +
+    "      <div ng-class=\"splitTypes ? 'col-sm-5': ''\"\n" +
     "           ng-show=\"splitTypes || eventFormData.getType() === 'place'\">\n" +
-    "        <label class=\"event-type-choser-label\">Een locatie of plaats</label>\n" +
+    "        <label class=\"event-type-choser-label place\"><span>Een locatie</span></label>\n" +
     "        <ul class=\"list-inline\" id=\"step1-places\">\n" +
     "          <li ng-repeat=\"placeType in ::placeLabels | orderBy:'label'\" ng-show=\"placeType.primary == true || showAllPlaces\">\n" +
     "            <button ng-bind=\"::placeType.label\" class=\"btn btn-default\"\n" +
     "                    ng-click=\"setEventType(placeType, false)\"></button>\n" +
     "          </li>\n" +
+    "          <li ng-hide=\"showAllPlaces\">\n" +
+    "            <a href=\"\" ng-click=\"togglePlaces()\">Toon alles</a>\n" +
+    "          </li>\n" +
     "        </ul>\n" +
-    "        <p ng-hide=\"showAllPlaces\">\n" +
-    "          Niet gevonden wat je zocht? <a href=\"\" ng-click=\"togglePlaces()\">Toon alle mogelijkheden</a>\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "\n" +
