@@ -11,7 +11,7 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelService, QuerySearchResultViewer) {
+function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
   var llc = this;
   var labelsPerPage = 10;
   var offset;
@@ -19,7 +19,15 @@ function LabelsListController(LabelService, QuerySearchResultViewer) {
   llc.pagedItemViewer = undefined;
   llc.query = '';
   llc.page = 0;
-  llc.queryChanged = queryChanged;
+  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+
+  query$
+    .filter(function (queryString) {
+      // Only if the query string is longer than 2 characters
+      return queryString.length > 2;
+    })
+    .debounce(300)
+    .subscribe(queryChanged);
 
   llc.findLabels = function(query, offset) {
     llc.loading = true;

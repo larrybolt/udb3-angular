@@ -5,7 +5,8 @@ describe('Controller: Labels List', function() {
     $rootScope,
     $q,
     $controller,
-    LabelService;
+    LabelService,
+    scheduler;
 
   var pagedLabels = {
     '@context': 'http://www.w3.org/ns/hydra/context.jsonld',
@@ -33,6 +34,12 @@ describe('Controller: Labels List', function() {
 
     LabelService = jasmine.createSpyObj('LabelService', ['find']);
     LabelService.find.and.returnValue($q.resolve(pagedLabels));
+
+    scheduler = new Rx.TestScheduler();
+    var originalDebounce = Rx.Observable.prototype.debounce;
+    spyOn(Rx.Observable.prototype, 'debounce').and.callFake(function(originalDelay) {
+      return originalDebounce.call(this, originalDelay, scheduler);
+    });
   }));
   
   function getLabelListController() {
@@ -45,18 +52,23 @@ describe('Controller: Labels List', function() {
     );
   }
 
-  it('should look for the first page of items when the search query changes', function() {
+  it('should look for the first page of items when the search query changes', function(done) {
     var controller = getLabelListController();
     spyOn(controller, 'findLabels');
     controller.queryChanged('asdf');
 
-    expect(controller.findLabels).toHaveBeenCalledWith('asdf', 0);
+    scheduler.scheduleAbsolute(null, 300, function() {
+      expect(controller.findLabels).toHaveBeenCalledWith('asdf', 0);
+      scheduler.stop();
+      done();
+    });
+
+    scheduler.start();
   });
 
   it('should look for the items at the right offset when the page for the active query changes', function() {
     var controller = getLabelListController();
     controller.query = 'asdf';
-    controller.queryChanged('asdf');
 
     spyOn(controller, 'findLabels');
     controller.page = 2;
@@ -65,23 +77,29 @@ describe('Controller: Labels List', function() {
     expect(controller.findLabels).toHaveBeenCalledWith('asdf', 10);
   });
 
-  it('should set the right loading states when looking for items', function() {
+  it('should set the right loading states when looking for items', function(done) {
     LabelService = jasmine.createSpyObj('LabelService', ['find']);
     var labelRequest = $q.defer();
     LabelService.find.and.returnValue(labelRequest.promise);
 
     var controller = getLabelListController();
     // The controller should not look for items when it loads
-    expect(controller.loading = false);
+    expect(controller.loading).toEqual(false);
 
     // When the query changes the controller start looking for items
     controller.queryChanged('dirk');
-    $scope.$digest();
-    expect(controller.loading = true);
+    scheduler.scheduleAbsolute(null, 300, function() {
+      expect(controller.loading).toEqual(true);
 
-    // The items should load after the search result arrives
-    labelRequest.resolve(pagedLabels);
-    $scope.$digest();
-    expect(controller.loading = false);
+      // The items should load after the search result arrives
+      labelRequest.resolve(pagedLabels);
+      $scope.$digest();
+      expect(controller.loading).toEqual(false);
+
+      scheduler.stop();
+      done();
+    });
+    
+    scheduler.start();
   });
 });

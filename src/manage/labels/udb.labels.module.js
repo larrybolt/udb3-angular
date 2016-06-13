@@ -10,7 +10,8 @@ angular
   .module('udb.manage.labels', [
     'ngSanitize',
     'ui.bootstrap',
-    'udb.manage'
+    'udb.manage',
+    'rx'
   ])
   .component('labelsComponent', {
     controller: 'LabelsListController',

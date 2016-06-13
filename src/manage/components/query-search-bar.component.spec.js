@@ -21,7 +21,7 @@ describe('Component: Query Search Bar', function () {
       {
         searchEvent: 'userSearchSubmitted',
         searchLabel: 'zoeken',
-        onUpdate: searchController.updateQuery
+        onChange: searchController.updateQuery
       });
   }));
   it('should fire an emit when finding results for a given query string', function () {

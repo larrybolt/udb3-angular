@@ -13,7 +13,7 @@ angular
     controller: QuerySearchBarComponent,
     controllerAs: 'qsb',
     bindings: {
-      onUpdate: '&',
+      onChange: '&',
       searchLabel: '@'
     }
   });
@@ -34,6 +34,6 @@ function QuerySearchBarComponent() {
     var query = typeof queryString !== 'undefined' ? queryString : qsb.queryString;
 
     qsb.queryString = query;
-    qsb.onUpdate({query: query});
+    qsb.onChange({query: query});
   }
 }

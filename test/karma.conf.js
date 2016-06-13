@@ -62,6 +62,8 @@ module.exports = function(config) {
       'bower_components/angular-xeditable/dist/js/xeditable.js',
       'bower_components/ng-file-upload/ng-file-upload.js',
       'bower_components/bootstrap-datepicker/js/bootstrap-datepicker.js',
+      'bower_components/rxjs/dist/rx.all.js',
+      'bower_components/rx-angular/dist/rx.angular.js',
       'src/**/*.module.js',
       'src/**/*.js',
       'src/**/*.html'

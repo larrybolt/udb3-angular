@@ -292,7 +292,8 @@ angular
   .module('udb.manage.labels', [
     'ngSanitize',
     'ui.bootstrap',
-    'udb.manage'
+    'udb.manage',
+    'rx'
   ])
   .component('labelsComponent', {
     controller: 'LabelsListController',
@@ -10674,7 +10675,7 @@ angular
     controller: QuerySearchBarComponent,
     controllerAs: 'qsb',
     bindings: {
-      onUpdate: '&',
+      onChange: '&',
       searchLabel: '@'
     }
   });
@@ -10695,7 +10696,7 @@ function QuerySearchBarComponent() {
     var query = typeof queryString !== 'undefined' ? queryString : qsb.queryString;
 
     qsb.queryString = query;
-    qsb.onUpdate({query: query});
+    qsb.onChange({query: query});
   }
 }
 
@@ -10849,7 +10850,7 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelService, QuerySearchResultViewer) {
+function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
   var llc = this;
   var labelsPerPage = 10;
   var offset;
@@ -10857,7 +10858,15 @@ function LabelsListController(LabelService, QuerySearchResultViewer) {
   llc.pagedItemViewer = undefined;
   llc.query = '';
   llc.page = 0;
-  llc.queryChanged = queryChanged;
+  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+
+  query$
+    .filter(function (queryString) {
+      // Only if the query string is longer than 2 characters
+      return queryString.length > 2;
+    })
+    .debounce(300)
+    .subscribe(queryChanged);
 
   llc.findLabels = function(query, offset) {
     llc.loading = true;
@@ -10891,7 +10900,7 @@ function LabelsListController(LabelService, QuerySearchResultViewer) {
     llc.findLabels(llc.query, offset);
   };
 }
-LabelsListController.$inject = ["LabelService", "QuerySearchResultViewer"];
+LabelsListController.$inject = ["LabelService", "QuerySearchResultViewer", "rx"];
 
 // Source: src/manage/labels/labels.service.js
 /**
@@ -17248,9 +17257,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "<form class=\"form-inline\" role=\"search\">\n" +
     "  <div class=\"form-group\">\n" +
     "    <label for=\"user-search-input\" ng-bind=\"::qsb.searchLabel\"></label>\n" +
-    "    <input type=\"text\" id=\"user-search-input\" class=\"form-control\" ng-model=\"qsb.queryString\" autocomplete=\"off\">\n" +
+    "    <input type=\"text\"\n" +
+    "           id=\"user-search-input\"\n" +
+    "           class=\"form-control\"\n" +
+    "           ng-model=\"qsb.queryString\"\n" +
+    "           autocomplete=\"off\"\n" +
+    "           ng-change=\"qsb.find()\">\n" +
     "  </div>\n" +
-    "  <button type=\"submit\" class=\"btn\" ng-click=\"qsb.find()\">Zoeken</button>\n" +
     "</form>\n"
   );
 
@@ -17296,7 +17309,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "<div class=\"row\">\n" +
     "    <div class=\"col-md-11\">\n" +
     "        <udb-query-search-bar search-label=\"Zoeken op labelnaam\"\n" +
-    "                              on-update=\"llc.queryChanged(query)\"\n" +
+    "                              on-change=\"llc.queryChanged(query)\"\n" +
     "        ></udb-query-search-bar>\n" +
     "    </div>\n" +
     "    <div class=\"col-md-1\">\n" +
