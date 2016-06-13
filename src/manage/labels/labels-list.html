@@ -52,9 +52,8 @@
             <div class="panel-footer">
                 <uib-pagination
                         total-items="llc.pagedItemViewer.totalItems"
-                        ng-model="llc.pagedItemViewer.currentPage"
+                        ng-model="llc.page"
                         items-per-page="llc.pagedItemViewer.itemsPerPage"
-                        ng-show="llc.pagedItemViewer.totalItems > 0"
                         max-size="10"
                         ng-change="llc.pageChanged()">
                 </uib-pagination>

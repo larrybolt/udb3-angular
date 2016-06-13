@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * @ngdoc directive
+ * @ngdoc component
  * @name udb.search.directive:udbSearchBar
  * @description
  * # udbQuerySearchBar

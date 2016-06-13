@@ -16,33 +16,37 @@ function LabelsListController($scope, $rootScope, LabelService, QuerySearchResul
   var labelsPerPage = 10;
   var offset;
   llc.loading = false;
-  llc.pagedItemViewer = new QuerySearchResultViewer(labelsPerPage, 1);
+  llc.pagedItemViewer = undefined;
   llc.query = '';
+  llc.page = 0;
 
-  llc.findLabels = function(query) {
-    // Reset the pager when search query is changed.
-    if (query !== llc.query) {
-      llc.pagedItemViewer.currentPage = 1;
+  llc.findLabels = function(query, offset) {
+    llc.loading = true;
+
+    function updateSearchResultViewer(searchResult) {
+      if (query === llc.query) {
+        llc.pagedItemViewer.setResults(offset, searchResult);
+      } else {
+        llc.query = query;
+        llc.pagedItemViewer = new QuerySearchResultViewer(query, offset, searchResult);
+      }
     }
 
-    // Calculate the offset for the pager
-    offset = (llc.pagedItemViewer.currentPage - 1) * labelsPerPage;
-    llc.query = query;
-    llc.loading = true;
     LabelService
       .find(llc.query, labelsPerPage, offset)
-      .then(llc.pagedItemViewer.setResults)
+      .then(updateSearchResultViewer)
       .finally(function () {
         llc.loading = false;
       });
   };
 
   var labelsSearchSubmittedListener = $rootScope.$on('labelSearchSubmitted', function(event, args) {
-    llc.findLabels(args.query || '');
+    llc.findLabels(args.query || '', 0);
   });
 
   llc.pageChanged = function() {
-    llc.findLabels(llc.query);
+    offset = (llc.page - 1) * labelsPerPage;
+    llc.findLabels(llc.query, offset);
   };
 
   $scope.$on('$destroy', labelsSearchSubmittedListener);

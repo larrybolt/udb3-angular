@@ -45,11 +45,43 @@ describe('Controller: Labels List', function() {
     );
   }
 
-  it('should catch the emit and find the labels', function() {
+  it('should look for the first page of items when the search query changes', function() {
     var controller = getLabelListController();
     spyOn(controller, 'findLabels');
     $rootScope.$emit('labelSearchSubmitted', {query: 'asdf'});
 
-    expect(controller.findLabels).toHaveBeenCalledWith('asdf');
+    expect(controller.findLabels).toHaveBeenCalledWith('asdf', 0);
+  });
+
+  it('should look for the items at the right offset when the page for the active query changes', function() {
+    var controller = getLabelListController();
+    controller.query = 'asdf';
+    $rootScope.$emit('labelSearchSubmitted', {query: 'asdf'});
+
+    spyOn(controller, 'findLabels');
+    controller.page = 2;
+    controller.pageChanged();
+
+    expect(controller.findLabels).toHaveBeenCalledWith('asdf', 10);
+  });
+
+  it('should set the right loading states when looking for items', function() {
+    LabelService = jasmine.createSpyObj('LabelService', ['find']);
+    var labelRequest = $q.defer();
+    LabelService.find.and.returnValue(labelRequest.promise);
+
+    var controller = getLabelListController();
+    // The controller should not look for items when it loads
+    expect(controller.loading = false);
+
+    // When the query changes the controller start looking for items
+    $rootScope.$emit('labelSearchSubmitted', {query: 'dirk'});
+    $scope.$digest();
+    expect(controller.loading = true);
+
+    // The items should load after the search result arrives
+    labelRequest.resolve(pagedLabels);
+    $scope.$digest();
+    expect(controller.loading = false);
   });
 });

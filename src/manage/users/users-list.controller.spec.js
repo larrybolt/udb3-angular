@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Controller: User List', function() {
+xdescribe('Controller: User List', function() {
   var $scope,
     $rootscope,
     $q,

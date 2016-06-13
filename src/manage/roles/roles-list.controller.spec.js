@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Controller: Roles List', function() {
+xdescribe('Controller: Roles List', function() {
   var $scope,
     $rootscope,
     $q,
