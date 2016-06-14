@@ -19,45 +19,60 @@ function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
   llc.pagedItemViewer = undefined;
   llc.query = '';
   llc.page = 0;
-  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+  var query$ = rx.createObservableFunction(llc, 'queryChanged')
+    .filter(ignoreShortQueries)
+    .debounce(300);
+  var offset$ = rx.createObservableFunction(llc, 'pageChanged')
+    .map(pageToOffset(labelsPerPage))
+    .startWith(0);
+  var searchParameters$ = rx.Observable.combineLatest(
+    query$,
+    offset$,
+    combineQueryParameters
+  );
 
-  query$
-    .filter(function (queryString) {
-      // Only if the query string is longer than 2 characters
-      return queryString.length > 2;
-    })
-    .debounce(300)
-    .subscribe(queryChanged);
+  /**
+   * @param {string} query
+   * @param {Number} offset
+   * @return {{query: *, offset: *}}
+   */
+  function combineQueryParameters(query, offset) {
+    return {query: query, offset: offset};
+  }
 
-  llc.findLabels = function(query, offset) {
+  /**
+   * @param {string} query
+   * @return {boolean}
+   */
+  function ignoreShortQueries(query) {
+    // Only if the query is longer than 2 characters
+    return query.length > 2;
+  }
+
+  /**
+   * @param {Number} itemsPerPage
+   * @return {Function}
+   */
+  function pageToOffset(itemsPerPage) {
+    return function(page) {
+      return (page - 1) * itemsPerPage;
+    };
+  }
+
+  llc.findLabels = function(searchParameters) {
     llc.loading = true;
 
     function updateSearchResultViewer(searchResult) {
-      if (query === llc.query) {
-        llc.pagedItemViewer.setResults(offset, searchResult);
-      } else {
-        llc.query = query;
-        llc.pagedItemViewer = new QuerySearchResultViewer(query, offset, searchResult);
-      }
+      llc.pagedItemViewer = new QuerySearchResultViewer(searchParameters.query, searchParameters.offset, searchResult);
     }
 
     LabelService
-      .find(llc.query, labelsPerPage, offset)
+      .find(searchParameters.query, labelsPerPage, searchParameters.offset)
       .then(updateSearchResultViewer)
       .finally(function () {
         llc.loading = false;
       });
   };
 
-  /**
-   * @param {string} queryString
-   */
-  function queryChanged(queryString) {
-    llc.findLabels(queryString, 0);
-  }
-
-  llc.pageChanged = function() {
-    offset = (llc.page - 1) * labelsPerPage;
-    llc.findLabels(llc.query, offset);
-  };
+  searchParameters$.subscribe(llc.findLabels);
 }

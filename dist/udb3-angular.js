@@ -10838,6 +10838,55 @@ function LabelEditorComponent(LabelService, $uibModal) {
 }
 LabelEditorComponent.$inject = ["LabelService", "$uibModal"];
 
+// Source: src/manage/labels/label-search-result-viewer.factory.js
+/**
+ * @ngdoc service
+ * @name udb.manage.LabelSearchResultViewer
+ * @description
+ * # QuerySearchResultViewer
+ * User search result viewer factory
+ */
+angular
+  .module('udb.manage')
+  .factory('LabelSearchResultViewer', LabelSearchResultViewerFactory);
+
+function LabelSearchResultViewerFactory(LabelService) {
+
+  /**
+   * @class SearchResultViewer
+   * @constructor
+   * @param    {Number}           query
+   * @param    {Number}           start
+   * @param    {PagedCollection}  searchResult
+   *
+   * @property {Object[]}   items           A list of search results items
+   * @property {Number}     itemsPerPage    The current page size
+   * @property {Number}     totalItems      The total items found
+   * @property {Number}     currentPage     The index of the current page without zeroing
+   */
+  var QuerySearchResultViewer = function (query, start, searchResult) {
+    this.query = query;
+    this.setResults(start, searchResult);
+  };
+
+  QuerySearchResultViewer.prototype = {
+    /**
+     * @param {Number}           start
+     * @param {PagedCollection}  pagedResult
+     */
+    setResults: function (start, pagedResult) {
+      var viewer = this;
+      viewer.start = start;
+      viewer.itemsPerPage = pagedResult.itemsPerPage;
+      viewer.items = pagedResult.member;
+      viewer.totalItems = pagedResult.totalItems;
+    }
+  };
+
+  return (QuerySearchResultViewer);
+}
+LabelSearchResultViewerFactory.$inject = ["LabelService"];
+
 // Source: src/manage/labels/labels-list.controller.js
 /**
  * @ngdoc function
@@ -10858,47 +10907,62 @@ function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
   llc.pagedItemViewer = undefined;
   llc.query = '';
   llc.page = 0;
-  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+  var query$ = rx.createObservableFunction(llc, 'queryChanged')
+    .filter(ignoreShortQueries)
+    .debounce(300);
+  var offset$ = rx.createObservableFunction(llc, 'pageChanged')
+    .map(pageToOffset(labelsPerPage))
+    .startWith(0);
+  var searchParameters$ = rx.Observable.combineLatest(
+    query$,
+    offset$,
+    combineQueryParameters
+  );
 
-  query$
-    .filter(function (queryString) {
-      // Only if the query string is longer than 2 characters
-      return queryString.length > 2;
-    })
-    .debounce(300)
-    .subscribe(queryChanged);
+  /**
+   * @param {string} query
+   * @param {Number} offset
+   * @return {{query: *, offset: *}}
+   */
+  function combineQueryParameters(query, offset) {
+    return {query: query, offset: offset};
+  }
 
-  llc.findLabels = function(query, offset) {
+  /**
+   * @param {string} query
+   * @return {boolean}
+   */
+  function ignoreShortQueries(query) {
+    // Only if the query is longer than 2 characters
+    return query.length > 2;
+  }
+
+  /**
+   * @param {Number} itemsPerPage
+   * @return {Function}
+   */
+  function pageToOffset(itemsPerPage) {
+    return function(page) {
+      return (page - 1) * itemsPerPage;
+    };
+  }
+
+  llc.findLabels = function(searchParameters) {
     llc.loading = true;
 
     function updateSearchResultViewer(searchResult) {
-      if (query === llc.query) {
-        llc.pagedItemViewer.setResults(offset, searchResult);
-      } else {
-        llc.query = query;
-        llc.pagedItemViewer = new QuerySearchResultViewer(query, offset, searchResult);
-      }
+      llc.pagedItemViewer = new QuerySearchResultViewer(searchParameters.query, searchParameters.offset, searchResult);
     }
 
     LabelService
-      .find(llc.query, labelsPerPage, offset)
+      .find(searchParameters.query, labelsPerPage, searchParameters.offset)
       .then(updateSearchResultViewer)
       .finally(function () {
         llc.loading = false;
       });
   };
 
-  /**
-   * @param {string} queryString
-   */
-  function queryChanged(queryString) {
-    llc.findLabels(queryString, 0);
-  }
-
-  llc.pageChanged = function() {
-    offset = (llc.page - 1) * labelsPerPage;
-    llc.findLabels(llc.query, offset);
-  };
+  searchParameters$.subscribe(llc.findLabels);
 }
 LabelsListController.$inject = ["LabelService", "QuerySearchResultViewer", "rx"];
 

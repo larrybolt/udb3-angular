@@ -45,8 +45,6 @@ describe('Controller: Labels List', function() {
   function getLabelListController() {
     return $controller(
       'LabelsListController', {
-        $scope: $scope,
-        $rootScope: $rootScope,
         LabelService: LabelService
       }
     );
@@ -54,11 +52,10 @@ describe('Controller: Labels List', function() {
 
   it('should look for the first page of items when the search query changes', function(done) {
     var controller = getLabelListController();
-    spyOn(controller, 'findLabels');
-    controller.queryChanged('asdf');
+    controller.queryChanged('reactive extension');
 
     scheduler.scheduleAbsolute(null, 300, function() {
-      expect(controller.findLabels).toHaveBeenCalledWith('asdf', 0);
+      expect(LabelService.find).toHaveBeenCalledWith('reactive extension', 10, 0);
       scheduler.stop();
       done();
     });
@@ -66,15 +63,18 @@ describe('Controller: Labels List', function() {
     scheduler.start();
   });
 
-  it('should look for the items at the right offset when the page for the active query changes', function() {
+  it('should look for the items at the right offset when the page for the active query changes', function(done) {
     var controller = getLabelListController();
-    controller.query = 'asdf';
+    controller.queryChanged('beep');
+    controller.pageChanged(2);
 
-    spyOn(controller, 'findLabels');
-    controller.page = 2;
-    controller.pageChanged();
+    scheduler.scheduleAbsolute(null, 300, function() {
+      expect(LabelService.find).toHaveBeenCalledWith('beep', 10, 10);
+      scheduler.stop();
+      done();
+    });
 
-    expect(controller.findLabels).toHaveBeenCalledWith('asdf', 10);
+    scheduler.start();
   });
 
   it('should set the right loading states when looking for items', function(done) {
@@ -99,7 +99,7 @@ describe('Controller: Labels List', function() {
       scheduler.stop();
       done();
     });
-    
+
     scheduler.start();
   });
 });
