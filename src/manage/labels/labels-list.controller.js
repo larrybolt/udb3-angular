@@ -11,34 +11,14 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
+function LabelsListController(LabelSearchResultViewer, rx, $scope) {
   var llc = this;
   var labelsPerPage = 10;
-  var offset;
-  llc.loading = false;
-  llc.pagedItemViewer = undefined;
-  llc.query = '';
-  llc.page = 0;
-  var query$ = rx.createObservableFunction(llc, 'queryChanged')
-    .filter(ignoreShortQueries)
-    .debounce(300);
-  var offset$ = rx.createObservableFunction(llc, 'pageChanged')
-    .map(pageToOffset(labelsPerPage))
-    .startWith(0);
-  var searchParameters$ = rx.Observable.combineLatest(
-    query$,
-    offset$,
-    combineQueryParameters
-  );
-
-  /**
-   * @param {string} query
-   * @param {Number} offset
-   * @return {{query: *, offset: *}}
-   */
-  function combineQueryParameters(query, offset) {
-    return {query: query, offset: offset};
-  }
+  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+  var filteredQuery$ = query$.filter(ignoreShortQueries);
+  var page$ = rx.createObservableFunction(llc, 'pageChanged');
+  var resultViewer = new LabelSearchResultViewer(filteredQuery$, page$, labelsPerPage);
+  var searchResult$ = resultViewer.getSearchResult$();
 
   /**
    * @param {string} query
@@ -49,30 +29,27 @@ function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
     return query.length > 2;
   }
 
-  /**
-   * @param {Number} itemsPerPage
-   * @return {Function}
-   */
-  function pageToOffset(itemsPerPage) {
-    return function(page) {
-      return (page - 1) * itemsPerPage;
-    };
-  }
+  llc.loading = false;
+  llc.query = '';
+  llc.page = 0;
 
-  llc.findLabels = function(searchParameters) {
-    llc.loading = true;
+  query$
+    .safeApply($scope, function (query) {
+      llc.query = query;
+    })
+    .subscribe();
 
-    function updateSearchResultViewer(searchResult) {
-      llc.pagedItemViewer = new QuerySearchResultViewer(searchParameters.query, searchParameters.offset, searchResult);
-    }
+  searchResult$
+    .safeApply($scope, function (searchResult) {
+      llc.searchResult = searchResult;
+      llc.loading = false;
+    })
+    .subscribe();
 
-    LabelService
-      .find(searchParameters.query, labelsPerPage, searchParameters.offset)
-      .then(updateSearchResultViewer)
-      .finally(function () {
-        llc.loading = false;
-      });
-  };
-
-  searchParameters$.subscribe(llc.findLabels);
+  filteredQuery$
+    .merge(page$)
+    .safeApply($scope, function () {
+      llc.loading = true;
+    })
+    .subscribe();
 }

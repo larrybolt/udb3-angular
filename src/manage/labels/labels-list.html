@@ -17,10 +17,10 @@
         <p ng-show="llc.query.length === 0">
             Schrijf een zoekopdracht in het veld hierboven om labels te tonen.
         </p>
-        <p ng-show="llc.query.length && llc.pagedItemViewer.totalItems === 0">
+        <p ng-show="llc.query.length && llc.searchResult.totalItems === 0">
             Geen labels gevonden.
         </p>
-        <div class="manage-labels-search-results" ng-show="llc.pagedItemViewer.totalItems > 0">
+        <div class="manage-labels-search-results" ng-show="llc.searchResult.totalItems > 0">
             <div class="table-responsive" >
                 <table class="table table-hover table-striped">
                     <thead>
@@ -32,7 +32,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat="label in llc.pagedItemViewer.items">
+                    <tr ng-repeat="label in llc.searchResult.member">
                         <td>{{ label.name }}</td>
                         <td>{{ label.visibility === "invisible" ? "Verborgen" : ""}}</td>
                         <td>{{ label.privacy === "private" ? "Voorbehouden" : ""}}</td>
@@ -53,11 +53,11 @@
             </div>
             <div class="panel-footer">
                 <uib-pagination
-                        total-items="llc.pagedItemViewer.totalItems"
+                        total-items="llc.searchResult.totalItems"
                         ng-model="llc.page"
-                        items-per-page="llc.pagedItemViewer.itemsPerPage"
+                        items-per-page="llc.searchResult.itemsPerPage"
                         max-size="10"
-                        ng-change="llc.pageChanged()">
+                        ng-change="llc.pageChanged(llc.page)">
                 </uib-pagination>
             </div>
         </div>

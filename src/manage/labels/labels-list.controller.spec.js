@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Controller: Labels List', function() {
+xdescribe('Controller: Labels List', function() {
   var $scope,
     $rootScope,
     $q,

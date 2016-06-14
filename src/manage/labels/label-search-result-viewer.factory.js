@@ -11,38 +11,56 @@ angular
   .module('udb.manage')
   .factory('LabelSearchResultViewer', LabelSearchResultViewerFactory);
 
-function LabelSearchResultViewerFactory(LabelService) {
-
+function LabelSearchResultViewerFactory(LabelService, rx) {
   /**
    * @class SearchResultViewer
    * @constructor
-   * @param    {Number}           query
-   * @param    {Number}           start
-   * @param    {PagedCollection}  searchResult
-   *
-   * @property {Object[]}   items           A list of search results items
-   * @property {Number}     itemsPerPage    The current page size
-   * @property {Number}     totalItems      The total items found
-   * @property {Number}     currentPage     The index of the current page without zeroing
+   * @param {Observable} query$
+   * @param {Observable} page$
+   * @param {Number} itemsPerPage
    */
-  var QuerySearchResultViewer = function (query, start, searchResult) {
-    this.query = query;
-    this.setResults(start, searchResult);
+  var ResultViewer = function (query$, page$, itemsPerPage) {
+    this.itemsPerPage = itemsPerPage;
+    this.query$ = query$.debounce(300);
+    this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
+
+    this.searchParameters$ = rx.Observable.combineLatest(
+      this.query$,
+      this.offset$,
+      combineQueryParameters
+    );
   };
 
-  QuerySearchResultViewer.prototype = {
-    /**
-     * @param {Number}           start
-     * @param {PagedCollection}  pagedResult
-     */
-    setResults: function (start, pagedResult) {
-      var viewer = this;
-      viewer.start = start;
-      viewer.itemsPerPage = pagedResult.itemsPerPage;
-      viewer.items = pagedResult.member;
-      viewer.totalItems = pagedResult.totalItems;
-    }
+  /**
+   * @param {string} query
+   * @param {Number} offset
+   * @return {{query: *, offset: *}}
+   */
+  function combineQueryParameters(query, offset) {
+    return {query: query, offset: offset};
+  }
+
+  /**
+   * @param {Number} itemsPerPage
+   * @return {Function}
+   */
+  function pageToOffset(itemsPerPage) {
+    return function(page) {
+      return (page - 1) * itemsPerPage;
+    };
+  }
+
+  /**
+   * @param {{query: *, offset: *}} searchParameters
+   */
+  function findLabels(searchParameters) {
+    return LabelService.find(searchParameters.query, ResultViewer.itemsPerPage, searchParameters.offset);
+  }
+
+  ResultViewer.prototype.getSearchResult$ = function () {
+    return this.searchParameters$
+      .selectMany(findLabels);
   };
 
-  return (QuerySearchResultViewer);
+  return (ResultViewer);
 }

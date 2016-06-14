@@ -10850,42 +10850,60 @@ angular
   .module('udb.manage')
   .factory('LabelSearchResultViewer', LabelSearchResultViewerFactory);
 
-function LabelSearchResultViewerFactory(LabelService) {
-
+function LabelSearchResultViewerFactory(LabelService, rx) {
   /**
    * @class SearchResultViewer
    * @constructor
-   * @param    {Number}           query
-   * @param    {Number}           start
-   * @param    {PagedCollection}  searchResult
-   *
-   * @property {Object[]}   items           A list of search results items
-   * @property {Number}     itemsPerPage    The current page size
-   * @property {Number}     totalItems      The total items found
-   * @property {Number}     currentPage     The index of the current page without zeroing
+   * @param {Observable} query$
+   * @param {Observable} page$
+   * @param {Number} itemsPerPage
    */
-  var QuerySearchResultViewer = function (query, start, searchResult) {
-    this.query = query;
-    this.setResults(start, searchResult);
+  var ResultViewer = function (query$, page$, itemsPerPage) {
+    this.itemsPerPage = itemsPerPage;
+    this.query$ = query$.debounce(300);
+    this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
+
+    this.searchParameters$ = rx.Observable.combineLatest(
+      this.query$,
+      this.offset$,
+      combineQueryParameters
+    );
   };
 
-  QuerySearchResultViewer.prototype = {
-    /**
-     * @param {Number}           start
-     * @param {PagedCollection}  pagedResult
-     */
-    setResults: function (start, pagedResult) {
-      var viewer = this;
-      viewer.start = start;
-      viewer.itemsPerPage = pagedResult.itemsPerPage;
-      viewer.items = pagedResult.member;
-      viewer.totalItems = pagedResult.totalItems;
-    }
+  /**
+   * @param {string} query
+   * @param {Number} offset
+   * @return {{query: *, offset: *}}
+   */
+  function combineQueryParameters(query, offset) {
+    return {query: query, offset: offset};
+  }
+
+  /**
+   * @param {Number} itemsPerPage
+   * @return {Function}
+   */
+  function pageToOffset(itemsPerPage) {
+    return function(page) {
+      return (page - 1) * itemsPerPage;
+    };
+  }
+
+  /**
+   * @param {{query: *, offset: *}} searchParameters
+   */
+  function findLabels(searchParameters) {
+    return LabelService.find(searchParameters.query, ResultViewer.itemsPerPage, searchParameters.offset);
+  }
+
+  ResultViewer.prototype.getSearchResult$ = function () {
+    return this.searchParameters$
+      .selectMany(findLabels);
   };
 
-  return (QuerySearchResultViewer);
+  return (ResultViewer);
 }
-LabelSearchResultViewerFactory.$inject = ["LabelService"];
+LabelSearchResultViewerFactory.$inject = ["LabelService", "rx"];
 
 // Source: src/manage/labels/labels-list.controller.js
 /**
@@ -10899,34 +10917,14 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
+function LabelsListController(LabelSearchResultViewer, rx, $scope) {
   var llc = this;
   var labelsPerPage = 10;
-  var offset;
-  llc.loading = false;
-  llc.pagedItemViewer = undefined;
-  llc.query = '';
-  llc.page = 0;
-  var query$ = rx.createObservableFunction(llc, 'queryChanged')
-    .filter(ignoreShortQueries)
-    .debounce(300);
-  var offset$ = rx.createObservableFunction(llc, 'pageChanged')
-    .map(pageToOffset(labelsPerPage))
-    .startWith(0);
-  var searchParameters$ = rx.Observable.combineLatest(
-    query$,
-    offset$,
-    combineQueryParameters
-  );
-
-  /**
-   * @param {string} query
-   * @param {Number} offset
-   * @return {{query: *, offset: *}}
-   */
-  function combineQueryParameters(query, offset) {
-    return {query: query, offset: offset};
-  }
+  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+  var filteredQuery$ = query$.filter(ignoreShortQueries);
+  var page$ = rx.createObservableFunction(llc, 'pageChanged');
+  var resultViewer = new LabelSearchResultViewer(filteredQuery$, page$, labelsPerPage);
+  var searchResult$ = resultViewer.getSearchResult$();
 
   /**
    * @param {string} query
@@ -10937,34 +10935,31 @@ function LabelsListController(LabelService, QuerySearchResultViewer, rx) {
     return query.length > 2;
   }
 
-  /**
-   * @param {Number} itemsPerPage
-   * @return {Function}
-   */
-  function pageToOffset(itemsPerPage) {
-    return function(page) {
-      return (page - 1) * itemsPerPage;
-    };
-  }
+  llc.loading = false;
+  llc.query = '';
+  llc.page = 0;
 
-  llc.findLabels = function(searchParameters) {
-    llc.loading = true;
+  query$
+    .safeApply($scope, function (query) {
+      llc.query = query;
+    })
+    .subscribe();
 
-    function updateSearchResultViewer(searchResult) {
-      llc.pagedItemViewer = new QuerySearchResultViewer(searchParameters.query, searchParameters.offset, searchResult);
-    }
+  searchResult$
+    .safeApply($scope, function (searchResult) {
+      llc.searchResult = searchResult;
+      llc.loading = false;
+    })
+    .subscribe();
 
-    LabelService
-      .find(searchParameters.query, labelsPerPage, searchParameters.offset)
-      .then(updateSearchResultViewer)
-      .finally(function () {
-        llc.loading = false;
-      });
-  };
-
-  searchParameters$.subscribe(llc.findLabels);
+  filteredQuery$
+    .merge(page$)
+    .safeApply($scope, function () {
+      llc.loading = true;
+    })
+    .subscribe();
 }
-LabelsListController.$inject = ["LabelService", "QuerySearchResultViewer", "rx"];
+LabelsListController.$inject = ["LabelSearchResultViewer", "rx", "$scope"];
 
 // Source: src/manage/labels/labels.service.js
 /**
@@ -17386,10 +17381,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        <p ng-show=\"llc.query.length === 0\">\n" +
     "            Schrijf een zoekopdracht in het veld hierboven om labels te tonen.\n" +
     "        </p>\n" +
-    "        <p ng-show=\"llc.query.length && llc.pagedItemViewer.totalItems === 0\">\n" +
+    "        <p ng-show=\"llc.query.length && llc.searchResult.totalItems === 0\">\n" +
     "            Geen labels gevonden.\n" +
     "        </p>\n" +
-    "        <div class=\"manage-labels-search-results\" ng-show=\"llc.pagedItemViewer.totalItems > 0\">\n" +
+    "        <div class=\"manage-labels-search-results\" ng-show=\"llc.searchResult.totalItems > 0\">\n" +
     "            <div class=\"table-responsive\" >\n" +
     "                <table class=\"table table-hover table-striped\">\n" +
     "                    <thead>\n" +
@@ -17401,7 +17396,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                    </tr>\n" +
     "                    </thead>\n" +
     "                    <tbody>\n" +
-    "                    <tr ng-repeat=\"label in llc.pagedItemViewer.items\">\n" +
+    "                    <tr ng-repeat=\"label in llc.searchResult.member\">\n" +
     "                        <td>{{ label.name }}</td>\n" +
     "                        <td>{{ label.visibility === \"invisible\" ? \"Verborgen\" : \"\"}}</td>\n" +
     "                        <td>{{ label.privacy === \"private\" ? \"Voorbehouden\" : \"\"}}</td>\n" +
@@ -17422,11 +17417,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "            </div>\n" +
     "            <div class=\"panel-footer\">\n" +
     "                <uib-pagination\n" +
-    "                        total-items=\"llc.pagedItemViewer.totalItems\"\n" +
+    "                        total-items=\"llc.searchResult.totalItems\"\n" +
     "                        ng-model=\"llc.page\"\n" +
-    "                        items-per-page=\"llc.pagedItemViewer.itemsPerPage\"\n" +
+    "                        items-per-page=\"llc.searchResult.itemsPerPage\"\n" +
     "                        max-size=\"10\"\n" +
-    "                        ng-change=\"llc.pageChanged()\">\n" +
+    "                        ng-change=\"llc.pageChanged(llc.page)\">\n" +
     "                </uib-pagination>\n" +
     "            </div>\n" +
     "        </div>\n" +
