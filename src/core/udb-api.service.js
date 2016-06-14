@@ -351,6 +351,10 @@ function UdbApi(
     );
   };
 
+  var offerPropertyPaths = {
+    typicalAgeRange: 'typical-age-range'
+  };
+
   /**
    * Update the property for a given id.
    *
@@ -364,9 +368,10 @@ function UdbApi(
   this.updateProperty = function(offerLocation, property, value) {
     var updateData = {};
     updateData[property] = value;
+    var path = offerPropertyPaths[property] ? offerPropertyPaths[property] : property;
 
     return $http.post(
-      offerLocation +  '/' + property,
+      offerLocation +  '/' + path,
       updateData,
       defaultApiConfig
     );
@@ -506,7 +511,7 @@ function UdbApi(
   this.deleteTypicalAgeRange = function(offerLocation) {
 
     return $http.delete(
-      offerLocation + '/typicalAgeRange',
+      offerLocation + '/typical-age-range',
       defaultApiConfig
     );
   };
