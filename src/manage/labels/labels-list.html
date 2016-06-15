@@ -14,10 +14,10 @@
 
 <div class="row" ng-cloak ng-show="!llc.loading">
     <div class="col-md-12">
-        <p ng-show="llc.query.length === 0">
+        <p ng-show="llc.query.length <= 2">
             Schrijf een zoekopdracht in het veld hierboven om labels te tonen.
         </p>
-        <p ng-show="llc.query.length && llc.searchResult.totalItems === 0">
+        <p ng-show="llc.query.length > 2 && llc.searchResult.totalItems === 0">
             Geen labels gevonden.
         </p>
         <div class="manage-labels-search-results" ng-show="llc.searchResult.totalItems > 0">

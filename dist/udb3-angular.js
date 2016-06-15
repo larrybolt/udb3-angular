@@ -10838,72 +10838,44 @@ function LabelEditorComponent(LabelService, $uibModal) {
 }
 LabelEditorComponent.$inject = ["LabelService", "$uibModal"];
 
-// Source: src/manage/labels/label-search-result-viewer.factory.js
+// Source: src/manage/labels/label-search-result-generator.factory.js
 /**
  * @ngdoc service
  * @name udb.manage.LabelSearchResultViewer
  * @description
- * # QuerySearchResultViewer
- * User search result viewer factory
+ * # LabelSearchResultViewer
+ * Label search result viewer factory
  */
 angular
   .module('udb.manage')
-  .factory('LabelSearchResultViewer', LabelSearchResultViewerFactory);
+  .factory('LabelSearchResultGenerator', LabelSearchResultGenerator);
 
-function LabelSearchResultViewerFactory(LabelService, rx) {
+/* @ngInject */
+function LabelSearchResultGenerator(LabelService, SearchResultGenerator) {
   /**
-   * @class SearchResultViewer
+   * @class LabelSearchResultViewer
    * @constructor
    * @param {Observable} query$
    * @param {Observable} page$
    * @param {Number} itemsPerPage
    */
-  var ResultViewer = function (query$, page$, itemsPerPage) {
-    this.itemsPerPage = itemsPerPage;
-    this.query$ = query$.debounce(300);
-    this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
-
-    this.searchParameters$ = rx.Observable.combineLatest(
-      this.query$,
-      this.offset$,
-      combineQueryParameters
-    );
+  var LabelSearchResultGenerator = function (query$, page$, itemsPerPage) {
+    SearchResultGenerator.call(this, query$, page$, itemsPerPage);
   };
 
-  /**
-   * @param {string} query
-   * @param {Number} offset
-   * @return {{query: *, offset: *}}
-   */
-  function combineQueryParameters(query, offset) {
-    return {query: query, offset: offset};
-  }
-
-  /**
-   * @param {Number} itemsPerPage
-   * @return {Function}
-   */
-  function pageToOffset(itemsPerPage) {
-    return function(page) {
-      return (page - 1) * itemsPerPage;
-    };
-  }
+  LabelSearchResultGenerator.prototype = Object.create(SearchResultGenerator.prototype);
+  LabelSearchResultGenerator.prototype.constructor = LabelSearchResultGenerator;
 
   /**
    * @param {{query: *, offset: *}} searchParameters
    */
-  function findLabels(searchParameters) {
-    return LabelService.find(searchParameters.query, ResultViewer.itemsPerPage, searchParameters.offset);
-  }
-
-  ResultViewer.prototype.getSearchResult$ = function () {
-    return this.searchParameters$
-      .selectMany(findLabels);
+  LabelSearchResultGenerator.prototype.find = function (searchParameters) {
+    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
-  return (ResultViewer);
+  return (LabelSearchResultGenerator);
 }
-LabelSearchResultViewerFactory.$inject = ["LabelService", "rx"];
+LabelSearchResultGenerator.$inject = ["LabelService", "SearchResultGenerator"];
 
 // Source: src/manage/labels/labels-list.controller.js
 /**
@@ -10917,14 +10889,14 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelSearchResultViewer, rx, $scope) {
+function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
   var llc = this;
   var labelsPerPage = 10;
   var query$ = rx.createObservableFunction(llc, 'queryChanged');
   var filteredQuery$ = query$.filter(ignoreShortQueries);
   var page$ = rx.createObservableFunction(llc, 'pageChanged');
-  var resultViewer = new LabelSearchResultViewer(filteredQuery$, page$, labelsPerPage);
-  var searchResult$ = resultViewer.getSearchResult$();
+  var searchResultGenerator = new LabelSearchResultGenerator(filteredQuery$, page$, labelsPerPage);
+  var searchResult$ = searchResultGenerator.getSearchResult$();
 
   /**
    * @param {string} query
@@ -10933,6 +10905,14 @@ function LabelsListController(LabelSearchResultViewer, rx, $scope) {
   function ignoreShortQueries(query) {
     // Only if the query is longer than 2 characters
     return query.length > 2;
+  }
+
+  /**
+   * @param {PagedCollection} searchResult
+   */
+  function showSearchResult(searchResult) {
+    llc.searchResult = searchResult;
+    llc.loading = false;
   }
 
   llc.loading = false;
@@ -10946,10 +10926,7 @@ function LabelsListController(LabelSearchResultViewer, rx, $scope) {
     .subscribe();
 
   searchResult$
-    .safeApply($scope, function (searchResult) {
-      llc.searchResult = searchResult;
-      llc.loading = false;
-    })
+    .safeApply($scope, showSearchResult)
     .subscribe();
 
   filteredQuery$
@@ -10959,7 +10936,7 @@ function LabelsListController(LabelSearchResultViewer, rx, $scope) {
     })
     .subscribe();
 }
-LabelsListController.$inject = ["LabelSearchResultViewer", "rx", "$scope"];
+LabelsListController.$inject = ["LabelSearchResultGenerator", "rx", "$scope"];
 
 // Source: src/manage/labels/labels.service.js
 /**
@@ -11390,6 +11367,76 @@ function RolesListController($scope, $rootScope, RoleService, QuerySearchResultV
   $scope.$on('$destroy', rolesSearchSubmittedListener);
 }
 RolesListController.$inject = ["$scope", "$rootScope", "RoleService", "QuerySearchResultViewer"];
+
+// Source: src/manage/search-result-generator.factory.js
+/**
+ * @ngdoc service
+ * @name udb.manage.SearchResultGenerator
+ * @description
+ * # Search Result Generator
+ * Provides a stream of paged search results.
+ */
+angular
+  .module('udb.manage')
+  .factory('SearchResultGenerator', SearchResultGenerator);
+
+/* @ngInject */
+function SearchResultGenerator(rx, LabelService) {
+  /**
+   * @class SearchResultGenerator
+   * @constructor
+   * @param {Observable} query$
+   * @param {Observable} page$
+   * @param {Number} itemsPerPage
+   */
+  var SearchResultGenerator = function (query$, page$, itemsPerPage) {
+    this.itemsPerPage = itemsPerPage;
+    this.query$ = query$.debounce(300);
+    this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
+
+    this.searchParameters$ = rx.Observable.combineLatest(
+      this.query$,
+      this.offset$,
+      combineQueryParameters
+    );
+  };
+
+  /**
+   * @param {string} query
+   * @param {Number} offset
+   * @return {{query: *, offset: *}}
+   */
+  function combineQueryParameters(query, offset) {
+    return {query: query, offset: offset};
+  }
+
+  /**
+   * @param {Number} itemsPerPage
+   * @return {Function}
+   */
+  function pageToOffset(itemsPerPage) {
+    return function(page) {
+      return (page - 1) * itemsPerPage;
+    };
+  }
+
+  /**
+   * @param {{query: *, offset: *}} searchParameters
+   * @return {Promise.<PagedCollection>}
+   */
+  SearchResultGenerator.prototype.find = function (searchParameters) {
+    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+  };
+
+  SearchResultGenerator.prototype.getSearchResult$ = function () {
+    var searchResultGenerator = this;
+    return searchResultGenerator.searchParameters$
+      .selectMany(searchResultGenerator.find);
+  };
+
+  return (SearchResultGenerator);
+}
+SearchResultGenerator.$inject = ["rx", "LabelService"];
 
 // Source: src/manage/users/user.service.js
 /**
@@ -17378,10 +17425,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "<div class=\"row\" ng-cloak ng-show=\"!llc.loading\">\n" +
     "    <div class=\"col-md-12\">\n" +
-    "        <p ng-show=\"llc.query.length === 0\">\n" +
+    "        <p ng-show=\"llc.query.length <= 2\">\n" +
     "            Schrijf een zoekopdracht in het veld hierboven om labels te tonen.\n" +
     "        </p>\n" +
-    "        <p ng-show=\"llc.query.length && llc.searchResult.totalItems === 0\">\n" +
+    "        <p ng-show=\"llc.query.length > 2 && llc.searchResult.totalItems === 0\">\n" +
     "            Geen labels gevonden.\n" +
     "        </p>\n" +
     "        <div class=\"manage-labels-search-results\" ng-show=\"llc.searchResult.totalItems > 0\">\n" +

@@ -2,24 +2,25 @@
 
 /**
  * @ngdoc service
- * @name udb.manage.LabelSearchResultViewer
+ * @name udb.manage.SearchResultGenerator
  * @description
- * # QuerySearchResultViewer
- * User search result viewer factory
+ * # Search Result Generator
+ * Provides a stream of paged search results.
  */
 angular
   .module('udb.manage')
-  .factory('LabelSearchResultViewer', LabelSearchResultViewerFactory);
+  .factory('SearchResultGenerator', SearchResultGenerator);
 
-function LabelSearchResultViewerFactory(LabelService, rx) {
+/* @ngInject */
+function SearchResultGenerator(rx, LabelService) {
   /**
-   * @class SearchResultViewer
+   * @class SearchResultGenerator
    * @constructor
    * @param {Observable} query$
    * @param {Observable} page$
    * @param {Number} itemsPerPage
    */
-  var ResultViewer = function (query$, page$, itemsPerPage) {
+  var SearchResultGenerator = function (query$, page$, itemsPerPage) {
     this.itemsPerPage = itemsPerPage;
     this.query$ = query$.debounce(300);
     this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
@@ -52,15 +53,17 @@ function LabelSearchResultViewerFactory(LabelService, rx) {
 
   /**
    * @param {{query: *, offset: *}} searchParameters
+   * @return {Promise.<PagedCollection>}
    */
-  function findLabels(searchParameters) {
-    return LabelService.find(searchParameters.query, ResultViewer.itemsPerPage, searchParameters.offset);
-  }
-
-  ResultViewer.prototype.getSearchResult$ = function () {
-    return this.searchParameters$
-      .selectMany(findLabels);
+  SearchResultGenerator.prototype.find = function (searchParameters) {
+    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
-  return (ResultViewer);
+  SearchResultGenerator.prototype.getSearchResult$ = function () {
+    var searchResultGenerator = this;
+    return searchResultGenerator.searchParameters$
+      .selectMany(searchResultGenerator.find);
+  };
+
+  return (SearchResultGenerator);
 }

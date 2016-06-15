@@ -11,14 +11,14 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelSearchResultViewer, rx, $scope) {
+function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
   var llc = this;
   var labelsPerPage = 10;
   var query$ = rx.createObservableFunction(llc, 'queryChanged');
   var filteredQuery$ = query$.filter(ignoreShortQueries);
   var page$ = rx.createObservableFunction(llc, 'pageChanged');
-  var resultViewer = new LabelSearchResultViewer(filteredQuery$, page$, labelsPerPage);
-  var searchResult$ = resultViewer.getSearchResult$();
+  var searchResultGenerator = new LabelSearchResultGenerator(filteredQuery$, page$, labelsPerPage);
+  var searchResult$ = searchResultGenerator.getSearchResult$();
 
   /**
    * @param {string} query
@@ -27,6 +27,14 @@ function LabelsListController(LabelSearchResultViewer, rx, $scope) {
   function ignoreShortQueries(query) {
     // Only if the query is longer than 2 characters
     return query.length > 2;
+  }
+
+  /**
+   * @param {PagedCollection} searchResult
+   */
+  function showSearchResult(searchResult) {
+    llc.searchResult = searchResult;
+    llc.loading = false;
   }
 
   llc.loading = false;
@@ -40,10 +48,7 @@ function LabelsListController(LabelSearchResultViewer, rx, $scope) {
     .subscribe();
 
   searchResult$
-    .safeApply($scope, function (searchResult) {
-      llc.searchResult = searchResult;
-      llc.loading = false;
-    })
+    .safeApply($scope, showSearchResult)
     .subscribe();
 
   filteredQuery$
