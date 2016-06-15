@@ -33,19 +33,11 @@
                     </thead>
                     <tbody>
                     <tr ng-repeat="label in llc.searchResult.member">
-                        <td>{{ label.name }}</td>
-                        <td>{{ label.visibility === "invisible" ? "Verborgen" : ""}}</td>
-                        <td>{{ label.privacy === "private" ? "Voorbehouden" : ""}}</td>
+                        <td ng-bind="::label.name"></td>
+                        <td ng-bind="::(label.visibility === 'invisible' ? 'Verborgen' : '')"></td>
+                        <td ng-bind="::(label.privacy === 'private' ? 'Voorbehouden' : '')"></td>
                         <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    Bewerken <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a href="/manage/label/{{ label.id }}">Bewerken</a></li>
-                                    <li><a href="#">Verwijderen</a></li>
-                                </ul>
-                            </div>
+                            <a ng-link="['LabelEditor', {id: label.id}]">Bewerken</a>
                         </td>
                     </tr>
                     </tbody>

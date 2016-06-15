@@ -17444,19 +17444,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                    </thead>\n" +
     "                    <tbody>\n" +
     "                    <tr ng-repeat=\"label in llc.searchResult.member\">\n" +
-    "                        <td>{{ label.name }}</td>\n" +
-    "                        <td>{{ label.visibility === \"invisible\" ? \"Verborgen\" : \"\"}}</td>\n" +
-    "                        <td>{{ label.privacy === \"private\" ? \"Voorbehouden\" : \"\"}}</td>\n" +
+    "                        <td ng-bind=\"::label.name\"></td>\n" +
+    "                        <td ng-bind=\"::(label.visibility === 'invisible' ? 'Verborgen' : '')\"></td>\n" +
+    "                        <td ng-bind=\"::(label.privacy === 'private' ? 'Voorbehouden' : '')\"></td>\n" +
     "                        <td>\n" +
-    "                            <div class=\"btn-group\">\n" +
-    "                                <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
-    "                                    Bewerken <span class=\"caret\"></span>\n" +
-    "                                </button>\n" +
-    "                                <ul class=\"dropdown-menu\">\n" +
-    "                                    <li><a href=\"/manage/label/{{ label.id }}\">Bewerken</a></li>\n" +
-    "                                    <li><a href=\"#\">Verwijderen</a></li>\n" +
-    "                                </ul>\n" +
-    "                            </div>\n" +
+    "                            <a ng-link=\"['LabelEditor', {id: label.id}]\">Bewerken</a>\n" +
     "                        </td>\n" +
     "                    </tr>\n" +
     "                    </tbody>\n" +
