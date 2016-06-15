@@ -21,7 +21,9 @@ function EventDetail(
   offerEditor,
   $location,
   $uibModal,
-  $q
+  $q,
+  $window,
+  offerLabeller
 ) {
   var activeTabId = 'data';
   var controller = this;
@@ -40,6 +42,8 @@ function EventDetail(
 
   $scope.eventIdIsInvalid = false;
   $scope.hasEditPermissions = false;
+  $scope.labelAdded = labelAdded;
+  $scope.labelRemoved = labelRemoved;
   $scope.eventHistory = [];
   $scope.tabs = [
     {
@@ -177,5 +181,30 @@ function EventDetail(
 
     modalInstance.result
       .then(controller.goToDashboardOnJobCompletion);
+  }
+
+  /**
+   * @param {Label} newLabel
+   */
+  function labelAdded(newLabel) {
+    var similarLabel = _.find(cachedEvent.labels, function (label) {
+      return newLabel.name.toUpperCase() === label.toUpperCase();
+    });
+
+    if (similarLabel) {
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      offerLabeller.label(cachedEvent, newLabel.name);
+    }
+
+    $scope.event.labels = angular.copy(cachedEvent.labels);
+  }
+
+  /**
+   * @param {Label} label
+   */
+  function labelRemoved(label) {
+    offerLabeller.unlabel(cachedEvent, label.name);
+    $scope.event.labels = angular.copy(cachedEvent.labels);
   }
 }

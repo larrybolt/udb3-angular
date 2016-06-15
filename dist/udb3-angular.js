@@ -6281,7 +6281,9 @@ function EventDetail(
   offerEditor,
   $location,
   $uibModal,
-  $q
+  $q,
+  $window,
+  offerLabeller
 ) {
   var activeTabId = 'data';
   var controller = this;
@@ -6300,6 +6302,8 @@ function EventDetail(
 
   $scope.eventIdIsInvalid = false;
   $scope.hasEditPermissions = false;
+  $scope.labelAdded = labelAdded;
+  $scope.labelRemoved = labelRemoved;
   $scope.eventHistory = [];
   $scope.tabs = [
     {
@@ -6438,8 +6442,33 @@ function EventDetail(
     modalInstance.result
       .then(controller.goToDashboardOnJobCompletion);
   }
+
+  /**
+   * @param {Label} newLabel
+   */
+  function labelAdded(newLabel) {
+    var similarLabel = _.find(cachedEvent.labels, function (label) {
+      return newLabel.name.toUpperCase() === label.toUpperCase();
+    });
+
+    if (similarLabel) {
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      offerLabeller.label(cachedEvent, newLabel.name);
+    }
+
+    $scope.event.labels = angular.copy(cachedEvent.labels);
+  }
+
+  /**
+   * @param {Label} label
+   */
+  function labelRemoved(label) {
+    offerLabeller.unlabel(cachedEvent, label.name);
+    $scope.event.labels = angular.copy(cachedEvent.labels);
+  }
 }
-EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal", "$q"];
+EventDetail.$inject = ["$scope", "eventId", "udbApi", "jsonLDLangFilter", "variationRepository", "offerEditor", "$location", "$uibModal", "$q", "$window", "offerLabeller"];
 
 // Source: src/event_form/components/calendartypes/event-form-period.directive.js
 /**
@@ -10969,7 +10998,9 @@ function PlaceDetail(
   offerEditor,
   eventCrud,
   $uibModal,
-  $q
+  $q,
+  $window,
+  offerLabeller
 ) {
   var activeTabId = 'data';
   var controller = this;
@@ -10988,6 +11019,8 @@ function PlaceDetail(
 
   $scope.placeIdIsInvalid = false;
   $scope.hasEditPermissions = false;
+  $scope.labelAdded = labelAdded;
+  $scope.labelRemoved = labelRemoved;
   $scope.placeHistory = [];
   $scope.tabs = [
     {
@@ -11113,8 +11146,33 @@ function PlaceDetail(
         displayModal(item, events);
       });
   }
+
+  /**
+   * @param {Label} newLabel
+   */
+  function labelAdded(newLabel) {
+    var similarLabel = _.find(cachedPlace.labels, function (label) {
+      return newLabel.name.toUpperCase() === label.toUpperCase();
+    });
+
+    if (similarLabel) {
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      offerLabeller.label(cachedPlace, newLabel.name);
+    }
+
+    $scope.place.labels = angular.copy(cachedPlace.labels);
+  }
+
+  /**
+   * @param {Label} label
+   */
+  function labelRemoved(label) {
+    offerLabeller.unlabel(cachedPlace, label.name);
+    $scope.place.labels = angular.copy(cachedPlace.labels);
+  }
 }
-PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal", "$q"];
+PlaceDetail.$inject = ["$scope", "placeId", "udbApi", "$location", "jsonLDLangFilter", "variationRepository", "offerEditor", "eventCrud", "$uibModal", "$q", "$window", "offerLabeller"];
 
 // Source: src/router/offer-locator.service.js
 /**
@@ -14473,6 +14531,16 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "              </td>\n" +
     "            </tr>\n" +
     "            <tr>\n" +
+    "              <td>\n" +
+    "                <strong>Labels</strong>\n" +
+    "              </td>\n" +
+    "              <td>\n" +
+    "                <udb-label-select offer=\"event\"\n" +
+    "                                  label-added=\"labelAdded(label)\"\n" +
+    "                                  label-removed=\"labelRemoved(label)\"></udb-label-select>\n" +
+    "              </td>\n" +
+    "            </tr>\n" +
+    "            <tr>\n" +
     "              <td><strong>Geschikt voor</strong></td>\n" +
     "              <td>\n" +
     "                <span ng-if=\"event.typicalAgeRange\">{{event.typicalAgeRange}}</span>\n" +
@@ -16600,6 +16668,16 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                <td>{{place.address.streetAddress}}<br />\n" +
     "                  {{place.address.postalCode}} {{place.address.addressLocality}}<br />\n" +
     "                  {{place.address.addressCountry}}</td>\n" +
+    "              </tr>\n" +
+    "              <tr>\n" +
+    "                <td>\n" +
+    "                  <strong>Labels</strong>\n" +
+    "                </td>\n" +
+    "                <td>\n" +
+    "                  <udb-label-select offer=\"place\"\n" +
+    "                                    label-added=\"labelAdded(label)\"\n" +
+    "                                    label-removed=\"labelRemoved(label)\"></udb-label-select>\n" +
+    "                </td>\n" +
     "              </tr>\n" +
     "              <tr ng-class=\"{muted: !place.typicalAgeRange}\">\n" +
     "                <td><strong>Geschikt voor</strong></td>\n" +
