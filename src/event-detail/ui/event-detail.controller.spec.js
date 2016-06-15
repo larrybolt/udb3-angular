@@ -11,6 +11,8 @@ describe('Controller: Event Detail', function() {
       offerEditor,
       UdbEvent,
       $q,
+      offerLabeller,
+      $window,
       $uibModal,
       exampleEventJson = {
         "@id": "http://culudb-silex.dev:8080/event/1111be8c-a412-488d-9ecc-8fdf9e52edbc",
@@ -162,6 +164,8 @@ describe('Controller: Event Detail', function() {
     UdbEvent = $injector.get('UdbEvent');
     $q = _$q_;
     $uibModal = jasmine.createSpyObj('$uibModal', ['open']);
+    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label', 'unlabel']);
+    $window = $injector.get('$window');
 
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     deferredPermission = $q.defer();
@@ -187,7 +191,9 @@ describe('Controller: Event Detail', function() {
         jsonLDLangFilter: jsonLDLangFilter,
         variationRepository: variationRepository,
         offerEditor: offerEditor,
-        $uibModal: $uibModal
+        $uibModal: $uibModal,
+        $window: $window,
+        offerLabeller: offerLabeller
       }
     );
   }));
@@ -288,5 +294,39 @@ describe('Controller: Event Detail', function() {
     $scope.$digest();
 
     expect($location.path).toHaveBeenCalledWith('/dashboard');
+  });
+
+
+  it('should update the event when adding a label', function () {
+    var label = {name:'some other label'};
+    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+    $scope.$digest();
+
+    $scope.labelAdded(label);
+    expect(offerLabeller.label).toHaveBeenCalledWith(jasmine.any(Object), 'some other label');
+  });
+
+  it('should update the event when removing a label', function () {
+    var label = {name:'some label'};
+    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+    $scope.$digest();
+
+    $scope.labelRemoved(label);
+    expect(offerLabeller.unlabel).toHaveBeenCalledWith(jasmine.any(Object), 'some label');
+  });
+
+  it('should prevent any duplicate labels and warn the user when trying to add one', function () {
+    var label = {name:'Some Label'};
+    deferredEvent.resolve(new UdbEvent(exampleEventJson));
+    $scope.$digest();
+
+    spyOn($window, 'alert');
+
+    $scope.labelAdded(label);
+
+    var expectedLabels = ['some label'];
+    expect($scope.event.labels).toEqual(expectedLabels);
+    expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
+    expect(offerLabeller.label).not.toHaveBeenCalled();
   });
 });
