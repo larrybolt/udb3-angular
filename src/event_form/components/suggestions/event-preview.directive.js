@@ -14,7 +14,7 @@ angular
 function udbEventPreview() {
   var eventPreviewDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-preview.directive.html'
   };

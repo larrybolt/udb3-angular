@@ -14,7 +14,7 @@ angular
 function udbEvent() {
   var eventDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event.directive.html'
   };
