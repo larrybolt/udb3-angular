@@ -34,7 +34,7 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     BaseJob.prototype.finish.call(this);
 
     if (this.state !== JobStates.FAILED) {
-      this.task.resolve(this.item.id);
+      this.task.resolve(this.item.apiUrl);
     }
   };
 

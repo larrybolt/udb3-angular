@@ -2888,6 +2888,10 @@ function UdbApi(
     );
   };
 
+  var offerPropertyPaths = {
+    typicalAgeRange: 'typical-age-range'
+  };
+
   /**
    * Update the property for a given id.
    *
@@ -2901,9 +2905,10 @@ function UdbApi(
   this.updateProperty = function(offerLocation, property, value) {
     var updateData = {};
     updateData[property] = value;
+    var path = offerPropertyPaths[property] ? offerPropertyPaths[property] : property;
 
     return $http.post(
-      offerLocation +  '/' + property,
+      offerLocation +  '/' + path,
       updateData,
       defaultApiConfig
     );
@@ -3043,7 +3048,7 @@ function UdbApi(
   this.deleteTypicalAgeRange = function(offerLocation) {
 
     return $http.delete(
-      offerLocation + '/typicalAgeRange',
+      offerLocation + '/typical-age-range',
       defaultApiConfig
     );
   };
@@ -4712,7 +4717,7 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     BaseJob.prototype.finish.call(this);
 
     if (this.state !== JobStates.FAILED) {
-      this.task.resolve(this.item.id);
+      this.task.resolve(this.item.apiUrl);
     }
   };
 
@@ -5086,8 +5091,8 @@ function EventCrud(
     jobLogger.addJob(job);
 
     // unvalidate cache on success
-    job.task.promise.then(function (itemId) {
-      udbApi.removeItemFromCache(itemId);
+    job.task.promise.then(function (offerLocation) {
+      udbApi.removeItemFromCache(offerLocation.toString());
     }, function() {});
   }
 
@@ -9543,9 +9548,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     $scope.minAge = null;
     $scope.ageCssClass = 'state-complete';
 
-    if (ageRange === AgeRangeEnum.ALL) {
-      $scope.saveAgeRange();
-    }
+    $scope.saveAgeRange();
   }
 
   /**
@@ -9592,20 +9595,19 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function saveAgeRange() {
 
     $scope.invalidAgeRange = false;
-    //$scope.minAge = parseInt($scope.minAge); // should already be a number!
-    if ($scope.ageRange !== AgeRangeEnum.ALL) {
 
-      if (isNaN($scope.minAge)) {
-        $scope.invalidAgeRange = true;
-      }
-      else {
-        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
-        EventFormData.typicalAgeRange = formatTypicalAgeRange($scope.minAge, $scope.ageRange.max);
-      }
-
+    if ($scope.ageRange === AgeRangeEnum.ALL) {
+      EventFormData.typicalAgeRange = null;
     }
     else {
-      EventFormData.typicalAgeRange = null;
+      if ($scope.minAge) {
+        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
+      }
+
+      EventFormData.typicalAgeRange = formatTypicalAgeRange(
+        $scope.minAge || $scope.ageRange.min,
+        $scope.ageRange.max
+      );
     }
 
     // Save to db if valid age entered.
@@ -14470,11 +14472,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                <span ng-switch-when=\"unknown\">Geen prijsinformatie</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
-    "            <tr ng-class=\"{muted: !event.typicalAgeRange}\">\n" +
+    "            <tr>\n" +
     "              <td><strong>Geschikt voor</strong></td>\n" +
     "              <td>\n" +
     "                <span ng-if=\"event.typicalAgeRange\">{{event.typicalAgeRange}}</span>\n" +
-    "                <span ng-if=\"!event.typicalAgeRange\">Geen leeftijdsinformatie</span>\n" +
+    "                <span ng-if=\"!event.typicalAgeRange\">Alle leeftijden</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
     "            <tr ng-class=\"{muted: !event.image}\">\n" +
