@@ -68,6 +68,7 @@ angular
     'udb.core',
     'udb.config',
     'udb.router',
+    'udb.entry',
     'btford.socket-io',
     'pascalprecht.translate',
     'xeditable'
@@ -187,6 +188,17 @@ angular
     'ui.bootstrap',
     'udb.core',
     'udb.config'
+  ]);
+
+/**
+ * @ngdoc module
+ * @name udb.management
+ * @description
+ * The udb management module
+ */
+angular
+  .module('udb.management', [
+    'udb.core'
   ]);
 
 angular.module('peg', []).factory('LuceneQueryParser', function () {
@@ -2540,6 +2552,15 @@ UnexpectedErrorModalController.$inject = ["$scope", "$uibModalInstance", "errorM
  */
 
 /**
+ * @typedef {Object} ApiProblem
+ * @property {URL} type
+ * @property {string} title
+ * @property {string} detail
+ * @property {URL} instance
+ * @property {Number} status
+ */
+
+/**
  * @readonly
  * @enum {string}
  */
@@ -2867,6 +2888,10 @@ function UdbApi(
     );
   };
 
+  var offerPropertyPaths = {
+    typicalAgeRange: 'typical-age-range'
+  };
+
   /**
    * Update the property for a given id.
    *
@@ -2880,9 +2905,10 @@ function UdbApi(
   this.updateProperty = function(offerLocation, property, value) {
     var updateData = {};
     updateData[property] = value;
+    var path = offerPropertyPaths[property] ? offerPropertyPaths[property] : property;
 
     return $http.post(
-      offerLocation +  '/' + property,
+      offerLocation +  '/' + path,
       updateData,
       defaultApiConfig
     );
@@ -3022,7 +3048,7 @@ function UdbApi(
   this.deleteTypicalAgeRange = function(offerLocation) {
 
     return $http.delete(
-      offerLocation + '/typicalAgeRange',
+      offerLocation + '/typical-age-range',
       defaultApiConfig
     );
   };
@@ -3217,6 +3243,106 @@ function UdbApi(
       )
       .then(returnUnwrappedData);
   };
+
+  /**
+   * @param {string}  name
+   * @param {boolean} isVisible
+   * @param {boolean} isPrivate
+   * @param {string}  [parentId]
+   * @return {Promise.<Object|ApiProblem>}
+   */
+  this.createLabel = function (name, isVisible, isPrivate, parentId) {
+    var labelData = {
+      name: name,
+      visibility: isVisible ? 'visible' : 'invisible',
+      privacy: isPrivate ? 'private' : 'public'
+    };
+
+    if (parentId) {
+      labelData.parentId = parentId;
+    }
+
+    return $http
+      .post(appConfig.baseUrl + 'label', labelData, defaultApiConfig)
+      .then(returnUnwrappedData, returnApiProblem);
+  };
+
+  /**
+   * @param {string} labelId
+   * @param {string} command
+   * @return {Promise.<Object|ApiProblem>}
+   */
+  this.updateLabel = function (labelId, command) {
+    return $http.patch(
+      appConfig.baseUrl + 'label/' + labelId,
+      {'command': command},
+      defaultApiConfig
+    ).then(returnUnwrappedData, returnApiProblem);
+  };
+
+  /**
+   * @param {uuid} labelId
+   * @return {Promise.<Object|ApiProblem>}
+   */
+  this.deleteLabel = function (labelId) {
+    return $http
+      .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .then(returnUnwrappedData, returnApiProblem);
+  };
+
+  /**
+   * @param {uuid} labelId
+   * @return {Promise.<Label>}
+   */
+  this.getLabelById = function (labelId) {
+    return $http
+      .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string} query
+   *  Matches case-insensitive and any part of a label.
+   * @param {Number} [limit]
+   *  The limit of results per page.
+   * @param {Number} [start]
+   * @return {Promise.<PagedCollection>}
+   */
+  this.findLabels = function (query, limit, start) {
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    requestConfig.params = {
+      query: query,
+      limit: limit ? limit : 30,
+      start: start ? start : 0
+    };
+
+    return $http
+      .get(appConfig.baseUrl + 'labels', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {Object} errorResponse
+   * @return {Promise.<ApiProblem>}
+   */
+  function returnApiProblem(errorResponse) {
+    if (errorResponse) {
+      // If the error response does not contain the proper data, make some up generic problem.
+      var error = errorResponse.data ? errorResponse.data : {
+        type: appConfig.baseUrl + 'problem',
+        title: 'Something went wrong.',
+        detail: 'We failed to perform the requested action!'
+      };
+      var problem = {
+        type: new URL(error.type),
+        title: error.title,
+        detail: error.detail,
+        status: errorResponse.status
+      };
+
+      return $q.reject(problem);
+    }
+  }
 }
 UdbApi.$inject = ["$q", "$http", "appConfig", "$cookieStore", "uitidAuth", "$cacheFactory", "UdbEvent", "UdbPlace", "UdbOrganizer", "Upload"];
 
@@ -4168,7 +4294,7 @@ angular
 function udbDashboardEventItem() {
   var dashboardEventItemDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/dashboard-item.directive.html'
   };
@@ -4191,7 +4317,7 @@ angular
 function udbDashboardPlaceItem() {
   var dashboardPlaceItemDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/dashboard-item.directive.html'
   };
@@ -4591,7 +4717,7 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     BaseJob.prototype.finish.call(this);
 
     if (this.state !== JobStates.FAILED) {
-      this.task.resolve(this.item.id);
+      this.task.resolve(this.item.apiUrl);
     }
   };
 
@@ -4965,8 +5091,8 @@ function EventCrud(
     jobLogger.addJob(job);
 
     // unvalidate cache on success
-    job.task.promise.then(function (itemId) {
-      udbApi.removeItemFromCache(itemId);
+    job.task.promise.then(function (offerLocation) {
+      udbApi.removeItemFromCache(offerLocation.toString());
     }, function() {});
   }
 
@@ -5368,22 +5494,7 @@ angular
 
 /* @ngInject */
 function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, QueryLabelJob, $q) {
-
   var offerLabeller = this;
-
-  // keep a cache of all the recently used labels
-  offerLabeller.recentLabels = ['some', 'recent', 'label'];
-
-  function updateRecentLabels() {
-    udbApi
-      .getRecentLabels()
-      .then(function (labels) {
-        offerLabeller.recentLabels = labels;
-      });
-  }
-
-  // warm up the cache
-  updateRecentLabels();
 
   /**
    * A helper function to create and log jobs
@@ -5413,50 +5524,90 @@ function OfferLabeller(jobLogger, udbApi, OfferLabelJob, OfferLabelBatchJob, Que
   /**
    * Label an event with a label
    * @param {UdbEvent|UdbPlace} offer
-   * @param {string} label
+   * @param {string} labelName
    */
-  this.label = function (offer, label) {
-    offer.label(label);
+  this.label = function (offer, labelName) {
+    offer.label(labelName);
 
     return udbApi
-      .labelOffer(offer.apiUrl, label)
-      .then(jobCreatorFactory(OfferLabelJob, offer, label));
+      .labelOffer(offer.apiUrl, labelName)
+      .then(jobCreatorFactory(OfferLabelJob, offer, labelName));
   };
 
   /**
    * Unlabel a label from an event
    * @param {UdbEvent|UdbPlace} offer
-   * @param {string} label
+   * @param {string} labelName
    */
-  this.unlabel = function (offer, label) {
-    offer.unlabel(label);
+  this.unlabel = function (offer, labelName) {
+    offer.unlabel(labelName);
 
     return udbApi
-      .unlabelOffer(offer.apiUrl, label)
-      .then(jobCreatorFactory(OfferLabelJob, offer, label, true));
+      .unlabelOffer(offer.apiUrl, labelName)
+      .then(jobCreatorFactory(OfferLabelJob, offer, labelName, true));
   };
 
   /**
    * @param {OfferIdentifier[]} offers
-   * @param {string} label
+   * @param {string} labelName
    */
-  this.labelOffersById = function (offers, label) {
+  this.labelOffersById = function (offers, labelName) {
     return udbApi
-      .labelOffers(offers, label)
-      .then(jobCreatorFactory(OfferLabelBatchJob, offers, label));
+      .labelOffers(offers, labelName)
+      .then(jobCreatorFactory(OfferLabelBatchJob, offers, labelName));
   };
 
   /**
    *
    * @param {string} query
-   * @param {string} label
+   * @param {string} labelName
+   * @param {Number} eventCount
    */
-  this.labelQuery = function (query, label, eventCount) {
+  this.labelQuery = function (query, labelName, eventCount) {
     eventCount = eventCount || 0;
 
     return udbApi
-      .labelQuery(query, label)
-      .then(jobCreatorFactory(QueryLabelJob, eventCount, label));
+      .labelQuery(query, labelName)
+      .then(jobCreatorFactory(QueryLabelJob, eventCount, labelName));
+  };
+
+  /**
+   * @param {string} labelName
+   * @param {Number} [maxItems]
+   * @return {Promise.<Label[]>}
+   */
+  offerLabeller.getSuggestions = function (labelName, maxItems) {
+    var max = typeof maxItems !== 'undefined' ?  maxItems : 5;
+    /** @param {PagedCollection} pagedSearchResults */
+    function returnSimilarLabels(pagedSearchResults) {
+      return pagedSearchResults.member;
+    }
+
+    function returnRecentLabels() {
+      return udbApi
+        .getRecentLabels()
+        .then(function (labelNames) {
+          return _.chain(labelNames)
+            .map(function (labelName) {
+              return {name: labelName, id: labelName};
+            })
+            .take(max)
+            .value();
+        });
+    }
+
+    function returnSuggestions(pagedSearchResults) {
+      if (pagedSearchResults.totalItems === 0) {
+        return returnRecentLabels();
+      } else {
+        return returnSimilarLabels(pagedSearchResults);
+
+      }
+    }
+
+    return udbApi
+      .findLabels(labelName, max)
+      .then(returnSuggestions, returnRecentLabels);
   };
 }
 OfferLabeller.$inject = ["jobLogger", "udbApi", "OfferLabelJob", "OfferLabelBatchJob", "QueryLabelJob", "$q"];
@@ -7171,7 +7322,7 @@ angular
 function udbEventPreview() {
   var eventPreviewDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-preview.directive.html'
   };
@@ -7194,7 +7345,7 @@ angular
 function udbEventSuggestion() {
   var eventSuggestionDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-suggestion.directive.html'
   };
@@ -7217,7 +7368,7 @@ angular
 function udbPlacePreview() {
   var placePreviewDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place-preview.directive.html'
   };
@@ -7240,7 +7391,7 @@ angular
 function udbPlaceSuggestion() {
   var placeSuggestionDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place-suggestion.directive.html'
   };
@@ -9397,9 +9548,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     $scope.minAge = null;
     $scope.ageCssClass = 'state-complete';
 
-    if (ageRange === AgeRangeEnum.ALL) {
-      $scope.saveAgeRange();
-    }
+    $scope.saveAgeRange();
   }
 
   /**
@@ -9446,20 +9595,19 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function saveAgeRange() {
 
     $scope.invalidAgeRange = false;
-    //$scope.minAge = parseInt($scope.minAge); // should already be a number!
-    if ($scope.ageRange !== AgeRangeEnum.ALL) {
 
-      if (isNaN($scope.minAge)) {
-        $scope.invalidAgeRange = true;
-      }
-      else {
-        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
-        EventFormData.typicalAgeRange = formatTypicalAgeRange($scope.minAge, $scope.ageRange.max);
-      }
-
+    if ($scope.ageRange === AgeRangeEnum.ALL) {
+      EventFormData.typicalAgeRange = null;
     }
     else {
-      EventFormData.typicalAgeRange = null;
+      if ($scope.minAge) {
+        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
+      }
+
+      EventFormData.typicalAgeRange = formatTypicalAgeRange(
+        $scope.minAge || $scope.ageRange.min,
+        $scope.ageRange.max
+      );
     }
 
     // Save to db if valid age entered.
@@ -10410,6 +10558,241 @@ function udbExportModalButtons() {
   };
 }
 
+// Source: src/management/label-editor.component.js
+angular
+  .module('udb.management')
+  .component('udbLabelEditor', {
+    templateUrl: 'templates/label-editor.html',
+    controller: LabelEditorComponent,
+    controllerAs: 'editor'
+  });
+
+/** @ngInject */
+function LabelEditorComponent(LabelManager, $uibModal) {
+  var editor = this;
+  editor.updateVisibility = updateVisibility;
+  editor.updatePrivacy = updatePrivacy;
+  editor.$routerOnActivate = loadLabelFromParams;
+  editor.renaming = false;
+  editor.rename = rename;
+
+  function rename() {
+    function showRenamedLabel(jobInfo) {
+      loadLabel(jobInfo.labelId);
+    }
+
+    editor.renaming = true;
+    LabelManager
+      .copy(editor.label)
+      .then(showRenamedLabel, showProblem)
+      .finally(function () {
+        editor.renaming = false;
+      });
+  }
+
+  /**
+   * @param {ApiProblem} problem
+   */
+  function showProblem(problem) {
+    loadLabel(editor.label.id);
+    var modalInstance = $uibModal.open(
+      {
+        templateUrl: 'templates/unexpected-error-modal.html',
+        controller: 'UnexpectedErrorModalController',
+        size: 'sm',
+        resolve: {
+          errorMessage: function() {
+            return problem.title + ' ' + problem.detail;
+          }
+        }
+      }
+    );
+  }
+
+  function loadLabelFromParams(next) {
+    var id = next.params.id;
+    loadLabel(id);
+  }
+
+  /**
+   *
+   * @param {Label} label
+   */
+  function showLabel(label) {
+    editor.label = label;
+  }
+
+  function loadLabel(id) {
+    editor.loadingError = false;
+    editor.label = false;
+    LabelManager
+      .get(id)
+      .then(showLabel, showLoadingError);
+  }
+
+  function showLoadingError () {
+    editor.loadingError = 'Label niet gevonden!';
+  }
+
+  function updateVisibility () {
+    var isVisible = editor.label.isVisible;
+    var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
+    jobPromise.catch(showProblem);
+  }
+
+  function updatePrivacy () {
+    var isPrivate = editor.label.isPrivate;
+    var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
+    jobPromise.catch(showProblem);
+  }
+}
+LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
+
+// Source: src/management/label-manager.service.js
+/**
+ * @typedef {Object} Label
+ * @property {string}   id
+ * @property {string}   name
+ * @property {boolean}  isVisible
+ * @property {boolean}  isPrivate
+ */
+
+/**
+ * @ngdoc function
+ * @name udb.management.service:LabelManager
+ * @description
+ * # LabelManager
+ * Service to manage labels.
+ */
+angular
+  .module('udb.management')
+  .service('LabelManager', LabelManager);
+
+/** @ngInject */
+function LabelManager(udbApi, jobLogger, BaseJob, $q) {
+  var service = this;
+
+  /**
+   * @param {uuid} labelId
+   * @return {Promise.<Label>}
+   */
+  service.get = function(labelId) {
+    return udbApi.getLabelById(labelId);
+  };
+
+  /**
+   * @param {string} name
+   * @param {boolean} isVisible
+   * @param {boolean} isPrivate
+   *
+   * @return {Promise.<BaseJob>}
+   */
+  service.create = function (name, isVisible, isPrivate) {
+    return udbApi
+      .createLabel(name, isVisible, isPrivate)
+      .then(createNewLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.copy = function (label) {
+    return udbApi
+      .createLabel(label.name, label.isVisible, label.isPrivate, label.id)
+      .then(createNewLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.delete = function (label) {
+    return udbApi
+      .deleteLabel(label.id)
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makeInvisible = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakeInvisible')
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makeVisible = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakeVisible')
+      .then(logLabelJob);
+  };
+
+  /**
+   *
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makePrivate = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakePrivate')
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Label} label
+   * @return {Promise.<BaseJob>}
+   */
+  service.makePublic = function (label) {
+    return udbApi
+      .updateLabel(label.id, 'MakePublic')
+      .then(logLabelJob);
+  };
+
+  /**
+   * @param {Object} commandInfo
+   * @return {Promise.<BaseJob>}
+   */
+  function logLabelJob(commandInfo) {
+    var job = new BaseJob(commandInfo.commandId);
+    jobLogger.addJob(job);
+
+    return $q.resolve(job);
+  }
+
+  /**
+   * @param {Object} commandInfo
+   * @return {Promise.<BaseJob>}
+   */
+  function createNewLabelJob(commandInfo) {
+    var job = new BaseJob(commandInfo.commandId);
+    job.labelId = commandInfo.labelId;
+    jobLogger.addJob(job);
+
+    return $q.resolve(job);
+  }
+}
+LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
+
+// Source: src/management/management.component.js
+angular
+  .module('udb.management')
+  .component('udbManagement', {
+    template: '<h1>Manage</h1> <ng-outlet></ng-outlet>',
+    $routeConfig: [
+      {
+        path: '/label/:id',
+        name: 'LabelEditor',
+        component: 'udbLabelEditor'
+      }
+    ]
+  });
+
 // Source: src/media/create-image-job.factory.js
 /**
  * @ngdoc service
@@ -11072,13 +11455,84 @@ angular
 function udbEventLink() {
   var eventLinkDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event-link.directive.html'
   };
 
   return eventLinkDirective;
 }
+
+// Source: src/search/components/label-select.component.js
+angular
+  .module('udb.search')
+  .component('udbLabelSelect', {
+    templateUrl: 'templates/label-select.html',
+    controller: LabelSelectComponent,
+    controllerAs: 'select',
+    bindings: {
+      offer: '<',
+      labelAdded: '&',
+      labelRemoved: '&'
+    }
+  });
+
+/** @ngInject */
+function LabelSelectComponent(offerLabeller) {
+  var select = this;
+  /** @type {Label[]} */
+  select.availableLabels = [];
+  select.suggestLabels = suggestLabels;
+  select.createLabel = createLabel;
+  /** @type {Label[]} */
+  select.labels = _.map(select.offer.labels, function (labelName) {
+    return {name:labelName};
+  });
+  select.minimumInputLength = 2;
+  select.findDelay = 300;
+
+  function createLabel(labelName) {
+    var similarLabel = _.find(select.labels, function (existingLabel) {
+      return existingLabel.name.toUpperCase() === labelName.toUpperCase();
+    });
+    if (!similarLabel) {
+      return {name:labelName};
+    }
+  }
+
+  function findSuggestions(name) {
+    offerLabeller
+      .getSuggestions(name, 6)
+      .then(function(labels) {
+        labels.push({name: name});
+        setAvailableLabels(labels);
+      })
+      .finally(function () {
+        select.refreshing = false;
+      });
+  }
+
+  var delayedFindSuggestions = _.debounce(findSuggestions, select.findDelay);
+
+  function suggestLabels(name) {
+    select.refreshing = true;
+    setAvailableLabels([]);
+    delayedFindSuggestions(name);
+  }
+
+  /** @param {Label[]} labels */
+  function setAvailableLabels(labels) {
+    select.availableLabels = _.chain(labels)
+      .reject(function(label) {
+        return _.find(select.labels, {'name': label.name});
+      })
+      .uniq(function (label) {
+        return label.name.toUpperCase();
+      })
+      .value();
+  }
+}
+LabelSelectComponent.$inject = ["offerLabeller"];
 
 // Source: src/search/components/query-editor-daterangepicker.directive.js
 /**
@@ -12946,206 +13400,6 @@ angular
   }
 );
 
-// Source: src/search/ui/event.controller.js
-/**
- * @ngdoc directive
- * @name udb.search.controller:EventController
- * @description
- * # EventController
- */
-angular
-  .module('udb.search')
-  .controller('EventController', EventController);
-
-/* @ngInject */
-function EventController(
-  udbApi,
-  jsonLDLangFilter,
-  offerTranslator,
-  offerLabeller,
-  offerEditor,
-  EventTranslationState,
-  $scope,
-  variationRepository,
-  $window
-) {
-  var controller = this;
-  /* @type {UdbEvent} */
-  var cachedEvent;
-
-  // Translation
-  var defaultLanguage = 'nl';
-  controller.eventTranslation = false;
-  controller.activeLanguage = defaultLanguage;
-  controller.languageSelector = [
-    {'lang': 'fr'},
-    {'lang': 'en'},
-    {'lang': 'de'}
-  ];
-  controller.availableLabels = offerLabeller.recentLabels;
-  initController();
-
-  function initController() {
-    if (!$scope.event.title) {
-      controller.fetching = true;
-      var eventPromise = udbApi.getOffer($scope.event['@id']);
-
-      eventPromise.then(function (eventObject) {
-        cachedEvent = eventObject;
-        cachedEvent.updateTranslationState();
-        controller.availableLabels = _.union(cachedEvent.labels, offerLabeller.recentLabels);
-
-        $scope.event = jsonLDLangFilter(cachedEvent, defaultLanguage);
-
-        if ($scope.event.location) {
-          $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
-        }
-        controller.fetching = false;
-        watchLabels();
-
-        // Try to fetch a personal variation for the event
-        fetchPersonalVariation();
-      });
-    } else {
-      controller.fetching = false;
-    }
-
-    function fetchPersonalVariation() {
-      var personalVariationPromise = variationRepository.getPersonalVariation(cachedEvent);
-      personalVariationPromise
-        .then(function (personalVariation) {
-          $scope.event.description = personalVariation.description[defaultLanguage];
-        })
-        .finally(function () {
-          controller.editable = true;
-        });
-    }
-
-    function watchLabels() {
-      $scope.$watch(function () {
-        return cachedEvent.labels;
-      }, function (labels) {
-        $scope.event.labels = angular.copy(labels);
-      });
-    }
-  }
-
-  controller.hasActiveTranslation = function () {
-    return cachedEvent && cachedEvent.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
-  };
-
-  controller.getLanguageTranslationIcon = function (lang) {
-    var icon = EventTranslationState.NONE.icon;
-
-    if (cachedEvent && lang) {
-      icon = cachedEvent.translationState[lang].icon;
-    }
-
-    return icon;
-  };
-
-  controller.translate = function () {
-    controller.applyPropertyChanges('name');
-    controller.applyPropertyChanges('description');
-  };
-
-  /**
-   * Sets the provided language as active or toggles it off when already active
-   *
-   * @param {String} lang
-   */
-  controller.toggleLanguage = function (lang) {
-    if (lang === controller.activeLanguage) {
-      controller.stopTranslating();
-    } else {
-      controller.activeLanguage = lang;
-      controller.eventTranslation = jsonLDLangFilter(cachedEvent, controller.activeLanguage);
-    }
-  };
-
-  controller.hasPropertyChanged = function (propertyName) {
-    var lang = controller.activeLanguage,
-        translation = controller.eventTranslation;
-
-    return controller.eventTranslation && cachedEvent[propertyName][lang] !== translation[propertyName];
-  };
-
-  controller.undoPropertyChanges = function (propertyName) {
-    var lang = controller.activeLanguage,
-        translation = controller.eventTranslation;
-
-    if (translation) {
-      translation[propertyName] = cachedEvent[propertyName][lang];
-    }
-  };
-
-  controller.applyPropertyChanges = function (propertyName) {
-    var translation = controller.eventTranslation[propertyName],
-        apiProperty;
-
-    // TODO: this is hacky, should decide on consistent name for this property
-    if (propertyName === 'name') {
-      apiProperty = 'title';
-    }
-
-    translateEventProperty(propertyName, translation, apiProperty);
-  };
-
-  controller.stopTranslating = function () {
-    controller.eventTranslation = undefined;
-    controller.activeLanguage = defaultLanguage;
-  };
-
-  function translateEventProperty(property, translation, apiProperty) {
-    var language = controller.activeLanguage,
-        udbProperty = apiProperty || property;
-
-    if (translation && translation !== cachedEvent[property][language]) {
-      var translationPromise = offerTranslator.translateProperty(cachedEvent, udbProperty, language, translation);
-
-      translationPromise.then(function () {
-        cachedEvent.updateTranslationState();
-      });
-    }
-  }
-
-  // Labelling
-  controller.labelAdded = function (newLabel) {
-    var similarLabel = _.find(cachedEvent.labels, function (label) {
-      return newLabel.toUpperCase() === label.toUpperCase();
-    });
-    if (similarLabel) {
-      $scope.$apply(function () {
-        $scope.event.labels = angular.copy(cachedEvent.labels);
-      });
-      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
-    } else {
-      offerLabeller.label(cachedEvent, newLabel);
-    }
-  };
-
-  controller.labelRemoved = function (label) {
-    offerLabeller.unlabel(cachedEvent, label);
-  };
-
-  // Editing
-  controller.updateDescription = function (description) {
-    if ($scope.event.description !== description) {
-      var updatePromise = offerEditor.editDescription(cachedEvent, description);
-
-      updatePromise.finally(function () {
-        if (!description) {
-          $scope.event.description = cachedEvent.description[defaultLanguage];
-        }
-      });
-
-      return updatePromise;
-    }
-  };
-
-}
-EventController.$inject = ["udbApi", "jsonLDLangFilter", "offerTranslator", "offerLabeller", "offerEditor", "EventTranslationState", "$scope", "variationRepository", "$window"];
-
 // Source: src/search/ui/event.directive.js
 /**
  * @ngdoc directive
@@ -13161,7 +13415,7 @@ angular
 function udbEvent() {
   var eventDirective = {
     restrict: 'AE',
-    controller: 'EventController',
+    controller: 'OfferController',
     controllerAs: 'eventCtrl',
     templateUrl: 'templates/event.directive.html'
   };
@@ -13169,33 +13423,35 @@ function udbEvent() {
   return eventDirective;
 }
 
-// Source: src/search/ui/place.controller.js
+// Source: src/search/ui/offer.controller.js
 /**
  * @ngdoc directive
- * @name udb.search.controller:PlaceController
+ * @name udb.search.controller:OfferController
  * @description
- * # EventController
+ * # OfferController
  */
 angular
   .module('udb.search')
-  .controller('PlaceController', PlaceController);
+  .controller('OfferController', OfferController);
 
 /* @ngInject */
-function PlaceController(
+function OfferController(
   udbApi,
   $scope,
   jsonLDLangFilter,
   EventTranslationState,
   offerTranslator,
   offerLabeller,
-  $window
+  $window,
+  offerEditor,
+  variationRepository,
+  $q
 ) {
   var controller = this;
-  /* @type {UdbPlace} */
-  var cachedPlace;
-
+  var cachedOffer;
   var defaultLanguage = 'nl';
-  controller.placeTranslation = false;
+
+  controller.translation = false;
   controller.activeLanguage = defaultLanguage;
   controller.languageSelector = [
     {'lang': 'fr'},
@@ -13203,46 +13459,62 @@ function PlaceController(
     {'lang': 'de'}
   ];
 
-  controller.availableLabels = offerLabeller.recentLabels;
-  initController();
-
-  function initController() {
+  controller.init = function () {
     if (!$scope.event.title) {
       controller.fetching = true;
-      var placePromise = udbApi.getOffer($scope.event['@id']);
 
-      placePromise.then(function (placeObject) {
-        cachedPlace = placeObject;
-        cachedPlace.updateTranslationState();
-        controller.availableLabels = _.union(cachedPlace.labels, offerLabeller.recentLabels);
+      return udbApi
+        .getOffer($scope.event['@id'])
+        .then(function (offerObject) {
+          cachedOffer = offerObject;
+          cachedOffer.updateTranslationState();
 
-        $scope.event = jsonLDLangFilter(cachedPlace, defaultLanguage);
-        controller.fetching = false;
+          $scope.event = jsonLDLangFilter(cachedOffer, defaultLanguage);
+          controller.fetching = false;
 
-        watchLabels();
-      });
+          watchLabels();
+          return cachedOffer;
+        });
     } else {
       controller.fetching = false;
     }
+  };
 
-    function watchLabels() {
-      $scope.$watch(function () {
-        return cachedPlace.labels;
-      }, function (labels) {
-        $scope.event.labels = angular.copy(labels);
-      });
+  // initialize controller and take optional event actions
+  $q.when(controller.init())
+    .then(fetchPersonalVariation)
+    .then(ifOfferIsEvent)
+    .then(translateLocation)
+    .finally(function () {
+      controller.editable = true;
+    });
+
+  function ifOfferIsEvent(offer) {
+    if (offer && $scope.event.url.split('/').shift() === 'event') {
+      return $q.resolve(offer);
+    } else {
+      return $q.reject();
     }
   }
 
+  function watchLabels() {
+    $scope.$watch(function () {
+      return cachedOffer.labels;
+    }, function (labels) {
+      $scope.event.labels = angular.copy(labels);
+    });
+  }
+
   controller.hasActiveTranslation = function () {
-    return cachedPlace && cachedPlace.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
+    var offer = cachedOffer;
+    return offer && offer.translationState[controller.activeLanguage] !== EventTranslationState.NONE;
   };
 
   controller.getLanguageTranslationIcon = function (lang) {
     var icon = EventTranslationState.NONE.icon;
 
-    if (cachedPlace && lang) {
-      icon = cachedPlace.translationState[lang].icon;
+    if (cachedOffer && lang) {
+      icon = cachedOffer.translationState[lang].icon;
     }
 
     return icon;
@@ -13263,28 +13535,28 @@ function PlaceController(
       controller.stopTranslating();
     } else {
       controller.activeLanguage = lang;
-      controller.placeTranslation = jsonLDLangFilter(cachedPlace, controller.activeLanguage);
+      controller.translation = jsonLDLangFilter(cachedOffer, controller.activeLanguage);
     }
   };
 
   controller.hasPropertyChanged = function (propertyName) {
     var lang = controller.activeLanguage,
-        translation = controller.placeTranslation;
+        translation = controller.translation;
 
-    return controller.placeTranslation && cachedPlace[propertyName][lang] !== translation[propertyName];
+    return controller.translation && cachedOffer[propertyName][lang] !== translation[propertyName];
   };
 
   controller.undoPropertyChanges = function (propertyName) {
     var lang = controller.activeLanguage,
-        translation = controller.placeTranslation;
+        translation = controller.translation;
 
     if (translation) {
-      translation[propertyName] = cachedPlace[propertyName][lang];
+      translation[propertyName] = cachedOffer[propertyName][lang];
     }
   };
 
   controller.applyPropertyChanges = function (propertyName) {
-    var translation = controller.placeTranslation[propertyName],
+    var translation = controller.translation[propertyName],
         apiProperty;
 
     // TODO: this is hacky, should decide on consistent name for this property
@@ -13296,7 +13568,7 @@ function PlaceController(
   };
 
   controller.stopTranslating = function () {
-    controller.placeTranslation = undefined;
+    controller.translation = undefined;
     controller.activeLanguage = defaultLanguage;
   };
 
@@ -13304,35 +13576,78 @@ function PlaceController(
     var language = controller.activeLanguage,
         udbProperty = apiProperty || property;
 
-    if (translation && translation !== cachedPlace[property][language]) {
-      var translationPromise = offerTranslator.translateProperty(cachedPlace, udbProperty, language, translation);
-
-      translationPromise.then(function () {
-        cachedPlace.updateTranslationState();
-      });
+    if (translation && translation !== cachedOffer[property][language]) {
+      offerTranslator
+        .translateProperty(cachedOffer, udbProperty, language, translation)
+        .then(cachedOffer.updateTranslationState);
     }
   }
 
   // Labelling
+  /**
+   * @param {Label} newLabel
+   */
   controller.labelAdded = function (newLabel) {
-    var similarLabel = _.find(cachedPlace.labels, function (label) {
-      return newLabel.toUpperCase() === label.toUpperCase();
+    var similarLabel = _.find(cachedOffer.labels, function (label) {
+      return newLabel.name.toUpperCase() === label.toUpperCase();
     });
     if (similarLabel) {
       $scope.$apply(function () {
-        $scope.event.labels = angular.copy(cachedPlace.labels);
+        $scope.event.labels = angular.copy(cachedOffer.labels);
       });
-      $window.alert('Het label "' + newLabel + '" is reeds toegevoegd als "' + similarLabel + '".');
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
     } else {
-      offerLabeller.label(cachedPlace, newLabel);
+      offerLabeller.label(cachedOffer, newLabel.name);
     }
   };
 
+  /**
+   * @param {Label} label
+   */
   controller.labelRemoved = function (label) {
-    offerLabeller.unlabel(cachedPlace, label);
+    offerLabeller.unlabel(cachedOffer, label.name);
+  };
+
+  /**
+   * @param {(UdbPlace|UdbEvent)}offer
+   * @return {Promise}
+   */
+  function fetchPersonalVariation(offer) {
+    return variationRepository
+      .getPersonalVariation(offer)
+      .then(function (personalVariation) {
+        $scope.event.description = personalVariation.description[defaultLanguage];
+        return personalVariation;
+      });
+  }
+
+  /**
+   * @param {UdbEvent} event
+   * @return {Promise}
+   */
+  function translateLocation(event) {
+    if ($scope.event.location) {
+      $scope.event.location = jsonLDLangFilter($scope.event.location, defaultLanguage);
+    }
+    return $q.resolve(event);
+  }
+
+  // Editing
+  controller.updateDescription = function (description) {
+    if ($scope.event.description !== description) {
+      var updatePromise = offerEditor.editDescription(cachedOffer, description);
+
+      updatePromise.finally(function () {
+        if (!description) {
+          $scope.event.description = cachedOffer.description[defaultLanguage];
+        }
+      });
+
+      return updatePromise;
+    }
   };
 }
-PlaceController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window"];
+OfferController.$inject = ["udbApi", "$scope", "jsonLDLangFilter", "EventTranslationState", "offerTranslator", "offerLabeller", "$window", "offerEditor", "variationRepository", "$q"];
 
 // Source: src/search/ui/place.directive.js
 /**
@@ -13349,7 +13664,7 @@ angular
 function udbPlace() {
   var placeDirective = {
     restrict: 'AE',
-    controller: 'PlaceController',
+    controller: 'OfferController',
     controllerAs: 'placeCtrl',
     templateUrl: 'templates/place.directive.html'
   };
@@ -14157,11 +14472,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                <span ng-switch-when=\"unknown\">Geen prijsinformatie</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
-    "            <tr ng-class=\"{muted: !event.typicalAgeRange}\">\n" +
+    "            <tr>\n" +
     "              <td><strong>Geschikt voor</strong></td>\n" +
     "              <td>\n" +
     "                <span ng-if=\"event.typicalAgeRange\">{{event.typicalAgeRange}}</span>\n" +
-    "                <span ng-if=\"!event.typicalAgeRange\">Geen leeftijdsinformatie</span>\n" +
+    "                <span ng-if=\"!event.typicalAgeRange\">Alle leeftijden</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
     "            <tr ng-class=\"{muted: !event.image}\">\n" +
@@ -16175,6 +16490,40 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
+  $templateCache.put('templates/label-editor.html',
+    "<h2>Labels</h2>\n" +
+    "<h3>Label bewerken</h3>\n" +
+    "\n" +
+    "<div ng-show=\"!editor.label && !editor.loadingError\">\n" +
+    "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-show=\"editor.label\">\n" +
+    "    <label for=\"label-name-field\">Naam</label>\n" +
+    "    <input id=\"label-name-field\" type=\"text\" ng-model=\"editor.label.name\" ng-disabled=\"editor.renaming\">\n" +
+    "    <button ng-disabled=\"editor.renaming\" type=\"button\" class=\"btn btn-primary\" ng-click=\"editor.rename()\">\n" +
+    "        Hernoemen <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"editor.renaming\"></i>\n" +
+    "    </button>\n" +
+    "    <br>\n" +
+    "    <label>\n" +
+    "        <input type=\"checkbox\"\n" +
+    "               ng-change=\"editor.updateVisibility()\"\n" +
+    "               ng-model=\"editor.label.isVisible\"> Tonen op publicatiekanalen\n" +
+    "    </label>\n" +
+    "    <br>\n" +
+    "    <label>\n" +
+    "        <input type=\"checkbox\"\n" +
+    "               ng-change=\"editor.updatePrivacy()\"\n" +
+    "               ng-model=\"editor.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
+    "    </label>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-show=\"editor.loadingError\">\n" +
+    "    <span ng-bind=\"editor.loadingError\"></span>\n" +
+    "</div>\n"
+  );
+
+
   $templateCache.put('templates/place-detail.html',
     "<div ng-if=\"placeIdIsInvalid\">\n" +
     "  <div class=\"page-header\">\n" +
@@ -16404,6 +16753,36 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/event-link.directive.html',
     "<a ng-href=\"{{ event.url }}\" ng-bind=\"::event.name\"></a>\n"
+  );
+
+
+  $templateCache.put('templates/label-select.html',
+    "<ui-select multiple\n" +
+    "           tagging=\"select.createLabel\"\n" +
+    "           tagging-label=\"false\"\n" +
+    "           ng-model=\"select.labels\"\n" +
+    "           reset-search-input=\"true\"\n" +
+    "           tagging-tokens=\"ENTER|;\"\n" +
+    "           on-select=\"select.labelAdded({label: $item})\"\n" +
+    "           on-remove=\"select.labelRemoved({label: $item})\">\n" +
+    "    <ui-select-match placeholder=\"Voeg een label toe...\">{{$item.name}}</ui-select-match>\n" +
+    "    <ui-select-no-choice ng-show=\"$select.search.length >= select.minimumInputLength &&\">\n" +
+    "        <div class=\"udb-label-select-refreshing\" style=\"padding: 3px 20px\">\n" +
+    "            <i class=\"fa fa-circle-o-notch fa-spin\"></i> Suggesties laden\n" +
+    "        </div>\n" +
+    "    </ui-select-no-choice>\n" +
+    "    <ui-select-choices repeat=\"label in select.availableLabels track by label.name\"\n" +
+    "                       ng-show=\"$select.search.length >= select.minimumInputLength &&\"\n" +
+    "                       ui-disable-choice=\"select.refreshing\"\n" +
+    "                       refresh=\"select.suggestLabels($select.search)\"\n" +
+    "                       refresh-delay=\"0\"\n" +
+    "                       minimum-input-length=\"{{select.minimumInputLength}}\">\n" +
+    "        <div>\n" +
+    "            <span ng-bind-html=\"label.name | highlight: $select.search\"></span>\n" +
+    "            <span ng-if=\"!label.id\"> (nieuw label toevoegen)</span>\n" +
+    "        </div>\n" +
+    "    </ui-select-choices>\n" +
+    "</ui-select>"
   );
 
 
@@ -16766,7 +17145,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </div>\n" +
     "  </div>\n" +
     "\n" +
-    "  <div class=\"col-sm-12\" ng-show=\"eventCtrl.eventTranslation\">\n" +
+    "  <div class=\"col-sm-12\" ng-show=\"eventCtrl.translation\">\n" +
     "    <div class=\"udb-details row\">\n" +
     "\n" +
     "      <button type=\"button\" class=\"close\" ng-click=\"eventCtrl.stopTranslating()\">\n" +
@@ -16788,10 +17167,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"col-sm-6\">\n" +
     "            <div class=\"form-group\">\n" +
     "              <label>Titel</label>\n" +
-    "              <input type=\"text\" class=\"form-control\" ng-model=\"eventCtrl.eventTranslation.name\"/>\n" +
+    "              <input type=\"text\" class=\"form-control\" ng-model=\"eventCtrl.translation.name\"/>\n" +
     "            </div>\n" +
     "            <div ng-show=\"eventCtrl.hasPropertyChanged('name') && eventCtrl.hasActiveTranslation()\">\n" +
-    "              <button ng-disabled=\"!eventCtrl.eventTranslation.name\" class=\"btn btn-danger\" ng-click=\"eventCtrl.applyPropertyChanges('name')\">\n" +
+    "              <button ng-disabled=\"!eventCtrl.translation.name\" class=\"btn btn-danger\" ng-click=\"eventCtrl.applyPropertyChanges('name')\">\n" +
     "                Opslaan\n" +
     "              </button>\n" +
     "              <button class=\"btn btn-default\" ng-click=\"eventCtrl.undoPropertyChanges('name')\">Annuleren</button>\n" +
@@ -16808,10 +17187,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"col-sm-6\">\n" +
     "            <div class=\"form-group\">\n" +
     "              <label>Beschrijving</label>\n" +
-    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"eventCtrl.eventTranslation.description\"></textarea>\n" +
+    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"eventCtrl.translation.description\"></textarea>\n" +
     "            </div>\n" +
     "            <div ng-show=\"eventCtrl.hasPropertyChanged('description') && eventCtrl.hasActiveTranslation()\">\n" +
-    "              <button ng-disabled=\"!eventCtrl.eventTranslation.description\" class=\"btn btn-danger\" ng-click=\"eventCtrl.applyPropertyChanges('description')\">\n" +
+    "              <button ng-disabled=\"!eventCtrl.translation.description\" class=\"btn btn-danger\" ng-click=\"eventCtrl.applyPropertyChanges('description')\">\n" +
     "                Opslaan\n" +
     "              </button>\n" +
     "              <button class=\"btn btn-default\" ng-click=\"eventCtrl.undoPropertyChanges('description')\">Annuleren</button>\n" +
@@ -16824,7 +17203,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "\n" +
     "        <div ng-hide=\"eventCtrl.hasActiveTranslation()\">\n" +
-    "          <button ng-disabled=\"!eventCtrl.eventTranslation.name\" class=\"btn btn-danger\" ng-click=\"eventCtrl.translate()\">Opslaan</button>\n" +
+    "          <button ng-disabled=\"!eventCtrl.translation.name\" class=\"btn btn-danger\" ng-click=\"eventCtrl.translate()\">Opslaan</button>\n" +
     "          <button class=\"btn btn-default\" ng-click=\"eventCtrl.stopTranslating()\">Annuleren</button>\n" +
     "        </div>\n" +
     "      </div>\n" +
@@ -16850,14 +17229,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
     "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
-    "            <ui-select multiple tagging tagging-label=\"(label toevoegen)\" ng-model=\"event.labels\"\n" +
-    "                       reset-search-input=\"true\" tagging-tokens=\"ENTER|;\"\n" +
-    "                       on-select=\"eventCtrl.labelAdded($item)\" on-remove=\"eventCtrl.labelRemoved($item)\">\n" +
-    "              <ui-select-match placeholder=\"Voeg een label toe...\">{{$item}}</ui-select-match>\n" +
-    "              <ui-select-choices repeat=\"label in availableLabels\">\n" +
-    "                <div ng-bind-html=\"label | highlight: $select.search\"></div>\n" +
-    "              </ui-select-choices>\n" +
-    "            </ui-select>\n" +
+    "          <udb-label-select offer=\"event\"\n" +
+    "                            label-added=\"eventCtrl.labelAdded(label)\"\n" +
+    "                            label-removed=\"eventCtrl.labelRemoved(label)\">\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
@@ -16931,7 +17305,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </div>\n" +
     "  </div>\n" +
     "\n" +
-    "  <div class=\"col-sm-12\" ng-show=\"placeCtrl.placeTranslation\">\n" +
+    "  <div class=\"col-sm-12\" ng-show=\"placeCtrl.translation\">\n" +
     "    <div class=\"udb-details row\">\n" +
     "\n" +
     "      <button type=\"button\" class=\"close\" ng-click=\"placeCtrl.stopTranslating()\">\n" +
@@ -16953,10 +17327,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"col-sm-6\">\n" +
     "            <div class=\"form-group\">\n" +
     "              <label>Titel</label>\n" +
-    "              <input type=\"text\" class=\"form-control\" ng-model=\"placeCtrl.placeTranslation.name\"/>\n" +
+    "              <input type=\"text\" class=\"form-control\" ng-model=\"placeCtrl.translation.name\"/>\n" +
     "            </div>\n" +
     "            <div ng-show=\"placeCtrl.hasPropertyChanged('name') && placeCtrl.hasActiveTranslation()\">\n" +
-    "              <button ng-disabled=\"!placeCtrl.placeTranslation.name\" class=\"btn btn-danger\" ng-click=\"placeCtrl.applyPropertyChanges('name')\">\n" +
+    "              <button ng-disabled=\"!placeCtrl.translation.name\" class=\"btn btn-danger\" ng-click=\"placeCtrl.applyPropertyChanges('name')\">\n" +
     "                Opslaan\n" +
     "              </button>\n" +
     "              <button class=\"btn btn-default\" ng-click=\"placeCtrl.undoPropertyChanges('name')\">Annuleren</button>\n" +
@@ -16973,10 +17347,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"col-sm-6\">\n" +
     "            <div class=\"form-group\">\n" +
     "              <label>Beschrijving</label>\n" +
-    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"placeCtrl.placeTranslation.description\"></textarea>\n" +
+    "              <textarea class=\"form-control resize-vertical\" rows=\"3\" ng-model=\"placeCtrl.translation.description\"></textarea>\n" +
     "            </div>\n" +
     "            <div ng-show=\"placeCtrl.hasPropertyChanged('description') && placeCtrl.hasActiveTranslation()\">\n" +
-    "              <button ng-disabled=\"!placeCtrl.placeTranslation.description\" class=\"btn btn-danger\" ng-click=\"placeCtrl.applyPropertyChanges('description')\">\n" +
+    "              <button ng-disabled=\"!placeCtrl.translation.description\" class=\"btn btn-danger\" ng-click=\"placeCtrl.applyPropertyChanges('description')\">\n" +
     "                Opslaan\n" +
     "              </button>\n" +
     "              <button class=\"btn btn-default\" ng-click=\"placeCtrl.undoPropertyChanges('description')\">Annuleren</button>\n" +
@@ -16989,7 +17363,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "\n" +
     "        <div ng-hide=\"placeCtrl.hasActiveTranslation()\">\n" +
-    "          <button ng-disabled=\"!placeCtrl.placeTranslation.name\" class=\"btn btn-danger\" ng-click=\"placeCtrl.translate()\">Opslaan</button>\n" +
+    "          <button ng-disabled=\"!placeCtrl.translation.name\" class=\"btn btn-danger\" ng-click=\"placeCtrl.translate()\">Opslaan</button>\n" +
     "          <button class=\"btn btn-default\" ng-click=\"placeCtrl.stopTranslating()\">Annuleren</button>\n" +
     "        </div>\n" +
     "      </div>\n" +
@@ -17014,15 +17388,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "\n" +
     "        <div ng-if=\"resultViewer.eventProperties.labels.visible && event.labels\" class=\"udb-labels\">\n" +
-    "          <span ng-hide=\"event.labels.length\">Dit evenement is nog niet gelabeld.</span>\n" +
-    "            <ui-select multiple tagging tagging-label=\"(label toevoegen)\" ng-model=\"event.labels\"\n" +
-    "                       reset-search-input=\"true\" tagging-tokens=\"ENTER|;\"\n" +
-    "                       on-select=\"placeCtrl.labelAdded($item)\" on-remove=\"placeCtrl.labelRemoved($item)\">\n" +
-    "              <ui-select-match placeholder=\"Voeg een label toe...\">{{$item}}</ui-select-match>\n" +
-    "              <ui-select-choices repeat=\"label in availableLabels\">\n" +
-    "                <div ng-bind-html=\"label | highlight: $select.search\"></div>\n" +
-    "              </ui-select-choices>\n" +
-    "            </ui-select>\n" +
+    "          <span ng-hide=\"event.labels.length\">Deze plaats is nog niet gelabeld.</span>\n" +
+    "          <udb-label-select offer=\"event\"\n" +
+    "                            label-added=\"placeCtrl.labelAdded(label)\"\n" +
+    "                            label-removed=\"placeCtrl.labelRemoved(label)\">\n" +
+    "          </udb-label-select>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +

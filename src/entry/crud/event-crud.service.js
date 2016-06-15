@@ -304,8 +304,8 @@ function EventCrud(
     jobLogger.addJob(job);
 
     // unvalidate cache on success
-    job.task.promise.then(function (itemId) {
-      udbApi.removeItemFromCache(itemId);
+    job.task.promise.then(function (offerLocation) {
+      udbApi.removeItemFromCache(offerLocation.toString());
     }, function() {});
   }
 

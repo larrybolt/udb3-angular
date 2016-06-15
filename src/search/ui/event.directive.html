@@ -76,7 +76,7 @@
     </div>
   </div>
 
-  <div class="col-sm-12" ng-show="eventCtrl.eventTranslation">
+  <div class="col-sm-12" ng-show="eventCtrl.translation">
     <div class="udb-details row">
 
       <button type="button" class="close" ng-click="eventCtrl.stopTranslating()">
@@ -98,10 +98,10 @@
           <div class="col-sm-6">
             <div class="form-group">
               <label>Titel</label>
-              <input type="text" class="form-control" ng-model="eventCtrl.eventTranslation.name"/>
+              <input type="text" class="form-control" ng-model="eventCtrl.translation.name"/>
             </div>
             <div ng-show="eventCtrl.hasPropertyChanged('name') && eventCtrl.hasActiveTranslation()">
-              <button ng-disabled="!eventCtrl.eventTranslation.name" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('name')">
+              <button ng-disabled="!eventCtrl.translation.name" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('name')">
                 Opslaan
               </button>
               <button class="btn btn-default" ng-click="eventCtrl.undoPropertyChanges('name')">Annuleren</button>
@@ -118,10 +118,10 @@
           <div class="col-sm-6">
             <div class="form-group">
               <label>Beschrijving</label>
-              <textarea class="form-control resize-vertical" rows="3" ng-model="eventCtrl.eventTranslation.description"></textarea>
+              <textarea class="form-control resize-vertical" rows="3" ng-model="eventCtrl.translation.description"></textarea>
             </div>
             <div ng-show="eventCtrl.hasPropertyChanged('description') && eventCtrl.hasActiveTranslation()">
-              <button ng-disabled="!eventCtrl.eventTranslation.description" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('description')">
+              <button ng-disabled="!eventCtrl.translation.description" class="btn btn-danger" ng-click="eventCtrl.applyPropertyChanges('description')">
                 Opslaan
               </button>
               <button class="btn btn-default" ng-click="eventCtrl.undoPropertyChanges('description')">Annuleren</button>
@@ -134,7 +134,7 @@
         </div>
 
         <div ng-hide="eventCtrl.hasActiveTranslation()">
-          <button ng-disabled="!eventCtrl.eventTranslation.name" class="btn btn-danger" ng-click="eventCtrl.translate()">Opslaan</button>
+          <button ng-disabled="!eventCtrl.translation.name" class="btn btn-danger" ng-click="eventCtrl.translate()">Opslaan</button>
           <button class="btn btn-default" ng-click="eventCtrl.stopTranslating()">Annuleren</button>
         </div>
       </div>
@@ -160,14 +160,9 @@
 
         <div ng-if="resultViewer.eventProperties.labels.visible && event.labels" class="udb-labels">
           <span ng-hide="event.labels.length">Dit evenement is nog niet gelabeld.</span>
-            <ui-select multiple tagging tagging-label="(label toevoegen)" ng-model="event.labels"
-                       reset-search-input="true" tagging-tokens="ENTER|;"
-                       on-select="eventCtrl.labelAdded($item)" on-remove="eventCtrl.labelRemoved($item)">
-              <ui-select-match placeholder="Voeg een label toe...">{{$item}}</ui-select-match>
-              <ui-select-choices repeat="label in availableLabels">
-                <div ng-bind-html="label | highlight: $select.search"></div>
-              </ui-select-choices>
-            </ui-select>
+          <udb-label-select offer="event"
+                            label-added="eventCtrl.labelAdded(label)"
+                            label-removed="eventCtrl.labelRemoved(label)">
         </div>
       </div>
     </div>

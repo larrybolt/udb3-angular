@@ -2130,7 +2130,6 @@ body {
   position: relative;
   padding: 14px 0;
   border-bottom: 2px solid #cccccc;
-  overflow: hidden;
   display: block;
   background-color: #ffffff;
 }
@@ -2487,6 +2486,9 @@ body {
   text-transform: uppercase;
   font-weight: bold;
   color: #333333;
+}
+.offer-form .btn {
+  padding: 6px 10px;
 }
 .offer-form .btn-chosen {
   color: #333333;
