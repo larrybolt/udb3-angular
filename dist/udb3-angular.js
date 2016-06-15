@@ -17033,6 +17033,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
 
   $templateCache.put('templates/search-bar.directive.html',
+    "<h1>Zoeken</h1>\n" +
     "<form class=\"navbar-form navbar-left udb-header-search\" role=\"search\"\n" +
     "      ng-class=\"{'has-errors': sb.hasErrors, 'is-editing': sb.isEditing}\">\n" +
     "  <div class=\"form-group has-warning has-feedback\">\n" +
@@ -17402,6 +17403,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
 
   $templateCache.put('templates/search.html',
+    "<udb-search-bar></udb-search-bar>\n" +
     "<div class=\"row rv-result-viewer\">\n" +
     "  <div class=\"col-sm-12 rv-search-results\" ng-class=\"{loading: resultViewer.loading}\">\n" +
     "\n" +
