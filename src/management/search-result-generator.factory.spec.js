@@ -32,7 +32,6 @@ describe('Factory: Search Result Generator', function() {
   }));
 
   beforeEach(inject(function(_$q_, _SearchResultGenerator_) {
-    console.log('hello');
     $q = _$q_;
     itemsPerPage = 10;
     SearchResultGenerator = _SearchResultGenerator_;
@@ -54,24 +53,28 @@ describe('Factory: Search Result Generator', function() {
     scheduler.scheduleAbsolute(null, 300, function() {
       expect(SearchService.find).toHaveBeenCalledWith('reactive extension', 10, 0);
       scheduler.stop();
+      sub.dispose();
+
       done();
     });
 
-    generator.getSearchResult$().subscribe();
+    var sub = generator.getSearchResult$().subscribe();
     scheduler.start();
   });
 
-  xit('should look for the items at the right offset when the page for the active query changes', function(done) {
-    var controller = getLabelListController();
-    controller.queryChanged('beep');
-    controller.pageChanged(2);
+  it('should look for the items at the right offset when the page for the active query changes', function(done) {
+    var query$ = Rx.Observable.return('beep');
+    var page$ = Rx.Observable.return(2).startWith(1);
+    var generator = new SearchResultGenerator(query$, page$, itemsPerPage);
 
     scheduler.scheduleAbsolute(null, 300, function() {
       expect(SearchService.find).toHaveBeenCalledWith('beep', 10, 10);
       scheduler.stop();
+      sub.dispose();
       done();
     });
 
+    var sub = generator.getSearchResult$().subscribe();
     scheduler.start();
   });
 
