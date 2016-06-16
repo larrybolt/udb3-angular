@@ -13,6 +13,8 @@ describe('Controller: Place Detail', function() {
       $q,
       $uibModal,
       eventCrud,
+      offerLabeller,
+      $window,
       examplePlaceEventJson = {
         '@id': "http://culudb-silex.dev:8080/place/03458606-eb3f-462d-97f3-548710286702",
         '@context': "/api/1.0/place.jsonld",
@@ -70,9 +72,11 @@ describe('Controller: Place Detail', function() {
     variationRepository = $injector.get('variationRepository');
     offerEditor = $injector.get('offerEditor');
     UdbPlace = $injector.get('UdbPlace');
+    offerLabeller = jasmine.createSpyObj('offerLabeller', ['recentLabels', 'label', 'unlabel']);
     $q = _$q_;
     $uibModal = jasmine.createSpyObj('$uibModal', ['open']);
     eventCrud = jasmine.createSpyObj('eventCrud', ['findEventsAtPlace']);
+    $window = $injector.get('$window');
 
     deferredEvent = $q.defer(); deferredVariation = $q.defer();
     deferredPermission = $q.defer();
@@ -97,7 +101,9 @@ describe('Controller: Place Detail', function() {
         variationRepository: variationRepository,
         offerEditor: offerEditor,
         $uibModal: $uibModal,
-        eventCrud: eventCrud
+        eventCrud: eventCrud,
+        $window: $window,
+        offerLabeller: offerLabeller
       }
     );
   }));
@@ -203,5 +209,38 @@ describe('Controller: Place Detail', function() {
     $scope.$digest();
 
     expect($location.path).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('should update the place when adding a label', function () {
+    var label = {name:'some other label'};
+    deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
+    $scope.$digest();
+
+    $scope.labelAdded(label);
+    expect(offerLabeller.label).toHaveBeenCalledWith(jasmine.any(Object), 'some other label');
+  });
+
+  it('should update the place when removing a label', function () {
+    var label = {name:'some label'};
+    deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
+    $scope.$digest();
+
+    $scope.labelRemoved(label);
+    expect(offerLabeller.unlabel).toHaveBeenCalledWith(jasmine.any(Object), 'some label');
+  });
+
+  it('should prevent any duplicate labels and warn the user when trying to add one', function () {
+    var label = {name:'Some Label'};
+    deferredEvent.resolve(new UdbPlace(examplePlaceEventJson));
+    $scope.$digest();
+
+    spyOn($window, 'alert');
+
+    $scope.labelAdded(label);
+
+    var expectedLabels = ['some label'];
+    expect($scope.place.labels).toEqual(expectedLabels);
+    expect($window.alert).toHaveBeenCalledWith('Het label "Some Label" is reeds toegevoegd als "some label".');
+    expect(offerLabeller.label).not.toHaveBeenCalled();
   });
 });
