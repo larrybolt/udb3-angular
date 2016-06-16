@@ -11,8 +11,6 @@ angular
     'ngSanitize',
     'ui.bootstrap',
     'udb.core',
-    'udb.manage.users',
-    'udb.manage.roles',
     'udb.manage.labels'
   ])
   .component('manageComponent', {
@@ -20,17 +18,6 @@ angular
     controllerAs: 'mc',
     template: '<ng-outlet></ng-outlet>',
     $routeConfig: [
-      {
-        path: '/users/list',
-        name: 'UsersList',
-        component: 'usersComponent',
-        useAsDefault: true
-      },
-      {
-        path: '/roles/list',
-        name: 'RolesList',
-        component: 'rolesComponent'
-      },
       {
         path: '/labels/overview',
         name: 'LabelsList',

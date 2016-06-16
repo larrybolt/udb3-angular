@@ -290,8 +290,6 @@ module.exports = function (grunt) {
           'src/export/udb.export.module.js',
           'src/media/udb.media.module.js',
           'src/manage/udb.manage.module.js',
-          'src/manage/users/udb.users.module.js',
-          'src/manage/roles/udb.roles.module.js',
           'src/manage/labels/udb.labels.module.js',
           'src/management/udb.management.module.js',
           'src/search/parsers/udb-query-parser.service.js'
