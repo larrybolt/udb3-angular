@@ -12,15 +12,17 @@
     </div>
 </div>
 
-<div class="row" ng-cloak ng-show="!llc.loading">
+<div class="row" ng-cloak>
     <div class="col-md-12">
-        <p ng-show="llc.query.length <= 2">
+        <p ng-show="llc.query.length < llc.minQueryLength">
             Schrijf een zoekopdracht in het veld hierboven om labels te tonen.
         </p>
-        <p ng-show="llc.query.length > 2 && llc.searchResult.totalItems === 0">
+        <p ng-show="llc.query.length >= llc.minQueryLength && llc.searchResult.totalItems === 0">
             Geen labels gevonden.
         </p>
-        <div class="manage-labels-search-results" ng-show="llc.searchResult.totalItems > 0">
+        <div class="query-search-result"
+             ng-class="{'loading-search-result': llc.loading}"
+             ng-show="llc.searchResult.totalItems > 0 && llc.query.length >= llc.minQueryLength">
             <div class="table-responsive" >
                 <table class="table table-hover table-striped">
                     <thead>

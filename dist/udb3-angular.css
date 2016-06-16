@@ -3132,3 +3132,10 @@ img.offer-image-thumbnail {
 .editable-wrap .editable-buttons button + button {
   margin-left: 10px;
 }
+.loading-search-result {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.query-search-result .table {
+  margin-bottom: 0px;
+}

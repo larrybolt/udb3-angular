@@ -10977,7 +10977,8 @@ angular
 /* @ngInject */
 function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
   var llc = this;
-  var labelsPerPage = 10;
+  var labelsPerPage = 1;
+  var minQueryLength = 3;
   var query$ = rx.createObservableFunction(llc, 'queryChanged');
   var filteredQuery$ = query$.filter(ignoreShortQueries);
   var page$ = rx.createObservableFunction(llc, 'pageChanged');
@@ -10989,8 +10990,7 @@ function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
    * @return {boolean}
    */
   function ignoreShortQueries(query) {
-    // Only if the query is longer than 2 characters
-    return query.length > 2;
+    return query.length >= minQueryLength;
   }
 
   /**
@@ -11004,6 +11004,7 @@ function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
   llc.loading = false;
   llc.query = '';
   llc.page = 0;
+  llc.minQueryLength = minQueryLength;
 
   query$
     .safeApply($scope, function (query) {
@@ -16855,15 +16856,17 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </div>\n" +
     "</div>\n" +
     "\n" +
-    "<div class=\"row\" ng-cloak ng-show=\"!llc.loading\">\n" +
+    "<div class=\"row\" ng-cloak>\n" +
     "    <div class=\"col-md-12\">\n" +
-    "        <p ng-show=\"llc.query.length <= 2\">\n" +
+    "        <p ng-show=\"llc.query.length < llc.minQueryLength\">\n" +
     "            Schrijf een zoekopdracht in het veld hierboven om labels te tonen.\n" +
     "        </p>\n" +
-    "        <p ng-show=\"llc.query.length > 2 && llc.searchResult.totalItems === 0\">\n" +
+    "        <p ng-show=\"llc.query.length >= llc.minQueryLength && llc.searchResult.totalItems === 0\">\n" +
     "            Geen labels gevonden.\n" +
     "        </p>\n" +
-    "        <div class=\"manage-labels-search-results\" ng-show=\"llc.searchResult.totalItems > 0\">\n" +
+    "        <div class=\"query-search-result\"\n" +
+    "             ng-class=\"{'loading-search-result': llc.loading}\"\n" +
+    "             ng-show=\"llc.searchResult.totalItems > 0 && llc.query.length >= llc.minQueryLength\">\n" +
     "            <div class=\"table-responsive\" >\n" +
     "                <table class=\"table table-hover table-striped\">\n" +
     "                    <thead>\n" +

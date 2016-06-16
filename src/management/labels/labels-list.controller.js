@@ -13,7 +13,8 @@ angular
 /* @ngInject */
 function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
   var llc = this;
-  var labelsPerPage = 10;
+  var labelsPerPage = 1;
+  var minQueryLength = 3;
   var query$ = rx.createObservableFunction(llc, 'queryChanged');
   var filteredQuery$ = query$.filter(ignoreShortQueries);
   var page$ = rx.createObservableFunction(llc, 'pageChanged');
@@ -25,8 +26,7 @@ function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
    * @return {boolean}
    */
   function ignoreShortQueries(query) {
-    // Only if the query is longer than 2 characters
-    return query.length > 2;
+    return query.length >= minQueryLength;
   }
 
   /**
@@ -40,6 +40,7 @@ function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
   llc.loading = false;
   llc.query = '';
   llc.page = 0;
+  llc.minQueryLength = minQueryLength;
 
   query$
     .safeApply($scope, function (query) {
