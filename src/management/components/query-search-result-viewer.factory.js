@@ -2,13 +2,13 @@
 
 /**
  * @ngdoc service
- * @name udb.manage.UserSearchResultViewer
+ * @name udb.management.UserSearchResultViewer
  * @description
  * # QuerySearchResultViewer
  * User search result viewer factory
  */
 angular
-  .module('udb.manage')
+  .module('udb.management')
   .factory('QuerySearchResultViewer', QuerySearchResultViewerFactory);
 
 function QuerySearchResultViewerFactory() {

@@ -99,11 +99,11 @@
                 <span ng-switch-when="unknown">Geen prijsinformatie</span>
               </td>
             </tr>
-            <tr ng-class="{muted: !event.typicalAgeRange}">
+            <tr>
               <td><strong>Geschikt voor</strong></td>
               <td>
                 <span ng-if="event.typicalAgeRange">{{event.typicalAgeRange}}</span>
-                <span ng-if="!event.typicalAgeRange">Geen leeftijdsinformatie</span>
+                <span ng-if="!event.typicalAgeRange">Alle leeftijden</span>
               </td>
             </tr>
             <tr ng-class="{muted: !event.image}">

@@ -2,20 +2,16 @@
 
 /**
  * @ngdoc module
- * @name udb.manage
+ * @name udb.management
  * @description
- * The udb manage module
+ * # Management Module
  */
 angular
-  .module('udb.manage', [
-    'ngSanitize',
-    'ui.bootstrap',
+  .module('udb.management', [
     'udb.core',
-    'udb.manage.labels'
+    'udb.management.labels'
   ])
-  .component('manageComponent', {
-    controller: 'ManageController',
-    controllerAs: 'mc',
+  .component('managementComponent', {
     template: '<ng-outlet></ng-outlet>',
     $routeConfig: [
       {
@@ -28,5 +24,11 @@ angular
         name: 'LabelEditor',
         component: 'udbLabelEditor'
       }
-    ]
+    ],
+    $canActivate: isAuthorized
   });
+
+function isAuthorized(authorizationService) {
+  return authorizationService.isLoggedIn();
+}
+isAuthorized.$inject = ['authorizationService'];

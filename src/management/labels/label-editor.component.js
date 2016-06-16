@@ -1,7 +1,7 @@
 'use strict';
 
 angular
-  .module('udb.manage.labels')
+  .module('udb.management.labels')
   .component('udbLabelEditor', {
     templateUrl: 'templates/label-editor.html',
     controller: LabelEditorComponent,
@@ -9,7 +9,7 @@ angular
   });
 
 /** @ngInject */
-function LabelEditorComponent(LabelService, $uibModal) {
+function LabelEditorComponent(LabelManager, $uibModal) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
@@ -23,7 +23,7 @@ function LabelEditorComponent(LabelService, $uibModal) {
     }
 
     editor.renaming = true;
-    LabelService
+    LabelManager
       .copy(editor.label)
       .then(showRenamedLabel, showProblem)
       .finally(function () {
@@ -66,7 +66,7 @@ function LabelEditorComponent(LabelService, $uibModal) {
   function loadLabel(id) {
     editor.loadingError = false;
     editor.label = false;
-    LabelService
+    LabelManager
       .get(id)
       .then(showLabel, showLoadingError);
   }
@@ -77,13 +77,13 @@ function LabelEditorComponent(LabelService, $uibModal) {
 
   function updateVisibility () {
     var isVisible = editor.label.isVisible;
-    var jobPromise = isVisible ? LabelService.makeVisible(editor.label) : LabelService.makeInvisible(editor.label);
+    var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
     jobPromise.catch(showProblem);
   }
 
   function updatePrivacy () {
     var isPrivate = editor.label.isPrivate;
-    var jobPromise = isPrivate ? LabelService.makePrivate(editor.label) : LabelService.makePublic(editor.label);
+    var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
     jobPromise.catch(showProblem);
   }
 }

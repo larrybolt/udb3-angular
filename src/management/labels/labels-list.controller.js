@@ -7,7 +7,7 @@
  * # LabelsListController
  */
 angular
-  .module('udb.manage.labels')
+  .module('udb.management.labels')
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */

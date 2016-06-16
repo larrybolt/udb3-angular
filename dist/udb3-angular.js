@@ -22,7 +22,7 @@ angular
     'udb.dashboard',
     'udb.saved-searches',
     'udb.media',
-    'udb.manage',
+    'udb.management',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
@@ -193,20 +193,26 @@ angular
 
 /**
  * @ngdoc module
- * @name udb.manage
+ * @name udb.management.labels
  * @description
- * The udb manage module
+ * # Label Management Module
  */
 angular
-  .module('udb.manage', [
-    'ngSanitize',
-    'ui.bootstrap',
+  .module('udb.management.labels', [
+    'rx'
+  ]);
+/**
+ * @ngdoc module
+ * @name udb.management
+ * @description
+ * # Management Module
+ */
+angular
+  .module('udb.management', [
     'udb.core',
-    'udb.manage.labels'
+    'udb.management.labels'
   ])
-  .component('manageComponent', {
-    controller: 'ManageController',
-    controllerAs: 'mc',
+  .component('managementComponent', {
     template: '<ng-outlet></ng-outlet>',
     $routeConfig: [
       {
@@ -219,25 +225,7 @@ angular
         name: 'LabelEditor',
         component: 'udbLabelEditor'
       }
-    ]
-  });
-/**
- * @ngdoc module
- * @name udb.manage.labels
- * @description
- * The udb manage labels module
- */
-angular
-  .module('udb.manage.labels', [
-    'ngSanitize',
-    'ui.bootstrap',
-    'udb.manage',
-    'rx'
-  ])
-  .component('labelsComponent', {
-    controller: 'LabelsListController',
-    controllerAs: 'llc',
-    templateUrl: 'templates/labels-list.html',
+    ],
     $canActivate: isAuthorized
   });
 
@@ -2932,6 +2920,10 @@ function UdbApi(
     );
   };
 
+  var offerPropertyPaths = {
+    typicalAgeRange: 'typical-age-range'
+  };
+
   /**
    * Update the property for a given id.
    *
@@ -2945,9 +2937,10 @@ function UdbApi(
   this.updateProperty = function(offerLocation, property, value) {
     var updateData = {};
     updateData[property] = value;
+    var path = offerPropertyPaths[property] ? offerPropertyPaths[property] : property;
 
     return $http.post(
-      offerLocation +  '/' + property,
+      offerLocation +  '/' + path,
       updateData,
       defaultApiConfig
     );
@@ -3087,7 +3080,7 @@ function UdbApi(
   this.deleteTypicalAgeRange = function(offerLocation) {
 
     return $http.delete(
-      offerLocation + '/typicalAgeRange',
+      offerLocation + '/typical-age-range',
       defaultApiConfig
     );
   };
@@ -4756,7 +4749,7 @@ function EventCrudJobFactory(BaseJob, $q, JobStates) {
     BaseJob.prototype.finish.call(this);
 
     if (this.state !== JobStates.FAILED) {
-      this.task.resolve(this.item.id);
+      this.task.resolve(this.item.apiUrl);
     }
   };
 
@@ -5130,8 +5123,8 @@ function EventCrud(
     jobLogger.addJob(job);
 
     // unvalidate cache on success
-    job.task.promise.then(function (itemId) {
-      udbApi.removeItemFromCache(itemId);
+    job.task.promise.then(function (offerLocation) {
+      udbApi.removeItemFromCache(offerLocation.toString());
     }, function() {});
   }
 
@@ -5242,7 +5235,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
       variationCreationJob.task.promise.then(function (jobInfo) {
         variation.id = jobInfo['offer_variation_id']; // jshint ignore:line
-        variationRepository.save(offer.id, variation);
+        variationRepository.save(offer['@id'], variation);
         deferredUpdate.resolve();
       }, rejectUpdate);
     };
@@ -5281,7 +5274,7 @@ function OfferEditor(jobLogger, udbApi, VariationCreationJob, BaseJob, $q, varia
 
     deletePromise.success(function (jobData) {
       jobLogger.addJob(new BaseJob(jobData.commandId));
-      variationRepository.remove(offer.id);
+      variationRepository.remove(offer['@id']);
     });
 
     return deletePromise;
@@ -9587,9 +9580,7 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
     $scope.minAge = null;
     $scope.ageCssClass = 'state-complete';
 
-    if (ageRange === AgeRangeEnum.ALL) {
-      $scope.saveAgeRange();
-    }
+    $scope.saveAgeRange();
   }
 
   /**
@@ -9636,20 +9627,19 @@ function EventFormStep5Controller($scope, EventFormData, eventCrud, udbOrganizer
   function saveAgeRange() {
 
     $scope.invalidAgeRange = false;
-    //$scope.minAge = parseInt($scope.minAge); // should already be a number!
-    if ($scope.ageRange !== AgeRangeEnum.ALL) {
 
-      if (isNaN($scope.minAge)) {
-        $scope.invalidAgeRange = true;
-      }
-      else {
-        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
-        EventFormData.typicalAgeRange = formatTypicalAgeRange($scope.minAge, $scope.ageRange.max);
-      }
-
+    if ($scope.ageRange === AgeRangeEnum.ALL) {
+      EventFormData.typicalAgeRange = null;
     }
     else {
-      EventFormData.typicalAgeRange = null;
+      if ($scope.minAge) {
+        $scope.invalidAgeRange = !isMinimumAgeInRange($scope.minAge, $scope.ageRange);
+      }
+
+      EventFormData.typicalAgeRange = formatTypicalAgeRange(
+        $scope.minAge || $scope.ageRange.min,
+        $scope.ageRange.max
+      );
     }
 
     // Save to db if valid age entered.
@@ -10600,7 +10590,7 @@ function udbExportModalButtons() {
   };
 }
 
-// Source: src/manage/components/query-search-bar.component.js
+// Source: src/management/components/query-search-bar.component.js
 /**
  * @ngdoc component
  * @name udb.search.directive:udbSearchBar
@@ -10608,7 +10598,7 @@ function udbExportModalButtons() {
  * # udbQuerySearchBar
  */
 angular
-  .module('udb.manage')
+  .module('udb.management')
   .component('udbQuerySearchBar', {
     templateUrl: 'templates/query-search-bar.html',
     controller: QuerySearchBarComponent,
@@ -10639,16 +10629,16 @@ function QuerySearchBarComponent() {
   }
 }
 
-// Source: src/manage/components/query-search-result-viewer.factory.js
+// Source: src/management/components/query-search-result-viewer.factory.js
 /**
  * @ngdoc service
- * @name udb.manage.UserSearchResultViewer
+ * @name udb.management.UserSearchResultViewer
  * @description
  * # QuerySearchResultViewer
  * User search result viewer factory
  */
 angular
-  .module('udb.manage')
+  .module('udb.management')
   .factory('QuerySearchResultViewer', QuerySearchResultViewerFactory);
 
 function QuerySearchResultViewerFactory() {
@@ -10687,9 +10677,9 @@ function QuerySearchResultViewerFactory() {
   return (QuerySearchResultViewer);
 }
 
-// Source: src/manage/labels/label-editor.component.js
+// Source: src/management/labels/label-editor.component.js
 angular
-  .module('udb.manage.labels')
+  .module('udb.management.labels')
   .component('udbLabelEditor', {
     templateUrl: 'templates/label-editor.html',
     controller: LabelEditorComponent,
@@ -10697,7 +10687,7 @@ angular
   });
 
 /** @ngInject */
-function LabelEditorComponent(LabelService, $uibModal) {
+function LabelEditorComponent(LabelManager, $uibModal) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
@@ -10711,7 +10701,7 @@ function LabelEditorComponent(LabelService, $uibModal) {
     }
 
     editor.renaming = true;
-    LabelService
+    LabelManager
       .copy(editor.label)
       .then(showRenamedLabel, showProblem)
       .finally(function () {
@@ -10754,7 +10744,7 @@ function LabelEditorComponent(LabelService, $uibModal) {
   function loadLabel(id) {
     editor.loadingError = false;
     editor.label = false;
-    LabelService
+    LabelManager
       .get(id)
       .then(showLabel, showLoadingError);
   }
@@ -10765,132 +10755,40 @@ function LabelEditorComponent(LabelService, $uibModal) {
 
   function updateVisibility () {
     var isVisible = editor.label.isVisible;
-    var jobPromise = isVisible ? LabelService.makeVisible(editor.label) : LabelService.makeInvisible(editor.label);
+    var jobPromise = isVisible ? LabelManager.makeVisible(editor.label) : LabelManager.makeInvisible(editor.label);
     jobPromise.catch(showProblem);
   }
 
   function updatePrivacy () {
     var isPrivate = editor.label.isPrivate;
-    var jobPromise = isPrivate ? LabelService.makePrivate(editor.label) : LabelService.makePublic(editor.label);
+    var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
     jobPromise.catch(showProblem);
   }
 }
-LabelEditorComponent.$inject = ["LabelService", "$uibModal"];
+LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
 
-// Source: src/manage/labels/label-search-result-generator.factory.js
+// Source: src/management/labels/label-manager.service.js
+/**
+ * @typedef {Object} Label
+ * @property {string}   id
+ * @property {string}   name
+ * @property {boolean}  isVisible
+ * @property {boolean}  isPrivate
+ */
+
 /**
  * @ngdoc service
- * @name udb.manage.LabelSearchResultViewer
+ * @name udb.management.labels
  * @description
- * # LabelSearchResultViewer
- * Label search result viewer factory
+ * # Label Manager
+ * This service allows you to lookup labels and perform actions on them.
  */
 angular
-  .module('udb.manage')
-  .factory('LabelSearchResultGenerator', LabelSearchResultGenerator);
+  .module('udb.management.labels')
+  .service('LabelManager', LabelManager);
 
 /* @ngInject */
-function LabelSearchResultGenerator(LabelService, SearchResultGenerator) {
-  /**
-   * @class LabelSearchResultViewer
-   * @constructor
-   * @param {Observable} query$
-   * @param {Observable} page$
-   * @param {Number} itemsPerPage
-   */
-  var LabelSearchResultGenerator = function (query$, page$, itemsPerPage) {
-    SearchResultGenerator.call(this, query$, page$, itemsPerPage);
-  };
-
-  LabelSearchResultGenerator.prototype = Object.create(SearchResultGenerator.prototype);
-  LabelSearchResultGenerator.prototype.constructor = LabelSearchResultGenerator;
-
-  /**
-   * @param {{query: *, offset: *}} searchParameters
-   */
-  LabelSearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
-  };
-
-  return (LabelSearchResultGenerator);
-}
-LabelSearchResultGenerator.$inject = ["LabelService", "SearchResultGenerator"];
-
-// Source: src/manage/labels/labels-list.controller.js
-/**
- * @ngdoc function
- * @name udbApp.controller:LabelsListController
- * @description
- * # LabelsListController
- */
-angular
-  .module('udb.manage.labels')
-  .controller('LabelsListController', LabelsListController);
-
-/* @ngInject */
-function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
-  var llc = this;
-  var labelsPerPage = 10;
-  var query$ = rx.createObservableFunction(llc, 'queryChanged');
-  var filteredQuery$ = query$.filter(ignoreShortQueries);
-  var page$ = rx.createObservableFunction(llc, 'pageChanged');
-  var searchResultGenerator = new LabelSearchResultGenerator(filteredQuery$, page$, labelsPerPage);
-  var searchResult$ = searchResultGenerator.getSearchResult$();
-
-  /**
-   * @param {string} query
-   * @return {boolean}
-   */
-  function ignoreShortQueries(query) {
-    // Only if the query is longer than 2 characters
-    return query.length > 2;
-  }
-
-  /**
-   * @param {PagedCollection} searchResult
-   */
-  function showSearchResult(searchResult) {
-    llc.searchResult = searchResult;
-    llc.loading = false;
-  }
-
-  llc.loading = false;
-  llc.query = '';
-  llc.page = 0;
-
-  query$
-    .safeApply($scope, function (query) {
-      llc.query = query;
-    })
-    .subscribe();
-
-  searchResult$
-    .safeApply($scope, showSearchResult)
-    .subscribe();
-
-  filteredQuery$
-    .merge(page$)
-    .safeApply($scope, function () {
-      llc.loading = true;
-    })
-    .subscribe();
-}
-LabelsListController.$inject = ["LabelSearchResultGenerator", "rx", "$scope"];
-
-// Source: src/manage/labels/labels.service.js
-/**
- * @ngdoc service
- * @name udb.manage.labels
- * @description
- * # user
- * Service in the udb.manage.labels.
- */
-angular
-  .module('udb.manage.labels')
-  .service('LabelService', LabelService);
-
-/* @ngInject */
-function LabelService(udbApi, jobLogger, BaseJob, $q) {
+function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   var service = this;
 
   /**
@@ -11009,38 +10907,137 @@ function LabelService(udbApi, jobLogger, BaseJob, $q) {
     return $q.resolve(job);
   }
 }
-LabelService.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
+LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
 
-// Source: src/manage/manage.controller.js
-/**
- * @ngdoc function
- * @name udbApp.controller:UserListController
- * @description
- * # UserListController
- */
-angular
-  .module('udb.manage')
-  .controller('ManageController', ManageController);
-
-/* @ngInject */
-function ManageController() {
-  var mc = this;
-}
-
-// Source: src/manage/search-result-generator.factory.js
+// Source: src/management/labels/label-search-result-generator.factory.js
 /**
  * @ngdoc service
- * @name udb.manage.SearchResultGenerator
+ * @name udb.management.LabelSearchResultViewer
+ * @description
+ * # Label Search Result Generator
+ * Create search result generator that takes a query and page input and provides a stream of paged search results.
+ */
+angular
+  .module('udb.management.labels')
+  .factory('LabelSearchResultGenerator', LabelSearchResultGenerator);
+
+/* @ngInject */
+function LabelSearchResultGenerator(LabelManager, SearchResultGenerator) {
+  /**
+   * @class LabelSearchResultViewer
+   * @constructor
+   * @param {Observable} query$
+   * @param {Observable} page$
+   * @param {Number} itemsPerPage
+   */
+  var LabelSearchResultGenerator = function (query$, page$, itemsPerPage) {
+    SearchResultGenerator.call(this, query$, page$, itemsPerPage);
+  };
+
+  LabelSearchResultGenerator.prototype = Object.create(SearchResultGenerator.prototype);
+  LabelSearchResultGenerator.prototype.constructor = LabelSearchResultGenerator;
+
+  /**
+   * @param {{query: *, offset: *}} searchParameters
+   */
+  LabelSearchResultGenerator.prototype.find = function (searchParameters) {
+    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+  };
+
+  return (LabelSearchResultGenerator);
+}
+LabelSearchResultGenerator.$inject = ["LabelManager", "SearchResultGenerator"];
+
+// Source: src/management/labels/labels-list.component.js
+/**
+ * @ngdoc function
+ * @name udbApp.component:LabelsComponent
+ * @description
+ * # Labels Component
+ */
+angular
+  .module('udb.management.labels')
+  .component('labelsComponent', {
+    controller: 'LabelsListController',
+    controllerAs: 'llc',
+    templateUrl: 'templates/labels-list.html'
+  });
+
+// Source: src/management/labels/labels-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelsListController
+ * @description
+ * # LabelsListController
+ */
+angular
+  .module('udb.management.labels')
+  .controller('LabelsListController', LabelsListController);
+
+/* @ngInject */
+function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
+  var llc = this;
+  var labelsPerPage = 10;
+  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+  var filteredQuery$ = query$.filter(ignoreShortQueries);
+  var page$ = rx.createObservableFunction(llc, 'pageChanged');
+  var searchResultGenerator = new LabelSearchResultGenerator(filteredQuery$, page$, labelsPerPage);
+  var searchResult$ = searchResultGenerator.getSearchResult$();
+
+  /**
+   * @param {string} query
+   * @return {boolean}
+   */
+  function ignoreShortQueries(query) {
+    // Only if the query is longer than 2 characters
+    return query.length > 2;
+  }
+
+  /**
+   * @param {PagedCollection} searchResult
+   */
+  function showSearchResult(searchResult) {
+    llc.searchResult = searchResult;
+    llc.loading = false;
+  }
+
+  llc.loading = false;
+  llc.query = '';
+  llc.page = 0;
+
+  query$
+    .safeApply($scope, function (query) {
+      llc.query = query;
+    })
+    .subscribe();
+
+  searchResult$
+    .safeApply($scope, showSearchResult)
+    .subscribe();
+
+  filteredQuery$
+    .merge(page$)
+    .safeApply($scope, function () {
+      llc.loading = true;
+    })
+    .subscribe();
+}
+LabelsListController.$inject = ["LabelSearchResultGenerator", "rx", "$scope"];
+
+// Source: src/management/search-result-generator.factory.js
+/**
+ * @ngdoc service
+ * @name udb.management.SearchResultGenerator
  * @description
  * # Search Result Generator
  * Provides a stream of paged search results.
  */
 angular
-  .module('udb.manage')
+  .module('udb.management')
   .factory('SearchResultGenerator', SearchResultGenerator);
 
 /* @ngInject */
-function SearchResultGenerator(rx, LabelService) {
+function SearchResultGenerator(rx, LabelManager) {
   /**
    * @class SearchResultGenerator
    * @constructor
@@ -11084,7 +11081,7 @@ function SearchResultGenerator(rx, LabelService) {
    * @return {Promise.<PagedCollection>}
    */
   SearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
   SearchResultGenerator.prototype.getSearchResult$ = function () {
@@ -11095,7 +11092,7 @@ function SearchResultGenerator(rx, LabelService) {
 
   return (SearchResultGenerator);
 }
-SearchResultGenerator.$inject = ["rx", "LabelService"];
+SearchResultGenerator.$inject = ["rx", "LabelManager"];
 
 // Source: src/media/create-image-job.factory.js
 /**
@@ -13596,11 +13593,11 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   this.getPersonalVariation = function (offer) {
     var deferredVariation =  $q.defer(),
-        personalVariation = personalVariationCache.get(offer.url);
+        personalVariation = personalVariationCache.get(offer['@id']);
 
     if (personalVariation) {
       if (personalVariation === 'no-personal-variation') {
-        deferredVariation.reject('there is no personal variation for offer with url: ' + offer.url);
+        deferredVariation.reject('there is no personal variation for offer with url: ' + offer['@id']);
       } else {
         deferredVariation.resolve(personalVariation);
       }
@@ -13610,7 +13607,7 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
       userPromise
         .then(function(user) {
           requestChain = requestChain.then(
-            requestVariation(user.id, 'personal', offer.apiUrl, deferredVariation)
+            requestVariation(user.id, 'personal', offer['@id'], deferredVariation)
           );
         });
     }
@@ -13620,10 +13617,10 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
 
   function requestVariation(userId, purpose, offerUrl, deferredVariation) {
     return function () {
-      var offerId = offerUrl.toString().split('/').pop();
+      var offerLocation = offerUrl.toString();
 
       if (interruptRequestChain) {
-        deferredVariation.reject('navigating away, interrupting request for variation for offer with id: ' + offerId);
+        deferredVariation.reject('interrupting request for offer variation located at: ' + offerLocation);
         return deferredVariation;
       }
 
@@ -13638,28 +13635,35 @@ function VariationRepository(udbApi, $cacheFactory, $q, UdbEvent, $rootScope, Ud
           } else if (jsonPersonalVariation['@context'] === '/api/1.0/place.jsonld') {
             variation = new UdbPlace(jsonPersonalVariation);
           }
-          personalVariationCache.put(offerId, variation);
+          personalVariationCache.put(offerLocation, variation);
           deferredVariation.resolve(variation);
         } else {
-          personalVariationCache.put(offerId, 'no-personal-variation');
-          deferredVariation.reject('there is no personal variation for event with id: ' + offerId);
+          personalVariationCache.put(offerLocation, 'no-personal-variation');
+          deferredVariation.reject('there is no personal variation for the offer located at: ' + offerLocation);
         }
       });
 
       personalVariationRequest.error(function () {
-        deferredVariation.reject('no variations found for event with id: ' + offerId);
+        deferredVariation.reject('no variations found for offer located at: ' + offerLocation);
       });
 
       return personalVariationRequest.then();
     };
   }
 
-  this.save = function (offerId, variation) {
-    personalVariationCache.put(offerId, variation);
+  /**
+   * @param {string} offerLocation
+   * @param {(UdbPlace|UdbEvent)} variation
+   */
+  this.save = function (offerLocation, variation) {
+    personalVariationCache.put(offerLocation, variation);
   };
 
-  this.remove = function (offerId) {
-    personalVariationCache.remove(offerId);
+  /**
+   * @param {string} offerLocation
+   */
+  this.remove = function (offerLocation) {
+    personalVariationCache.remove(offerLocation);
   };
 
   $rootScope.$on('$locationChangeStart', function() {
@@ -14769,11 +14773,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                <span ng-switch-when=\"unknown\">Geen prijsinformatie</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
-    "            <tr ng-class=\"{muted: !event.typicalAgeRange}\">\n" +
+    "            <tr>\n" +
     "              <td><strong>Geschikt voor</strong></td>\n" +
     "              <td>\n" +
     "                <span ng-if=\"event.typicalAgeRange\">{{event.typicalAgeRange}}</span>\n" +
-    "                <span ng-if=\"!event.typicalAgeRange\">Geen leeftijdsinformatie</span>\n" +
+    "                <span ng-if=\"!event.typicalAgeRange\">Alle leeftijden</span>\n" +
     "              </td>\n" +
     "            </tr>\n" +
     "            <tr ng-class=\"{muted: !event.image}\">\n" +
@@ -15747,36 +15751,36 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </section>\n" +
     "\n" +
     "    <div class=\"row\" ng-show=\"!activeEventType\">\n" +
-    "      <div ng-class=\"splitTypes ? 'col-xs-6': 'col-xs-12'\"\n" +
+    "      <div ng-class=\"splitTypes ? 'col-sm-5': ''\"\n" +
     "           ng-show=\"splitTypes || eventFormData.getType() === 'event'\">\n" +
-    "        <label class=\"event-type-choser-label\">Een activiteit of evenement</label>\n" +
+    "        <label class=\"event-type-choser-label event\"><span>Een evenement</span></label>\n" +
     "        <ul class=\"list-inline\" id=\"step1-events\">\n" +
     "          <li ng-repeat=\"eventType in ::eventTypeLabels | orderBy:'label'\" ng-show=\"eventType.primary === true || showAllEventTypes\">\n" +
     "            <button ng-bind=\"::eventType.label\" class=\"btn btn-default\"\n" +
     "                    ng-click=\"setEventType(eventType, true)\"></button>\n" +
     "          </li>\n" +
+    "          <li ng-hide=\"showAllEventTypes\">\n" +
+    "            <a href=\"\" ng-click=\"toggleEventTypes()\">Toon alles</a>\n" +
+    "          </li>\n" +
     "        </ul>\n" +
-    "        <p ng-hide=\"showAllEventTypes\">\n" +
-    "          Niet gevonden wat je zocht? <a href=\"\" ng-click=\"toggleEventTypes()\">Toon alle mogelijkheden</a>\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "\n" +
-    "      <div class=\"col-xs-1 col-xs-12\" ng-show=\"splitTypes\">\n" +
-    "        <p class=\"text-center\"><em>of</em></p>\n" +
+    "      <div class=\"col-sm-2\" ng-show=\"splitTypes\">\n" +
+    "        <p class=\"text-center event-type-splitter\"><em>of</em></p>\n" +
     "      </div>\n" +
     "\n" +
-    "      <div ng-class=\"splitTypes ? 'col-xs-5': 'col-xs-12'\"\n" +
+    "      <div ng-class=\"splitTypes ? 'col-sm-5': ''\"\n" +
     "           ng-show=\"splitTypes || eventFormData.getType() === 'place'\">\n" +
-    "        <label class=\"event-type-choser-label\">Een locatie of plaats</label>\n" +
+    "        <label class=\"event-type-choser-label place\"><span>Een locatie</span></label>\n" +
     "        <ul class=\"list-inline\" id=\"step1-places\">\n" +
     "          <li ng-repeat=\"placeType in ::placeLabels | orderBy:'label'\" ng-show=\"placeType.primary == true || showAllPlaces\">\n" +
     "            <button ng-bind=\"::placeType.label\" class=\"btn btn-default\"\n" +
     "                    ng-click=\"setEventType(placeType, false)\"></button>\n" +
     "          </li>\n" +
+    "          <li ng-hide=\"showAllPlaces\">\n" +
+    "            <a href=\"\" ng-click=\"togglePlaces()\">Toon alles</a>\n" +
+    "          </li>\n" +
     "        </ul>\n" +
-    "        <p ng-hide=\"showAllPlaces\">\n" +
-    "          Niet gevonden wat je zocht? <a href=\"\" ng-click=\"togglePlaces()\">Toon alle mogelijkheden</a>\n" +
-    "        </p>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "\n" +

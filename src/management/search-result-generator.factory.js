@@ -2,17 +2,17 @@
 
 /**
  * @ngdoc service
- * @name udb.manage.SearchResultGenerator
+ * @name udb.management.SearchResultGenerator
  * @description
  * # Search Result Generator
  * Provides a stream of paged search results.
  */
 angular
-  .module('udb.manage')
+  .module('udb.management')
   .factory('SearchResultGenerator', SearchResultGenerator);
 
 /* @ngInject */
-function SearchResultGenerator(rx, LabelService) {
+function SearchResultGenerator(rx, LabelManager) {
   /**
    * @class SearchResultGenerator
    * @constructor
@@ -56,7 +56,7 @@ function SearchResultGenerator(rx, LabelService) {
    * @return {Promise.<PagedCollection>}
    */
   SearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
   SearchResultGenerator.prototype.getSearchResult$ = function () {

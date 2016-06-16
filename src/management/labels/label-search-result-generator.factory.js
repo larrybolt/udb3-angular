@@ -2,17 +2,17 @@
 
 /**
  * @ngdoc service
- * @name udb.manage.LabelSearchResultViewer
+ * @name udb.management.LabelSearchResultViewer
  * @description
- * # LabelSearchResultViewer
- * Label search result viewer factory
+ * # Label Search Result Generator
+ * Create search result generator that takes a query and page input and provides a stream of paged search results.
  */
 angular
-  .module('udb.manage')
+  .module('udb.management.labels')
   .factory('LabelSearchResultGenerator', LabelSearchResultGenerator);
 
 /* @ngInject */
-function LabelSearchResultGenerator(LabelService, SearchResultGenerator) {
+function LabelSearchResultGenerator(LabelManager, SearchResultGenerator) {
   /**
    * @class LabelSearchResultViewer
    * @constructor
@@ -31,7 +31,7 @@ function LabelSearchResultGenerator(LabelService, SearchResultGenerator) {
    * @param {{query: *, offset: *}} searchParameters
    */
   LabelSearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelService.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
   return (LabelSearchResultGenerator);

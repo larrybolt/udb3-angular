@@ -1,18 +1,26 @@
 'use strict';
 
 /**
+ * @typedef {Object} Label
+ * @property {string}   id
+ * @property {string}   name
+ * @property {boolean}  isVisible
+ * @property {boolean}  isPrivate
+ */
+
+/**
  * @ngdoc service
- * @name udb.manage.labels
+ * @name udb.management.labels
  * @description
- * # user
- * Service in the udb.manage.labels.
+ * # Label Manager
+ * This service allows you to lookup labels and perform actions on them.
  */
 angular
-  .module('udb.manage.labels')
-  .service('LabelService', LabelService);
+  .module('udb.management.labels')
+  .service('LabelManager', LabelManager);
 
 /* @ngInject */
-function LabelService(udbApi, jobLogger, BaseJob, $q) {
+function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   var service = this;
 
   /**

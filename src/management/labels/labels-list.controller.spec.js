@@ -5,7 +5,7 @@ xdescribe('Controller: Labels List', function() {
     $rootScope,
     $q,
     $controller,
-    LabelService,
+    LabelManager,
     scheduler;
 
   var pagedLabels = {
@@ -23,8 +23,8 @@ xdescribe('Controller: Labels List', function() {
   };
 
 
-  beforeEach(module('udb.manage'));
-  beforeEach(module('udb.manage.labels'));
+  beforeEach(module('udb.management'));
+  beforeEach(module('udb.management.labels'));
 
   beforeEach(inject(function(_$rootScope_, _$q_, _$controller_) {
     $controller = _$controller_;
@@ -32,8 +32,8 @@ xdescribe('Controller: Labels List', function() {
     $rootScope = _$rootScope_;
     $scope = $rootScope.$new();
 
-    LabelService = jasmine.createSpyObj('LabelService', ['find']);
-    LabelService.find.and.returnValue($q.resolve(pagedLabels));
+    LabelManager = jasmine.createSpyObj('LabelManager', ['find']);
+    LabelManager.find.and.returnValue($q.resolve(pagedLabels));
 
     scheduler = new Rx.TestScheduler();
     var originalDebounce = Rx.Observable.prototype.debounce;
@@ -45,7 +45,7 @@ xdescribe('Controller: Labels List', function() {
   function getLabelListController() {
     return $controller(
       'LabelsListController', {
-        LabelService: LabelService
+        LabelService: LabelManager
       }
     );
   }
@@ -55,7 +55,7 @@ xdescribe('Controller: Labels List', function() {
     controller.queryChanged('reactive extension');
 
     scheduler.scheduleAbsolute(null, 300, function() {
-      expect(LabelService.find).toHaveBeenCalledWith('reactive extension', 10, 0);
+      expect(LabelManager.find).toHaveBeenCalledWith('reactive extension', 10, 0);
       scheduler.stop();
       done();
     });
@@ -69,7 +69,7 @@ xdescribe('Controller: Labels List', function() {
     controller.pageChanged(2);
 
     scheduler.scheduleAbsolute(null, 300, function() {
-      expect(LabelService.find).toHaveBeenCalledWith('beep', 10, 10);
+      expect(LabelManager.find).toHaveBeenCalledWith('beep', 10, 10);
       scheduler.stop();
       done();
     });
@@ -78,9 +78,9 @@ xdescribe('Controller: Labels List', function() {
   });
 
   it('should set the right loading states when looking for items', function(done) {
-    LabelService = jasmine.createSpyObj('LabelService', ['find']);
+    LabelManager = jasmine.createSpyObj('LabelManager', ['find']);
     var labelRequest = $q.defer();
-    LabelService.find.and.returnValue(labelRequest.promise);
+    LabelManager.find.and.returnValue(labelRequest.promise);
 
     var controller = getLabelListController();
     // The controller should not look for items when it loads

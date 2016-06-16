@@ -7,7 +7,7 @@
  * # udbQuerySearchBar
  */
 angular
-  .module('udb.manage')
+  .module('udb.management')
   .component('udbQuerySearchBar', {
     templateUrl: 'templates/query-search-bar.html',
     controller: QuerySearchBarComponent,

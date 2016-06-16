@@ -4,7 +4,7 @@ describe('Component: Query Search Bar', function () {
 
   var searchBar, $rootScope, $scope, $componentController, searchController;
 
-  beforeEach(module('udb.manage'));
+  beforeEach(module('udb.management'));
   beforeEach(module('udb.templates'));
 
   beforeEach(inject(function (_$rootScope_, $compile, _$componentController_){
