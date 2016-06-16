@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * @ngdoc service
+ * @ngdoc factory
  * @name udb.management.SearchResultGenerator
  * @description
  * # Search Result Generator
@@ -12,7 +12,7 @@ angular
   .factory('SearchResultGenerator', SearchResultGenerator);
 
 /* @ngInject */
-function SearchResultGenerator(rx, LabelManager) {
+function SearchResultGenerator(rx, SearchService) {
   /**
    * @class SearchResultGenerator
    * @constructor
@@ -21,6 +21,7 @@ function SearchResultGenerator(rx, LabelManager) {
    * @param {Number} itemsPerPage
    */
   var SearchResultGenerator = function (query$, page$, itemsPerPage) {
+    this.searchService = SearchService;
     this.itemsPerPage = itemsPerPage;
     this.query$ = query$.debounce(300);
     this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
@@ -31,6 +32,8 @@ function SearchResultGenerator(rx, LabelManager) {
       combineQueryParameters
     );
   };
+
+  SearchResultGenerator.prototype.constructor = SearchResultGenerator;
 
   /**
    * @param {string} query
@@ -56,13 +59,14 @@ function SearchResultGenerator(rx, LabelManager) {
    * @return {Promise.<PagedCollection>}
    */
   SearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    return this.searchService
+      .find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
   SearchResultGenerator.prototype.getSearchResult$ = function () {
     var searchResultGenerator = this;
     return searchResultGenerator.searchParameters$
-      .selectMany(searchResultGenerator.find);
+      .selectMany(searchResultGenerator.find.bind(this));
   };
 
   return (SearchResultGenerator);

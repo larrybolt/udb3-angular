@@ -10932,17 +10932,12 @@ function LabelSearchResultGenerator(LabelManager, SearchResultGenerator) {
    */
   var LabelSearchResultGenerator = function (query$, page$, itemsPerPage) {
     SearchResultGenerator.call(this, query$, page$, itemsPerPage);
+
+    this.searchService = LabelManager;
   };
 
   LabelSearchResultGenerator.prototype = Object.create(SearchResultGenerator.prototype);
   LabelSearchResultGenerator.prototype.constructor = LabelSearchResultGenerator;
-
-  /**
-   * @param {{query: *, offset: *}} searchParameters
-   */
-  LabelSearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
-  };
 
   return (LabelSearchResultGenerator);
 }
@@ -11027,7 +11022,7 @@ LabelsListController.$inject = ["LabelSearchResultGenerator", "rx", "$scope"];
 
 // Source: src/management/search-result-generator.factory.js
 /**
- * @ngdoc service
+ * @ngdoc factory
  * @name udb.management.SearchResultGenerator
  * @description
  * # Search Result Generator
@@ -11038,7 +11033,7 @@ angular
   .factory('SearchResultGenerator', SearchResultGenerator);
 
 /* @ngInject */
-function SearchResultGenerator(rx, LabelManager) {
+function SearchResultGenerator(rx, SearchService) {
   /**
    * @class SearchResultGenerator
    * @constructor
@@ -11047,6 +11042,7 @@ function SearchResultGenerator(rx, LabelManager) {
    * @param {Number} itemsPerPage
    */
   var SearchResultGenerator = function (query$, page$, itemsPerPage) {
+    this.searchService = SearchService;
     this.itemsPerPage = itemsPerPage;
     this.query$ = query$.debounce(300);
     this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
@@ -11057,6 +11053,8 @@ function SearchResultGenerator(rx, LabelManager) {
       combineQueryParameters
     );
   };
+
+  SearchResultGenerator.prototype.constructor = SearchResultGenerator;
 
   /**
    * @param {string} query
@@ -11082,18 +11080,57 @@ function SearchResultGenerator(rx, LabelManager) {
    * @return {Promise.<PagedCollection>}
    */
   SearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    return this.searchService
+      .find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
   };
 
   SearchResultGenerator.prototype.getSearchResult$ = function () {
     var searchResultGenerator = this;
     return searchResultGenerator.searchParameters$
-      .selectMany(searchResultGenerator.find);
+      .selectMany(searchResultGenerator.find.bind(this));
   };
 
   return (SearchResultGenerator);
 }
-SearchResultGenerator.$inject = ["rx", "LabelManager"];
+SearchResultGenerator.$inject = ["rx", "SearchService"];
+
+// Source: src/management/search.service.js
+/**
+ * @ngdoc service
+ * @name udb.management.SearchService
+ * @description
+ * # Search Service
+ * This is a placeholder service to feed the search result generator.
+ */
+angular
+  .module('udb.management')
+  .service('SearchService', SearchService);
+
+/* @ngInject */
+function SearchService($q) {
+  var service = this;
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return $q.resolve({
+      '@context': 'http://www.w3.org/ns/hydra/context.jsonld',
+      '@type': 'PagedCollection',
+      'itemsPerPage': 10,
+      'totalItems': 0,
+      'member': [],
+      'firstPage': 'http://du.de/items?page=1',
+      'lastPage': 'http://du.de/items?page=1',
+      'nextPage': 'http://du.de/items?page=1'
+    });
+  };
+}
+SearchService.$inject = ["$q"];
 
 // Source: src/media/create-image-job.factory.js
 /**

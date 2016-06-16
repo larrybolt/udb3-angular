@@ -22,17 +22,12 @@ function LabelSearchResultGenerator(LabelManager, SearchResultGenerator) {
    */
   var LabelSearchResultGenerator = function (query$, page$, itemsPerPage) {
     SearchResultGenerator.call(this, query$, page$, itemsPerPage);
+
+    this.searchService = LabelManager;
   };
 
   LabelSearchResultGenerator.prototype = Object.create(SearchResultGenerator.prototype);
   LabelSearchResultGenerator.prototype.constructor = LabelSearchResultGenerator;
-
-  /**
-   * @param {{query: *, offset: *}} searchParameters
-   */
-  LabelSearchResultGenerator.prototype.find = function (searchParameters) {
-    return LabelManager.find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
-  };
 
   return (LabelSearchResultGenerator);
 }
