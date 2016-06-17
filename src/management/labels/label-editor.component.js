@@ -1,7 +1,7 @@
 'use strict';
 
 angular
-  .module('udb.management')
+  .module('udb.management.labels')
   .component('udbLabelEditor', {
     templateUrl: 'templates/label-editor.html',
     controller: LabelEditorComponent,

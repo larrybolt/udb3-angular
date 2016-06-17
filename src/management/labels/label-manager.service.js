@@ -9,19 +9,30 @@
  */
 
 /**
- * @ngdoc function
- * @name udb.management.service:LabelManager
+ * @ngdoc service
+ * @name udb.management.labels
  * @description
- * # LabelManager
- * Service to manage labels.
+ * # Label Manager
+ * This service allows you to lookup labels and perform actions on them.
  */
 angular
-  .module('udb.management')
+  .module('udb.management.labels')
   .service('LabelManager', LabelManager);
 
-/** @ngInject */
+/* @ngInject */
 function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   var service = this;
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return udbApi.findLabels(query, limit, start);
+  };
 
   /**
    * @param {uuid} labelId

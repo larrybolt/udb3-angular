@@ -22,6 +22,7 @@ angular
     'udb.dashboard',
     'udb.saved-searches',
     'udb.media',
+    'udb.management',
     'btford.socket-io',
     'pascalprecht.translate'
   ])
@@ -192,15 +193,46 @@ angular
 
 /**
  * @ngdoc module
+ * @name udb.management.labels
+ * @description
+ * # Label Management Module
+ */
+angular
+  .module('udb.management.labels', [
+    'rx'
+  ]);
+/**
+ * @ngdoc module
  * @name udb.management
  * @description
- * The udb management module
+ * # Management Module
  */
 angular
   .module('udb.management', [
-    'udb.core'
-  ]);
+    'udb.core',
+    'udb.management.labels'
+  ])
+  .component('udbManagement', {
+    template: '<ng-outlet></ng-outlet>',
+    $routeConfig: [
+      {
+        path: '/labels/overview',
+        name: 'LabelsList',
+        component: 'labelsComponent'
+      },
+      {
+        path: '/label/:id',
+        name: 'LabelEditor',
+        component: 'udbLabelEditor'
+      }
+    ],
+    $canActivate: isAuthorized
+  });
 
+function isAuthorized(authorizationService) {
+  return authorizationService.isLoggedIn();
+}
+isAuthorized.$inject = ['authorizationService'];
 angular.module('peg', []).factory('LuceneQueryParser', function () {
  return (function() {
   /*
@@ -10583,9 +10615,48 @@ function udbExportModalButtons() {
   };
 }
 
-// Source: src/management/label-editor.component.js
+// Source: src/management/components/query-search-bar.component.js
+/**
+ * @ngdoc component
+ * @name udb.search.directive:udbSearchBar
+ * @description
+ * # udbQuerySearchBar
+ */
 angular
   .module('udb.management')
+  .component('udbQuerySearchBar', {
+    templateUrl: 'templates/query-search-bar.html',
+    controller: QuerySearchBarComponent,
+    controllerAs: 'qsb',
+    bindings: {
+      onChange: '&',
+      searchLabel: '@'
+    }
+  });
+
+/* @ngInject */
+function QuerySearchBarComponent() {
+  var qsb = this;
+
+  qsb.queryString = '';
+  qsb.find = find;
+
+  /**
+   * Search with a given query string and update the search bar or use the one currently displayed in the search bar
+   *
+   * @param {String} [queryString]
+   */
+  function find(queryString) {
+    var query = typeof queryString !== 'undefined' ? queryString : qsb.queryString;
+
+    qsb.queryString = query;
+    qsb.onChange({query: query});
+  }
+}
+
+// Source: src/management/labels/label-editor.component.js
+angular
+  .module('udb.management.labels')
   .component('udbLabelEditor', {
     templateUrl: 'templates/label-editor.html',
     controller: LabelEditorComponent,
@@ -10673,7 +10744,7 @@ function LabelEditorComponent(LabelManager, $uibModal) {
 }
 LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
 
-// Source: src/management/label-manager.service.js
+// Source: src/management/labels/label-manager.service.js
 /**
  * @typedef {Object} Label
  * @property {string}   id
@@ -10683,19 +10754,30 @@ LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
  */
 
 /**
- * @ngdoc function
- * @name udb.management.service:LabelManager
+ * @ngdoc service
+ * @name udb.management.labels
  * @description
- * # LabelManager
- * Service to manage labels.
+ * # Label Manager
+ * This service allows you to lookup labels and perform actions on them.
  */
 angular
-  .module('udb.management')
+  .module('udb.management.labels')
   .service('LabelManager', LabelManager);
 
-/** @ngInject */
+/* @ngInject */
 function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   var service = this;
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return udbApi.findLabels(query, limit, start);
+  };
 
   /**
    * @param {uuid} labelId
@@ -10804,19 +10886,198 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
 }
 LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
 
-// Source: src/management/management.component.js
+// Source: src/management/labels/labels-list.component.js
+/**
+ * @ngdoc function
+ * @name udbApp.component:LabelsComponent
+ * @description
+ * # Labels Component
+ */
+angular
+  .module('udb.management.labels')
+  .component('labelsComponent', {
+    controller: 'LabelsListController',
+    controllerAs: 'llc',
+    templateUrl: 'templates/labels-list.html'
+  });
+
+// Source: src/management/labels/labels-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelsListController
+ * @description
+ * # LabelsListController
+ */
+angular
+  .module('udb.management.labels')
+  .controller('LabelsListController', LabelsListController);
+
+/* @ngInject */
+function LabelsListController(SearchResultGenerator, rx, $scope, LabelManager) {
+  var llc = this;
+  var itemsPerPage = 10;
+  var minQueryLength = 3;
+  var query$ = rx.createObservableFunction(llc, 'queryChanged');
+  var filteredQuery$ = query$.filter(ignoreShortQueries);
+  var page$ = rx.createObservableFunction(llc, 'pageChanged');
+  var searchResultGenerator = new SearchResultGenerator(LabelManager, filteredQuery$, page$, itemsPerPage);
+  var searchResult$ = searchResultGenerator.getSearchResult$();
+
+  /**
+   * @param {string} query
+   * @return {boolean}
+   */
+  function ignoreShortQueries(query) {
+    return query.length >= minQueryLength;
+  }
+
+  /**
+   * @param {PagedCollection} searchResult
+   */
+  function showSearchResult(searchResult) {
+    llc.searchResult = searchResult;
+    llc.loading = false;
+  }
+
+  llc.loading = false;
+  llc.query = '';
+  llc.page = 0;
+  llc.minQueryLength = minQueryLength;
+
+  query$
+    .safeApply($scope, function (query) {
+      llc.query = query;
+    })
+    .subscribe();
+
+  searchResult$
+    .safeApply($scope, showSearchResult)
+    .subscribe();
+
+  filteredQuery$
+    .merge(page$)
+    .safeApply($scope, function () {
+      llc.loading = true;
+    })
+    .subscribe();
+}
+LabelsListController.$inject = ["SearchResultGenerator", "rx", "$scope", "LabelManager"];
+
+// Source: src/management/search-result-generator.factory.js
+/**
+ * @ngdoc factory
+ * @name udb.management.SearchResultGenerator
+ * @description
+ * # Search Result Generator
+ * Provides a stream of paged search results.
+ */
 angular
   .module('udb.management')
-  .component('udbManagement', {
-    template: '<h1>Manage</h1> <ng-outlet></ng-outlet>',
-    $routeConfig: [
-      {
-        path: '/label/:id',
-        name: 'LabelEditor',
-        component: 'udbLabelEditor'
-      }
-    ]
-  });
+  .factory('SearchResultGenerator', SearchResultGenerator);
+
+/* @ngInject */
+function SearchResultGenerator(rx) {
+  /**
+   * @class SearchResultGenerator
+   * @constructor
+   * @param {Object} searchService
+   * @param {Observable} query$
+   * @param {Observable} page$
+   * @param {Number} itemsPerPage
+   */
+  var SearchResultGenerator = function (searchService, query$, page$, itemsPerPage) {
+    this.searchService = searchService;
+    this.itemsPerPage = itemsPerPage;
+    this.query$ = query$.debounce(300);
+    this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
+
+    this.searchParameters$ = rx.Observable.combineLatest(
+      this.query$,
+      this.offset$,
+      combineQueryParameters
+    );
+  };
+
+  SearchResultGenerator.prototype.constructor = SearchResultGenerator;
+
+  /**
+   * @param {string} query
+   * @param {Number} offset
+   * @return {{query: *, offset: *}}
+   */
+  function combineQueryParameters(query, offset) {
+    return {query: query, offset: offset};
+  }
+
+  /**
+   * @param {Number} itemsPerPage
+   * @return {Function}
+   */
+  function pageToOffset(itemsPerPage) {
+    return function(page) {
+      return (page - 1) * itemsPerPage;
+    };
+  }
+
+  /**
+   * @param {{query: *, offset: *}} searchParameters
+   * @return {Promise.<PagedCollection>}
+   */
+  SearchResultGenerator.prototype.find = function (searchParameters) {
+    var generator = this;
+
+    return generator.searchService
+      .find(searchParameters.query, generator.itemsPerPage, searchParameters.offset);
+  };
+
+  SearchResultGenerator.prototype.getSearchResult$ = function () {
+    var generator = this;
+
+    return generator.searchParameters$
+      .selectMany(generator.find.bind(generator));
+  };
+
+  return (SearchResultGenerator);
+}
+SearchResultGenerator.$inject = ["rx"];
+
+// Source: src/management/search.service.js
+/**
+ * @ngdoc service
+ * @name udb.management.SearchService
+ * @description
+ * # Search Service
+ * This is a placeholder service to feed the search result generator.
+ */
+angular
+  .module('udb.management')
+  .service('SearchService', SearchService);
+
+/* @ngInject */
+function SearchService($q) {
+  var service = this;
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return $q.resolve({
+      '@context': 'http://www.w3.org/ns/hydra/context.jsonld',
+      '@type': 'PagedCollection',
+      'itemsPerPage': 10,
+      'totalItems': 0,
+      'member': [],
+      'firstPage': 'http://du.de/items?page=1',
+      'lastPage': 'http://du.de/items?page=1',
+      'nextPage': 'http://du.de/items?page=1'
+    });
+  };
+}
+SearchService.$inject = ["$q"];
 
 // Source: src/media/create-image-job.factory.js
 /**
@@ -16554,6 +16815,21 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
+  $templateCache.put('templates/query-search-bar.html',
+    "<form class=\"form-inline\" role=\"search\">\n" +
+    "  <div class=\"form-group\">\n" +
+    "    <label for=\"user-search-input\" ng-bind=\"::qsb.searchLabel\"></label>\n" +
+    "    <input type=\"text\"\n" +
+    "           id=\"user-search-input\"\n" +
+    "           class=\"form-control\"\n" +
+    "           ng-model=\"qsb.queryString\"\n" +
+    "           autocomplete=\"off\"\n" +
+    "           ng-change=\"qsb.find()\">\n" +
+    "  </div>\n" +
+    "</form>\n"
+  );
+
+
   $templateCache.put('templates/label-editor.html',
     "<h2>Labels</h2>\n" +
     "<h3>Label bewerken</h3>\n" +
@@ -16584,6 +16860,69 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "<div ng-show=\"editor.loadingError\">\n" +
     "    <span ng-bind=\"editor.loadingError\"></span>\n" +
+    "</div>\n"
+  );
+
+
+  $templateCache.put('templates/labels-list.html',
+    "<h1 class=\"title\" id=\"page-title\">\n" +
+    "    Labels\n" +
+    "</h1>\n" +
+    "<div class=\"row\">\n" +
+    "    <div class=\"col-md-11\">\n" +
+    "        <udb-query-search-bar search-label=\"Zoeken op labelnaam\"\n" +
+    "                              on-change=\"llc.queryChanged(query)\"\n" +
+    "        ></udb-query-search-bar>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-1\">\n" +
+    "        <i ng-show=\"llc.loading\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "    </div>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"row\" ng-cloak>\n" +
+    "    <div class=\"col-md-12\">\n" +
+    "        <p ng-show=\"llc.query.length < llc.minQueryLength\">\n" +
+    "            Schrijf een zoekopdracht in het veld hierboven om labels te tonen.\n" +
+    "        </p>\n" +
+    "        <p ng-show=\"llc.query.length >= llc.minQueryLength && llc.searchResult.totalItems === 0\">\n" +
+    "            Geen labels gevonden.\n" +
+    "        </p>\n" +
+    "        <div class=\"query-search-result\"\n" +
+    "             ng-class=\"{'loading-search-result': llc.loading}\"\n" +
+    "             ng-show=\"llc.searchResult.totalItems > 0 && llc.query.length >= llc.minQueryLength\">\n" +
+    "            <div class=\"table-responsive\" >\n" +
+    "                <table class=\"table table-hover table-striped\">\n" +
+    "                    <thead>\n" +
+    "                    <tr>\n" +
+    "                        <th>Naam</th>\n" +
+    "                        <th>Verborgen</th>\n" +
+    "                        <th>Voorbehouden</th>\n" +
+    "                        <th>Opties</th>\n" +
+    "                    </tr>\n" +
+    "                    </thead>\n" +
+    "                    <tbody>\n" +
+    "                    <tr ng-repeat=\"label in llc.searchResult.member\">\n" +
+    "                        <td ng-bind=\"::label.name\"></td>\n" +
+    "                        <td ng-bind=\"::(label.visibility === 'invisible' ? 'Verborgen' : '')\"></td>\n" +
+    "                        <td ng-bind=\"::(label.privacy === 'private' ? 'Voorbehouden' : '')\"></td>\n" +
+    "                        <td>\n" +
+    "                            <a ng-link=\"['LabelEditor', {id: label.id}]\">Bewerken</a>\n" +
+    "                        </td>\n" +
+    "                    </tr>\n" +
+    "                    </tbody>\n" +
+    "                </table>\n" +
+    "            </div>\n" +
+    "            <div class=\"panel-footer\">\n" +
+    "                <uib-pagination\n" +
+    "                        total-items=\"llc.searchResult.totalItems\"\n" +
+    "                        ng-model=\"llc.page\"\n" +
+    "                        items-per-page=\"llc.searchResult.itemsPerPage\"\n" +
+    "                        max-size=\"10\"\n" +
+    "                        ng-change=\"llc.pageChanged(llc.page)\">\n" +
+    "                </uib-pagination>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
     "</div>\n"
   );
 
