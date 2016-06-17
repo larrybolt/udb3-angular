@@ -74,11 +74,21 @@
                   {{place.address.postalCode}} {{place.address.addressLocality}}<br />
                   {{place.address.addressCountry}}</td>
               </tr>
-              <tr ng-class="{muted: !place.typicalAgeRange}">
+              <tr>
+                <td>
+                  <strong>Labels</strong>
+                </td>
+                <td>
+                  <udb-label-select offer="place"
+                                    label-added="labelAdded(label)"
+                                    label-removed="labelRemoved(label)"></udb-label-select>
+                </td>
+              </tr>
+              <tr>
                 <td><strong>Geschikt voor</strong></td>
                 <td>
                   <span ng-if="place.typicalAgeRange">{{place.typicalAgeRange}}</span>
-                  <span ng-if="!place.typicalAgeRange">Geen leeftijdsinformatie</span>
+                  <span ng-if="!place.typicalAgeRange">Alle leeftijden</span>
                 </td>
               </tr>
               <tr ng-class="{muted: !place.image}">

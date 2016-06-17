@@ -100,6 +100,16 @@
               </td>
             </tr>
             <tr>
+              <td>
+                <strong>Labels</strong>
+              </td>
+              <td>
+                <udb-label-select offer="event"
+                                  label-added="labelAdded(label)"
+                                  label-removed="labelRemoved(label)"></udb-label-select>
+              </td>
+            </tr>
+            <tr>
               <td><strong>Geschikt voor</strong></td>
               <td>
                 <span ng-if="event.typicalAgeRange">{{event.typicalAgeRange}}</span>
