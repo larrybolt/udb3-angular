@@ -212,7 +212,7 @@ angular
     'udb.core',
     'udb.management.labels'
   ])
-  .component('managementComponent', {
+  .component('udbManagement', {
     template: '<ng-outlet></ng-outlet>',
     $routeConfig: [
       {
