@@ -23,12 +23,7 @@ describe('Factory: Search Result Generator', function() {
 
   beforeEach(module('udb.management', function($provide) {
     SearchService = jasmine.createSpyObj('SearchService', ['find']);
-
-    $provide.provider('SearchService', {
-      $get: function () {
-        return SearchService;
-      }
-    });
+    $provide.value('SearchService', SearchService);
   }));
 
   beforeEach(inject(function(_$q_, _SearchResultGenerator_) {
@@ -48,7 +43,7 @@ describe('Factory: Search Result Generator', function() {
   it('should look for the first page of items when the search query changes', function(done) {
     var query$ = Rx.Observable.return('reactive extension');
     var page$ = Rx.Observable.return(1);
-    var generator = new SearchResultGenerator(query$, page$, itemsPerPage);
+    var generator = new SearchResultGenerator(SearchService, query$, page$, itemsPerPage);
 
     scheduler.scheduleAbsolute(null, 300, function() {
       expect(SearchService.find).toHaveBeenCalledWith('reactive extension', 10, 0);
@@ -65,7 +60,7 @@ describe('Factory: Search Result Generator', function() {
   it('should look for the items at the right offset when the page for the active query changes', function(done) {
     var query$ = Rx.Observable.return('beep');
     var page$ = Rx.Observable.return(2).startWith(1);
-    var generator = new SearchResultGenerator(query$, page$, itemsPerPage);
+    var generator = new SearchResultGenerator(SearchService, query$, page$, itemsPerPage);
 
     scheduler.scheduleAbsolute(null, 300, function() {
       expect(SearchService.find).toHaveBeenCalledWith('beep', 10, 10);
@@ -75,32 +70,6 @@ describe('Factory: Search Result Generator', function() {
     });
 
     var sub = generator.getSearchResult$().subscribe();
-    scheduler.start();
-  });
-
-  xit('should set the right loading states when looking for items', function(done) {
-    SearchService = jasmine.createSpyObj('SearchService', ['find']);
-    var labelRequest = $q.defer();
-    SearchService.find.and.returnValue(labelRequest.promise);
-
-    var controller = getLabelListController();
-    // The controller should not look for items when it loads
-    expect(controller.loading).toEqual(false);
-
-    // When the query changes the controller start looking for items
-    controller.queryChanged('dirk');
-    scheduler.scheduleAbsolute(null, 300, function() {
-      expect(controller.loading).toEqual(true);
-
-      // The items should load after the search result arrives
-      labelRequest.resolve(pagedSearchResult);
-      $scope.$digest();
-      expect(controller.loading).toEqual(false);
-
-      scheduler.stop();
-      done();
-    });
-
     scheduler.start();
   });
 });

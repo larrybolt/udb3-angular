@@ -10629,54 +10629,6 @@ function QuerySearchBarComponent() {
   }
 }
 
-// Source: src/management/components/query-search-result-viewer.factory.js
-/**
- * @ngdoc service
- * @name udb.management.UserSearchResultViewer
- * @description
- * # QuerySearchResultViewer
- * User search result viewer factory
- */
-angular
-  .module('udb.management')
-  .factory('QuerySearchResultViewer', QuerySearchResultViewerFactory);
-
-function QuerySearchResultViewerFactory() {
-
-  /**
-   * @class SearchResultViewer
-   * @constructor
-   * @param    {Number}           query
-   * @param    {Number}           start
-   * @param    {PagedCollection}  searchResult
-   *
-   * @property {Object[]}   items           A list of search results items
-   * @property {Number}     itemsPerPage    The current page size
-   * @property {Number}     totalItems      The total items found
-   * @property {Number}     currentPage     The index of the current page without zeroing
-   */
-  var QuerySearchResultViewer = function (query, start, searchResult) {
-    this.query = query;
-    this.setResults(start, searchResult);
-  };
-
-  QuerySearchResultViewer.prototype = {
-    /**
-     * @param {Number}           start
-     * @param {PagedCollection}  pagedResult
-     */
-    setResults: function (start, pagedResult) {
-      var viewer = this;
-      viewer.start = start;
-      viewer.itemsPerPage = pagedResult.itemsPerPage;
-      viewer.items = pagedResult.member;
-      viewer.totalItems = pagedResult.totalItems;
-    }
-  };
-
-  return (QuerySearchResultViewer);
-}
-
 // Source: src/management/labels/label-editor.component.js
 angular
   .module('udb.management.labels')
@@ -10909,40 +10861,6 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
 }
 LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
 
-// Source: src/management/labels/label-search-result-generator.factory.js
-/**
- * @ngdoc service
- * @name udb.management.LabelSearchResultViewer
- * @description
- * # Label Search Result Generator
- * Create search result generator that takes a query and page input and provides a stream of paged search results.
- */
-angular
-  .module('udb.management.labels')
-  .factory('LabelSearchResultGenerator', LabelSearchResultGenerator);
-
-/* @ngInject */
-function LabelSearchResultGenerator(LabelManager, SearchResultGenerator) {
-  /**
-   * @class LabelSearchResultViewer
-   * @constructor
-   * @param {Observable} query$
-   * @param {Observable} page$
-   * @param {Number} itemsPerPage
-   */
-  var LabelSearchResultGenerator = function (query$, page$, itemsPerPage) {
-    SearchResultGenerator.call(this, query$, page$, itemsPerPage);
-
-    this.searchService = LabelManager;
-  };
-
-  LabelSearchResultGenerator.prototype = Object.create(SearchResultGenerator.prototype);
-  LabelSearchResultGenerator.prototype.constructor = LabelSearchResultGenerator;
-
-  return (LabelSearchResultGenerator);
-}
-LabelSearchResultGenerator.$inject = ["LabelManager", "SearchResultGenerator"];
-
 // Source: src/management/labels/labels-list.component.js
 /**
  * @ngdoc function
@@ -10970,14 +10888,14 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
+function LabelsListController(SearchResultGenerator, rx, $scope, LabelManager) {
   var llc = this;
-  var labelsPerPage = 1;
+  var itemsPerPage = 10;
   var minQueryLength = 3;
   var query$ = rx.createObservableFunction(llc, 'queryChanged');
   var filteredQuery$ = query$.filter(ignoreShortQueries);
   var page$ = rx.createObservableFunction(llc, 'pageChanged');
-  var searchResultGenerator = new LabelSearchResultGenerator(filteredQuery$, page$, labelsPerPage);
+  var searchResultGenerator = new SearchResultGenerator(LabelManager, filteredQuery$, page$, itemsPerPage);
   var searchResult$ = searchResultGenerator.getSearchResult$();
 
   /**
@@ -11018,7 +10936,7 @@ function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
     })
     .subscribe();
 }
-LabelsListController.$inject = ["LabelSearchResultGenerator", "rx", "$scope"];
+LabelsListController.$inject = ["SearchResultGenerator", "rx", "$scope", "LabelManager"];
 
 // Source: src/management/search-result-generator.factory.js
 /**
@@ -11033,16 +10951,17 @@ angular
   .factory('SearchResultGenerator', SearchResultGenerator);
 
 /* @ngInject */
-function SearchResultGenerator(rx, SearchService) {
+function SearchResultGenerator(rx) {
   /**
    * @class SearchResultGenerator
    * @constructor
+   * @param {Object} searchService
    * @param {Observable} query$
    * @param {Observable} page$
    * @param {Number} itemsPerPage
    */
-  var SearchResultGenerator = function (query$, page$, itemsPerPage) {
-    this.searchService = SearchService;
+  var SearchResultGenerator = function (searchService, query$, page$, itemsPerPage) {
+    this.searchService = searchService;
     this.itemsPerPage = itemsPerPage;
     this.query$ = query$.debounce(300);
     this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
@@ -11080,19 +10999,22 @@ function SearchResultGenerator(rx, SearchService) {
    * @return {Promise.<PagedCollection>}
    */
   SearchResultGenerator.prototype.find = function (searchParameters) {
-    return this.searchService
-      .find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    var generator = this;
+
+    return generator.searchService
+      .find(searchParameters.query, generator.itemsPerPage, searchParameters.offset);
   };
 
   SearchResultGenerator.prototype.getSearchResult$ = function () {
-    var searchResultGenerator = this;
-    return searchResultGenerator.searchParameters$
-      .selectMany(searchResultGenerator.find.bind(this));
+    var generator = this;
+
+    return generator.searchParameters$
+      .selectMany(generator.find.bind(generator));
   };
 
   return (SearchResultGenerator);
 }
-SearchResultGenerator.$inject = ["rx", "SearchService"];
+SearchResultGenerator.$inject = ["rx"];
 
 // Source: src/management/search.service.js
 /**

@@ -11,14 +11,14 @@ angular
   .controller('LabelsListController', LabelsListController);
 
 /* @ngInject */
-function LabelsListController(LabelSearchResultGenerator, rx, $scope) {
+function LabelsListController(SearchResultGenerator, rx, $scope, LabelManager) {
   var llc = this;
-  var labelsPerPage = 1;
+  var itemsPerPage = 10;
   var minQueryLength = 3;
   var query$ = rx.createObservableFunction(llc, 'queryChanged');
   var filteredQuery$ = query$.filter(ignoreShortQueries);
   var page$ = rx.createObservableFunction(llc, 'pageChanged');
-  var searchResultGenerator = new LabelSearchResultGenerator(filteredQuery$, page$, labelsPerPage);
+  var searchResultGenerator = new SearchResultGenerator(LabelManager, filteredQuery$, page$, itemsPerPage);
   var searchResult$ = searchResultGenerator.getSearchResult$();
 
   /**

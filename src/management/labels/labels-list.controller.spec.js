@@ -1,14 +1,13 @@
 'use strict';
 
-xdescribe('Controller: Labels List', function() {
+describe('Controller: Labels List', function() {
   var $scope,
     $rootScope,
     $q,
     $controller,
-    LabelManager,
-    scheduler;
-
-  var pagedLabels = {
+    searchResultGenerator;
+  
+  var pagedSearchResult = {
     '@context': 'http://www.w3.org/ns/hydra/context.jsonld',
     '@type': 'PagedCollection',
     'itemsPerPage': 50,
@@ -26,80 +25,46 @@ xdescribe('Controller: Labels List', function() {
   beforeEach(module('udb.management'));
   beforeEach(module('udb.management.labels'));
 
-  beforeEach(inject(function(_$rootScope_, _$q_, _$controller_) {
+  beforeEach(inject(function(_$rootScope_, _$q_, _$controller_, _SearchResultGenerator_) {
     $controller = _$controller_;
     $q = _$q_;
     $rootScope = _$rootScope_;
     $scope = $rootScope.$new();
-
-    LabelManager = jasmine.createSpyObj('LabelManager', ['find']);
-    LabelManager.find.and.returnValue($q.resolve(pagedLabels));
-
-    scheduler = new Rx.TestScheduler();
-    var originalDebounce = Rx.Observable.prototype.debounce;
-    spyOn(Rx.Observable.prototype, 'debounce').and.callFake(function(originalDelay) {
-      return originalDebounce.call(this, originalDelay, scheduler);
-    });
+    searchResultGenerator = _SearchResultGenerator_;
   }));
   
   function getLabelListController() {
     return $controller(
       'LabelsListController', {
-        LabelService: LabelManager
+        SearchResultGenerator: searchResultGenerator,
+        $scope: $scope
       }
     );
   }
 
-  it('should look for the first page of items when the search query changes', function(done) {
-    var controller = getLabelListController();
-    controller.queryChanged('reactive extension');
-
-    scheduler.scheduleAbsolute(null, 300, function() {
-      expect(LabelManager.find).toHaveBeenCalledWith('reactive extension', 10, 0);
-      scheduler.stop();
-      done();
-    });
-
-    scheduler.start();
-  });
-
-  it('should look for the items at the right offset when the page for the active query changes', function(done) {
-    var controller = getLabelListController();
-    controller.queryChanged('beep');
-    controller.pageChanged(2);
-
-    scheduler.scheduleAbsolute(null, 300, function() {
-      expect(LabelManager.find).toHaveBeenCalledWith('beep', 10, 10);
-      scheduler.stop();
-      done();
-    });
-
-    scheduler.start();
-  });
-
   it('should set the right loading states when looking for items', function(done) {
-    LabelManager = jasmine.createSpyObj('LabelManager', ['find']);
-    var labelRequest = $q.defer();
-    LabelManager.find.and.returnValue(labelRequest.promise);
-
+    var deferredSearchResult = $q.defer();
+    var searchResult$ = Rx.Observable.fromPromise(deferredSearchResult.promise);
+    spyOn(searchResultGenerator.prototype, 'getSearchResult$').and.returnValue(searchResult$);
     var controller = getLabelListController();
+
+    function assertLoadingEnded() {
+      expect(controller.loading).toEqual(false);
+      sub.dispose();
+      done();
+    }
+
     // The controller should not look for items when it loads
     expect(controller.loading).toEqual(false);
 
     // When the query changes the controller start looking for items
     controller.queryChanged('dirk');
-    scheduler.scheduleAbsolute(null, 300, function() {
-      expect(controller.loading).toEqual(true);
+    expect(controller.loading).toEqual(true);
 
-      // The items should load after the search result arrives
-      labelRequest.resolve(pagedLabels);
-      $scope.$digest();
-      expect(controller.loading).toEqual(false);
+    // The items should load after the search result arrives
+    deferredSearchResult.resolve(pagedSearchResult);
+    $scope.$digest();
 
-      scheduler.stop();
-      done();
-    });
-
-    scheduler.start();
+    var sub = searchResult$.subscribe(assertLoadingEnded);
   });
 });

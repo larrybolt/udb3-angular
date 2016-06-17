@@ -12,16 +12,17 @@ angular
   .factory('SearchResultGenerator', SearchResultGenerator);
 
 /* @ngInject */
-function SearchResultGenerator(rx, SearchService) {
+function SearchResultGenerator(rx) {
   /**
    * @class SearchResultGenerator
    * @constructor
+   * @param {Object} searchService
    * @param {Observable} query$
    * @param {Observable} page$
    * @param {Number} itemsPerPage
    */
-  var SearchResultGenerator = function (query$, page$, itemsPerPage) {
-    this.searchService = SearchService;
+  var SearchResultGenerator = function (searchService, query$, page$, itemsPerPage) {
+    this.searchService = searchService;
     this.itemsPerPage = itemsPerPage;
     this.query$ = query$.debounce(300);
     this.offset$ = page$.map(pageToOffset(itemsPerPage)).startWith(0);
@@ -59,14 +60,17 @@ function SearchResultGenerator(rx, SearchService) {
    * @return {Promise.<PagedCollection>}
    */
   SearchResultGenerator.prototype.find = function (searchParameters) {
-    return this.searchService
-      .find(searchParameters.query, this.itemsPerPage, searchParameters.offset);
+    var generator = this;
+
+    return generator.searchService
+      .find(searchParameters.query, generator.itemsPerPage, searchParameters.offset);
   };
 
   SearchResultGenerator.prototype.getSearchResult$ = function () {
-    var searchResultGenerator = this;
-    return searchResultGenerator.searchParameters$
-      .selectMany(searchResultGenerator.find.bind(this));
+    var generator = this;
+
+    return generator.searchParameters$
+      .selectMany(generator.find.bind(generator));
   };
 
   return (SearchResultGenerator);
