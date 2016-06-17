@@ -84,11 +84,11 @@
                                     label-removed="labelRemoved(label)"></udb-label-select>
                 </td>
               </tr>
-              <tr ng-class="{muted: !place.typicalAgeRange}">
+              <tr>
                 <td><strong>Geschikt voor</strong></td>
                 <td>
                   <span ng-if="place.typicalAgeRange">{{place.typicalAgeRange}}</span>
-                  <span ng-if="!place.typicalAgeRange">Geen leeftijdsinformatie</span>
+                  <span ng-if="!place.typicalAgeRange">Alle leeftijden</span>
                 </td>
               </tr>
               <tr ng-class="{muted: !place.image}">

@@ -16679,11 +16679,11 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                                    label-removed=\"labelRemoved(label)\"></udb-label-select>\n" +
     "                </td>\n" +
     "              </tr>\n" +
-    "              <tr ng-class=\"{muted: !place.typicalAgeRange}\">\n" +
+    "              <tr>\n" +
     "                <td><strong>Geschikt voor</strong></td>\n" +
     "                <td>\n" +
     "                  <span ng-if=\"place.typicalAgeRange\">{{place.typicalAgeRange}}</span>\n" +
-    "                  <span ng-if=\"!place.typicalAgeRange\">Geen leeftijdsinformatie</span>\n" +
+    "                  <span ng-if=\"!place.typicalAgeRange\">Alle leeftijden</span>\n" +
     "                </td>\n" +
     "              </tr>\n" +
     "              <tr ng-class=\"{muted: !place.image}\">\n" +
@@ -16837,7 +16837,6 @@ $templateCache.put('templates/calendar-summary.directive.html',
   $templateCache.put('templates/label-select.html',
     "<ui-select multiple\n" +
     "           tagging=\"select.createLabel\"\n" +
-    "           tagging-label=\"(nieuw)\"\n" +
     "           ng-model=\"select.labels\"\n" +
     "           reset-search-input=\"true\"\n" +
     "           tagging-tokens=\"ENTER|;\"\n" +
