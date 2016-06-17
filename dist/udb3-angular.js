@@ -2800,7 +2800,7 @@ function UdbApi(
       if (response.data.hasPermission) {
         return $q.resolve();
       } else {
-        $q.reject();
+        return $q.reject();
       }
     });
   };
@@ -16837,7 +16837,6 @@ $templateCache.put('templates/calendar-summary.directive.html',
   $templateCache.put('templates/label-select.html',
     "<ui-select multiple\n" +
     "           tagging=\"select.createLabel\"\n" +
-    "           tagging-label=\"(nieuw)\"\n" +
     "           ng-model=\"select.labels\"\n" +
     "           reset-search-input=\"true\"\n" +
     "           tagging-tokens=\"ENTER|;\"\n" +

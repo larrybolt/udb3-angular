@@ -272,7 +272,7 @@ function UdbApi(
       if (response.data.hasPermission) {
         return $q.resolve();
       } else {
-        $q.reject();
+        return $q.reject();
       }
     });
   };
