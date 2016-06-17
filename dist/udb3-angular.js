@@ -2797,11 +2797,7 @@ function UdbApi(
       offerLocation + '/permission',
       defaultApiConfig
     ).then(function (response) {
-      if (response.data.hasPermission) {
-        return $q.resolve();
-      } else {
-        return $q.reject();
-      }
+      return response.data.hasPermission ? $q.resolve() : $q.reject();
     });
   };
 
