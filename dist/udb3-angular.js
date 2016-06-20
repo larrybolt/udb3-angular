@@ -13797,9 +13797,11 @@ function OfferController(
 
   // initialize controller and take optional event actions
   $q.when(controller.init())
+    // translate location before fetching the maybe non-existant variation
+    // a variation does not change the location
+    .then(translateLocation)
     .then(fetchPersonalVariation)
     .then(ifOfferIsEvent)
-    .then(translateLocation)
     .finally(function () {
       controller.editable = true;
     });
@@ -13933,6 +13935,8 @@ function OfferController(
       .then(function (personalVariation) {
         $scope.event.description = personalVariation.description[defaultLanguage];
         return personalVariation;
+      }, function () {
+        return $q.reject();
       });
   }
 
@@ -17499,7 +17503,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  </div>\n" +
     "\n" +
     "  <div class=\"col-sm-2\">\n" +
-    "    <div class=\"udb-place-name\" ng-bind=\"event.location.name.nl\"></div>\n" +
+    "    <div class=\"udb-place-name\" ng-bind=\"event.location.name\"></div>\n" +
     "    <div class=\"udb-place-city\" ng-bind=\"event.location.address.addressLocality\"></div>\n" +
     "  </div>\n" +
     "\n" +

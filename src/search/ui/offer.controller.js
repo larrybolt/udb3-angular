@@ -58,9 +58,11 @@ function OfferController(
 
   // initialize controller and take optional event actions
   $q.when(controller.init())
+    // translate location before fetching the maybe non-existant variation
+    // a variation does not change the location
+    .then(translateLocation)
     .then(fetchPersonalVariation)
     .then(ifOfferIsEvent)
-    .then(translateLocation)
     .finally(function () {
       controller.editable = true;
     });
@@ -194,6 +196,8 @@ function OfferController(
       .then(function (personalVariation) {
         $scope.event.description = personalVariation.description[defaultLanguage];
         return personalVariation;
+      }, function () {
+        return $q.reject();
       });
   }
 
