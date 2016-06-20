@@ -17499,7 +17499,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  </div>\n" +
     "\n" +
     "  <div class=\"col-sm-2\">\n" +
-    "    <div class=\"udb-place-name\" ng-bind=\"event.location.name\"></div>\n" +
+    "    <div class=\"udb-place-name\" ng-bind=\"event.location.name.nl\"></div>\n" +
     "    <div class=\"udb-place-city\" ng-bind=\"event.location.address.addressLocality\"></div>\n" +
     "  </div>\n" +
     "\n" +
