@@ -221,7 +221,12 @@ angular
         component: 'labelsComponent'
       },
       {
-        path: '/label/:id',
+        path: '/labels/create',
+        name: 'LabelCreator',
+        component: 'udbLabelCreator'
+      },
+      {
+        path: '/labels/:id',
         name: 'LabelEditor',
         component: 'udbLabelEditor'
       }
@@ -10654,6 +10659,63 @@ function QuerySearchBarComponent() {
   }
 }
 
+// Source: src/management/labels/label-creator.component.js
+angular
+  .module('udb.management.labels')
+  .component('udbLabelCreator', {
+    templateUrl: 'templates/label-creator.html',
+    controller: LabelCreatorComponent,
+    controllerAs: 'creator',
+    bindings: {
+      $router: '<'
+    }
+  });
+
+/** @ngInject */
+function LabelCreatorComponent(LabelManager, $uibModal) {
+  var creator = this;
+  creator.creating = false;
+  creator.create = create;
+  creator.label = {
+    name: '',
+    isPrivate: false,
+    isVisible: true
+  };
+
+  function create() {
+    function goToOverview(jobInfo) {
+      creator.$router.navigate(['LabelsList']);
+    }
+
+    creator.creating = true;
+    LabelManager
+      .create(creator.label.name, creator.label.isVisible, creator.label.isPrivate)
+      .then(goToOverview, showProblem)
+      .finally(function () {
+        creator.creating = false;
+      });
+  }
+
+  /**
+   * @param {ApiProblem} problem
+   */
+  function showProblem(problem) {
+    var modalInstance = $uibModal.open(
+      {
+        templateUrl: 'templates/unexpected-error-modal.html',
+        controller: 'UnexpectedErrorModalController',
+        size: 'sm',
+        resolve: {
+          errorMessage: function() {
+            return problem.title + ' ' + problem.detail;
+          }
+        }
+      }
+    );
+  }
+}
+LabelCreatorComponent.$inject = ["LabelManager", "$uibModal"];
+
 // Source: src/management/labels/label-editor.component.js
 angular
   .module('udb.management.labels')
@@ -10962,6 +11024,50 @@ function LabelsListController(SearchResultGenerator, rx, $scope, LabelManager) {
     .subscribe();
 }
 LabelsListController.$inject = ["SearchResultGenerator", "rx", "$scope", "LabelManager"];
+
+// Source: src/management/labels/unique-label.directive.js
+angular
+  .module('udb.management.labels')
+  .directive('udbUniqueLabel', UniqueLabelDirective);
+
+/** @ngInject */
+function UniqueLabelDirective(LabelManager, $q) {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, element, attrs, controller) {
+
+      function isUnique(labelName) {
+
+        if (controller.$isEmpty(labelName)) {
+          return $q.when();
+        }
+
+        var def = $q.defer();
+
+        function findDuplicate(similarLabels) {
+          var duplicate = _.find(similarLabels.member, function (label) {
+            return label.name.toUpperCase() === labelName.toUpperCase();
+          });
+          if (duplicate)  {
+            def.reject(duplicate);
+          } else {
+            def.resolve();
+          }
+        }
+
+        LabelManager
+          .find(labelName, 10, 0)
+          .then(findDuplicate, def.resolve);
+
+        return def.promise;
+      }
+
+      controller.$asyncValidators.uniqueLabel = isUnique;
+    }
+  };
+}
+UniqueLabelDirective.$inject = ["LabelManager", "$q"];
 
 // Source: src/management/search-result-generator.factory.js
 /**
@@ -16834,9 +16940,60 @@ $templateCache.put('templates/calendar-summary.directive.html',
   );
 
 
+  $templateCache.put('templates/label-creator.html',
+    "<div class=\"page-header\">\n" +
+    "    <h1>Labels</h1>\n" +
+    "</div>\n" +
+    "<h2>Label Aanmaken</h2>\n" +
+    "\n" +
+    "<form name=\"creator.form\" class=\"css-form\" novalidate>\n" +
+    "    <div class=\"row\">\n" +
+    "        <div class=\"col-md-6\">\n" +
+    "            <label for=\"label-name-field\">Naam</label>\n" +
+    "            <input id=\"label-name-field\"\n" +
+    "                   name=\"name\"\n" +
+    "                   type=\"text\"\n" +
+    "                   udb-unique-label\n" +
+    "                   ng-minlength=\"3\"\n" +
+    "                   ng-model=\"creator.label.name\"\n" +
+    "                   ng-model-options=\"{debounce: 300}\"\n" +
+    "                   ng-disabled=\"creator.creating\">\n" +
+    "        </div>\n" +
+    "        <div class=\"col-md-6\">\n" +
+    "            <div ng-show=\"creator.form.name.$error.uniqueLabel\" class=\"alert alert-warning\" role=\"alert\">\n" +
+    "                Er bestaat al een label met deze naam!\n" +
+    "            </div>\n" +
+    "            <div ng-show=\"creator.form.name.$error.minlength\" class=\"alert alert-warning\" role=\"alert\">\n" +
+    "                Een label moet uit minstens 3 karakters bestaan.\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "        <div class=\"col-md-12\">\n" +
+    "            <label>\n" +
+    "                <input type=\"checkbox\"\n" +
+    "                       ng-model=\"creator.label.isVisible\"> Tonen op publicatiekanalen\n" +
+    "            </label>\n" +
+    "            <br>\n" +
+    "            <label>\n" +
+    "                <input type=\"checkbox\"\n" +
+    "                       ng-model=\"creator.label.isPrivate\"> Voorbehouden aan specifieke gebruikersgroepen\n" +
+    "            </label>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div class=\"col-md-12\">\n" +
+    "            <button ng-disabled=\"!creator.form.$valid || creator.creating\" type=\"button\" class=\"btn btn-primary\" ng-click=\"creator.create()\">\n" +
+    "                Aanmaken <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"creator.creating\"></i>\n" +
+    "            </button>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "</form>"
+  );
+
+
   $templateCache.put('templates/label-editor.html',
-    "<h2>Labels</h2>\n" +
-    "<h3>Label bewerken</h3>\n" +
+    "<div class=\"page-header\">\n" +
+    "    <h1>Labels</h1>\n" +
+    "</div>\n" +
+    "<h2>Label bewerken</h2>\n" +
     "\n" +
     "<div ng-show=\"!editor.label && !editor.loadingError\">\n" +
     "    <i class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
@@ -16869,9 +17026,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
 
   $templateCache.put('templates/labels-list.html',
-    "<h1 class=\"title\" id=\"page-title\">\n" +
-    "    Labels\n" +
-    "</h1>\n" +
+    "<div class=\"page-header\">\n" +
+    "    <h1>Labels <small><a ng-link=\"['LabelCreator']\">toevoegen</a></small></h1>\n" +
+    "</div>\n" +
+    "\n" +
     "<div class=\"row\">\n" +
     "    <div class=\"col-md-11\">\n" +
     "        <udb-query-search-bar search-label=\"Zoeken op labelnaam\"\n" +

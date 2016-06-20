@@ -1,0 +1,45 @@
+<div class="page-header">
+    <h1>Labels</h1>
+</div>
+<h2>Label Aanmaken</h2>
+
+<form name="creator.form" class="css-form" novalidate>
+    <div class="row">
+        <div class="col-md-6">
+            <label for="label-name-field">Naam</label>
+            <input id="label-name-field"
+                   name="name"
+                   type="text"
+                   udb-unique-label
+                   ng-minlength="3"
+                   ng-model="creator.label.name"
+                   ng-model-options="{debounce: 300}"
+                   ng-disabled="creator.creating">
+        </div>
+        <div class="col-md-6">
+            <div ng-show="creator.form.name.$error.uniqueLabel" class="alert alert-warning" role="alert">
+                Er bestaat al een label met deze naam!
+            </div>
+            <div ng-show="creator.form.name.$error.minlength" class="alert alert-warning" role="alert">
+                Een label moet uit minstens 3 karakters bestaan.
+            </div>
+        </div>
+        <div class="col-md-12">
+            <label>
+                <input type="checkbox"
+                       ng-model="creator.label.isVisible"> Tonen op publicatiekanalen
+            </label>
+            <br>
+            <label>
+                <input type="checkbox"
+                       ng-model="creator.label.isPrivate"> Voorbehouden aan specifieke gebruikersgroepen
+            </label>
+        </div>
+
+        <div class="col-md-12">
+            <button ng-disabled="!creator.form.$valid || creator.creating" type="button" class="btn btn-primary" ng-click="creator.create()">
+                Aanmaken <i class="fa fa-circle-o-notch fa-spin" ng-show="creator.creating"></i>
+            </button>
+        </div>
+    </div>
+</form>
