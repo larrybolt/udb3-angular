@@ -3139,3 +3139,9 @@ img.offer-image-thumbnail {
 .query-search-result .table {
   margin-bottom: 0px;
 }
+[udb-form-group] .help-block {
+  display: none;
+}
+[udb-form-group].has-error .help-block {
+  display: block;
+}

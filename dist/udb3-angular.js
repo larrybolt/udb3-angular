@@ -10659,6 +10659,30 @@ function QuerySearchBarComponent() {
   }
 }
 
+// Source: src/management/directives/form-group.directive.js
+angular
+  .module('udb.management')
+  .directive('udbFormGroup', FormGroupDirective);
+
+function FormGroupDirective() {
+  return {
+    restrict: 'A',
+    require: '^form',
+    link: function (scope, element, attributes, formController) {
+      var inputElement = element[0].querySelector('[name]');
+      var field = angular.element(inputElement);
+      var fieldName = field.attr('name');
+
+      field.bind('blur', function () {
+        var isInvalid = formController[fieldName].$invalid;
+        element
+          .toggleClass('has-error', isInvalid)
+          .toggleClass('has-success', !isInvalid);
+      });
+    }
+  };
+}
+
 // Source: src/management/labels/label-creator.component.js
 angular
   .module('udb.management.labels')
@@ -16949,8 +16973,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "<form name=\"creator.form\" class=\"css-form\" novalidate>\n" +
     "    <div class=\"row\">\n" +
     "        <div class=\"col-md-6\">\n" +
-    "            <div class=\"form-group\">\n" +
-    "                <label for=\"label-name-field\">Naam</label>\n" +
+    "            <div class=\"form-group\" udb-form-group>\n" +
+    "                <label class=\"control-label\" for=\"label-name-field\">Naam</label>\n" +
     "                <input id=\"label-name-field\"\n" +
     "                       class=\"form-control\"\n" +
     "                       name=\"name\"\n" +
@@ -16962,17 +16986,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                       ng-model=\"creator.label.name\"\n" +
     "                       ng-model-options=\"{debounce: 300}\"\n" +
     "                       ng-disabled=\"creator.creating\">\n" +
-    "            </div>\n" +
-    "        </div>\n" +
-    "        <div class=\"col-md-6\">\n" +
-    "            <div ng-show=\"creator.form.name.$error.uniqueLabel\" class=\"alert alert-warning\" role=\"alert\">\n" +
-    "                Er bestaat al een label met deze naam!\n" +
-    "            </div>\n" +
-    "            <div ng-show=\"creator.form.name.$error.minlength\" class=\"alert alert-warning\" role=\"alert\">\n" +
-    "                Een label moet uit minstens 3 tekens bestaan.\n" +
-    "            </div>\n" +
-    "            <div ng-show=\"creator.form.name.$error.maxlength\" class=\"alert alert-warning\" role=\"alert\">\n" +
-    "                Een label mag maximum 255 tekens bevatten.\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.uniqueLabel\">Er bestaat al een label met deze naam.</p>\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.required\">Een label naam is verplicht.</p>\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.minlength\">Een label moet uit minstens 3 tekens bestaan.</p>\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.maxlength\">Een label mag maximum 255 tekens bevatten.</p>\n" +
     "            </div>\n" +
     "        </div>\n" +
     "    </div>\n" +

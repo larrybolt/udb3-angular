@@ -6,8 +6,8 @@
 <form name="creator.form" class="css-form" novalidate>
     <div class="row">
         <div class="col-md-6">
-            <div class="form-group">
-                <label for="label-name-field">Naam</label>
+            <div class="form-group" udb-form-group>
+                <label class="control-label" for="label-name-field">Naam</label>
                 <input id="label-name-field"
                        class="form-control"
                        name="name"
@@ -19,17 +19,10 @@
                        ng-model="creator.label.name"
                        ng-model-options="{debounce: 300}"
                        ng-disabled="creator.creating">
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div ng-show="creator.form.name.$error.uniqueLabel" class="alert alert-warning" role="alert">
-                Er bestaat al een label met deze naam!
-            </div>
-            <div ng-show="creator.form.name.$error.minlength" class="alert alert-warning" role="alert">
-                Een label moet uit minstens 3 tekens bestaan.
-            </div>
-            <div ng-show="creator.form.name.$error.maxlength" class="alert alert-warning" role="alert">
-                Een label mag maximum 255 tekens bevatten.
+                <p class="help-block" ng-if="creator.form.name.$error.uniqueLabel">Er bestaat al een label met deze naam.</p>
+                <p class="help-block" ng-if="creator.form.name.$error.required">Een label naam is verplicht.</p>
+                <p class="help-block" ng-if="creator.form.name.$error.minlength">Een label moet uit minstens 3 tekens bestaan.</p>
+                <p class="help-block" ng-if="creator.form.name.$error.maxlength">Een label mag maximum 255 tekens bevatten.</p>
             </div>
         </div>
     </div>
