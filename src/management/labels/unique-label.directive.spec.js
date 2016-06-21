@@ -29,6 +29,24 @@ describe('Directive: Unique label', function () {
         {name: 'other-label'}
       ]
     }));
-    var element = getFormElement('unique-label');
+
+    var formElement = getFormElement('unique-label');
+    expect($rootScope.form.name.$error).toEqual({});
+  });
+
+  it('should mark a duplicate label as invalid', function () {
+    LabelManager.find.and.returnValue($q.resolve({
+      member: [
+        {name: 'unique-label'}
+      ]
+    }));
+
+    var formElement = getFormElement('unique-label');
+    expect($rootScope.form.name.$error).toEqual({'uniqueLabel': true});
+  });
+
+  it('should should not trigger validation for empty input', function () {
+    var formElement = getFormElement('');
+    expect(LabelManager.find).not.toHaveBeenCalled();
   });
 });

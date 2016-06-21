@@ -16955,6 +16955,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                   type=\"text\"\n" +
     "                   udb-unique-label\n" +
     "                   ng-minlength=\"3\"\n" +
+    "                   ng-maxlength=\"255\"\n" +
     "                   ng-model=\"creator.label.name\"\n" +
     "                   ng-model-options=\"{debounce: 300}\"\n" +
     "                   ng-disabled=\"creator.creating\">\n" +
@@ -16964,7 +16965,10 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                Er bestaat al een label met deze naam!\n" +
     "            </div>\n" +
     "            <div ng-show=\"creator.form.name.$error.minlength\" class=\"alert alert-warning\" role=\"alert\">\n" +
-    "                Een label moet uit minstens 3 karakters bestaan.\n" +
+    "                Een label moet uit minstens 3 tekens bestaan.\n" +
+    "            </div>\n" +
+    "            <div ng-show=\"creator.form.name.$error.maxlength\" class=\"alert alert-warning\" role=\"alert\">\n" +
+    "                Een label mag maximum 255 tekens bevatten.\n" +
     "            </div>\n" +
     "        </div>\n" +
     "        <div class=\"col-md-12\">\n" +
