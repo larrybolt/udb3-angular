@@ -16955,6 +16955,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                   type=\"text\"\n" +
     "                   udb-unique-label\n" +
     "                   ng-minlength=\"3\"\n" +
+    "                   ng-required=\"true\"\n" +
     "                   ng-maxlength=\"255\"\n" +
     "                   ng-model=\"creator.label.name\"\n" +
     "                   ng-model-options=\"{debounce: 300}\"\n" +
