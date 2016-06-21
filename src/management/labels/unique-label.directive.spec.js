@@ -4,7 +4,7 @@ describe('Directive: Unique label', function () {
   var $compile, $rootScope, $q, LabelManager;
 
   beforeEach(module('udb.management.labels', function($provide) {
-    LabelManager = jasmine.createSpyObj('LabelManager', ['find']);
+    LabelManager = jasmine.createSpyObj('LabelManager', ['get']);
     $provide.value('LabelManager', LabelManager);
   }));
 
@@ -24,29 +24,25 @@ describe('Directive: Unique label', function () {
   }
 
   it('should check if a label name is unique', function () {
-    LabelManager.find.and.returnValue($q.resolve({
-      member: [
-        {name: 'other-label'}
-      ]
-    }));
-
+    LabelManager.get.and.returnValue($q.reject());
     var formElement = getFormElement('unique-label');
     expect($rootScope.form.name.$error).toEqual({});
   });
 
   it('should mark a duplicate label as invalid', function () {
-    LabelManager.find.and.returnValue($q.resolve({
-      member: [
-        {name: 'unique-label'}
-      ]
+    LabelManager.get.and.returnValue($q.resolve({
+      name: 'popular-label',
+      id: 'EE764EB5-B541-4C07-8DDD-CAE6C175D262',
+      isVisible: true,
+      isPrivate: false
     }));
 
-    var formElement = getFormElement('unique-label');
+    var formElement = getFormElement('popular-label');
     expect($rootScope.form.name.$error).toEqual({'uniqueLabel': true});
   });
 
   it('should should not trigger validation for empty input', function () {
     var formElement = getFormElement('');
-    expect(LabelManager.find).not.toHaveBeenCalled();
+    expect(LabelManager.get).not.toHaveBeenCalled();
   });
 });

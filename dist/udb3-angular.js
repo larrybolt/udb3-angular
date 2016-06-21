@@ -3329,7 +3329,7 @@ function UdbApi(
    */
   this.getLabelById = function (labelId) {
     return $http
-      .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .get(appConfig.baseUrl + 'labels/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
@@ -10866,11 +10866,12 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   };
 
   /**
-   * @param {uuid} labelId
+   * @param {string|uuid} labelIdentifier
+   *  The name or uuid of a label.
    * @return {Promise.<Label>}
    */
-  service.get = function(labelId) {
-    return udbApi.getLabelById(labelId);
+  service.get = function(labelIdentifier) {
+    return udbApi.getLabelById(labelIdentifier);
   };
 
   /**
@@ -11060,31 +11061,18 @@ function UniqueLabelDirective(LabelManager, $q) {
     restrict: 'A',
     require: 'ngModel',
     link: function (scope, element, attrs, controller) {
-
       function isUnique(labelName) {
-
         if (controller.$isEmpty(labelName)) {
           return $q.when();
         }
 
-        var def = $q.defer();
-
-        function findDuplicate(similarLabels) {
-          var duplicate = _.find(similarLabels.member, function (label) {
-            return label.name.toUpperCase() === labelName.toUpperCase();
-          });
-          if (duplicate)  {
-            def.reject(duplicate);
-          } else {
-            def.resolve();
-          }
-        }
+        var deferredUniqueCheck = $q.defer();
 
         LabelManager
-          .find(labelName, 10, 0)
-          .then(findDuplicate, def.resolve);
+          .get(labelName)
+          .then(deferredUniqueCheck.reject, deferredUniqueCheck.resolve);
 
-        return def.promise;
+        return deferredUniqueCheck.promise;
       }
 
       controller.$asyncValidators.uniqueLabel = isUnique;

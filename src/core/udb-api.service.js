@@ -764,7 +764,7 @@ function UdbApi(
    */
   this.getLabelById = function (labelId) {
     return $http
-      .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .get(appConfig.baseUrl + 'labels/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
