@@ -1888,9 +1888,9 @@ input + .alert {
 .udb-header-search .warning-icon {
   left: auto;
   right: 36px;
-  color: yellow;
+  color: #e5e600;
   display: block;
-  background-color: #4b79a0;
+  background-color: transparent;
 }
 /*body {
   padding-top: 155px;
