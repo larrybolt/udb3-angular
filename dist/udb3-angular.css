@@ -1934,7 +1934,7 @@ input + .alert {
   width: 320px;
   left: -320px;
   position: fixed;
-  top: 50px;
+  top: 0px;
   bottom: 0;
   transition: left 0.3s ease;
   overflow-x: hidden;
@@ -1988,7 +1988,7 @@ input + .alert {
 }
 .udb-job-log-overlay {
   position: fixed;
-  top: 50px;
+  top: 0px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -2002,7 +2002,7 @@ input + .alert {
 }
 #logo .letter,
 #logo #deur {
-  fill: #222;
+  fill: #eee;
 }
 #logo .warning {
   display: none;
