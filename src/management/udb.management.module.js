@@ -20,7 +20,12 @@ angular
         component: 'labelsComponent'
       },
       {
-        path: '/label/:id',
+        path: '/labels/create',
+        name: 'LabelCreator',
+        component: 'udbLabelCreator'
+      },
+      {
+        path: '/labels/:id',
         name: 'LabelEditor',
         component: 'udbLabelEditor'
       }

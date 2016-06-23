@@ -35,11 +35,12 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   };
 
   /**
-   * @param {uuid} labelId
+   * @param {string|uuid} labelIdentifier
+   *  The name or uuid of a label.
    * @return {Promise.<Label>}
    */
-  service.get = function(labelId) {
-    return udbApi.getLabelById(labelId);
+  service.get = function(labelIdentifier) {
+    return udbApi.getLabelById(labelIdentifier);
   };
 
   /**
