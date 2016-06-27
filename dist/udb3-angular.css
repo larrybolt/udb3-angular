@@ -2551,7 +2551,7 @@ body {
   display: block;
   margin: 0 auto;
   text-align: center;
-  padding-top: 60px;
+  padding-top: 30px;
   font-size: 7em;
   text-decoration: none !important;
 }
@@ -2564,6 +2564,10 @@ body {
   margin: 0 auto;
   text-align: center;
   text-decoration: underline;
+}
+.offer-form #add-date-tip {
+  padding-top: 30px;
+  color: #999;
 }
 .offer-form .add-date-link,
 .offer-form .add-date-link:focus *,
