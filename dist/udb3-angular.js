@@ -16034,6 +16034,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <div class=\"alert alert-danger\" role=\"alert\" ng-show=\"cityAutoCompleteError\">\n" +
     "            Er was een probleem tijdens het ophalen van de steden\n" +
     "          </div>\n" +
+    "            <p>&nbsp;</p>\n" +
+    "            <p>&nbsp;</p>\n" +
+    "            <p>&nbsp;</p>\n" +
     "        </div>\n" +
     "        <div id=\"gemeente-gekozen\" ng-show=\"selectedCity !== ''\">\n" +
     "          <span class=\"btn-chosen\" id=\"gemeente-gekozen-button\" ng-bind=\"selectedCity\"></span>\n" +
@@ -16074,6 +16077,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "            <div class=\"alert alert-danger\" role=\"alert\" ng-show=\"locationAutoCompleteError\">\n" +
     "              Er was een probleem tijdens het ophalen van de locaties\n" +
     "            </div>\n" +
+    "              <p>&nbsp;</p>\n" +
+    "              <p>&nbsp;</p>\n" +
+    "              <p>&nbsp;</p>\n" +
     "          </div>\n" +
     "\n" +
     "          <div id=\"locatie-gekozen\" ng-show=\"selectedLocation\" >\n" +
@@ -16119,7 +16125,6 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <a class=\"btn btn-link plaats-adres-wijzigen\" ng-click=\"changeStreetAddress()\">Wijzigen</a>\n" +
     "        </span>\n" +
     "      </div>\n" +
-    "\n" +
     "    </div>\n" +
     "\n" +
     "  </form>\n" +
