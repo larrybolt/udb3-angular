@@ -8746,7 +8746,6 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
       timestamp.showEndHour = false;
       controller.eventTimingChanged();
     }
-
   };
 
   /**
@@ -15059,7 +15058,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                uib-typeahead=\"time for time in ::times | filter:$viewValue | limitTo:8\"\n" +
     "                typeahead-on-select=\"EventFormStep2.eventTimingChanged()\"\n" +
     "                typeahead-editable=\"false\"\n" +
-    "                placeholder=\"Bv. 08:00\">\n" +
+    "                placeholder=\"Bv. 08:00\"\n" +
+    "                focus-if>\n" +
     "          </div>\n" +
     "        </div>\n" +
     "        <div class=\"col-xs-6 einduur\" ng-show=\"timestamp.showStartHour\">\n" +
@@ -15079,7 +15079,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                uib-typeahead=\"time for time in ::times | filter:$viewValue | limitTo:8\"\n" +
     "                typeahead-on-select=\"EventFormStep2.eventTimingChanged()\"\n" +
     "                typeahead-editable=\"false\"\n" +
-    "                placeholder=\"Bv. 23:00\">\n" +
+    "                placeholder=\"Bv. 23:00\"\n" +
+    "                focus-if>\n" +
     "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +

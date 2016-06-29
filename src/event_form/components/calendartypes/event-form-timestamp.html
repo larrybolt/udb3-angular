@@ -27,7 +27,8 @@
                 uib-typeahead="time for time in ::times | filter:$viewValue | limitTo:8"
                 typeahead-on-select="EventFormStep2.eventTimingChanged()"
                 typeahead-editable="false"
-                placeholder="Bv. 08:00">
+                placeholder="Bv. 08:00"
+                focus-if>
           </div>
         </div>
         <div class="col-xs-6 einduur" ng-show="timestamp.showStartHour">
@@ -47,7 +48,8 @@
                 uib-typeahead="time for time in ::times | filter:$viewValue | limitTo:8"
                 typeahead-on-select="EventFormStep2.eventTimingChanged()"
                 typeahead-editable="false"
-                placeholder="Bv. 23:00">
+                placeholder="Bv. 23:00"
+                focus-if>
           </div>
         </div>
       </div>
