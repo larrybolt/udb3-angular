@@ -13723,6 +13723,10 @@ function Search(
   $scope.queryEditorShown = false;
   $scope.currentPage = getCurrentPage();
 
+  this.$routerOnReuse = function(next, prev) {
+    console.log(next.params);
+  };
+
   /**
    * Fires off a search for events using a plain query string or a query object.
    * @param {String|Query} query A query string or object to search with.
