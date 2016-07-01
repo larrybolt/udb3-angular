@@ -14577,7 +14577,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <div class=\"panel panel-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
     "    <div class=\"panel-body text-center\">\n" +
     "      <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
-    "        <br/><a href=\"event\">Een activiteit of monument toevoegen?</a>\n" +
+    "        <!--<br/><a href=\"event\">Een activiteit of monument toevoegen?</a>-->\n" +
     "      </p>\n" +
     "    </div>\n" +
     "  </div>\n" +
@@ -14586,9 +14586,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "    <div class=\"clearfix\">\n" +
     "      <p class=\"invoer-title\"><span class=\"block-header\">Recent</span>\n" +
-    "        <span class=\"pull-right\">\n" +
-    "          <a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
-    "        </span>\n" +
+    "        <!--<span class=\"pull-right\">-->\n" +
+    "          <!--<a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>-->\n" +
+    "        <!--</span>-->\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
