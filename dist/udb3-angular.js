@@ -14577,7 +14577,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <div class=\"panel panel-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
     "    <div class=\"panel-body text-center\">\n" +
     "      <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
-    "        <br/><a href=\"event\">Een activiteit of monument toevoegen?</a>\n" +
+    "        <!--<br/><a href=\"event\">Een activiteit of monument toevoegen?</a>-->\n" +
     "      </p>\n" +
     "    </div>\n" +
     "  </div>\n" +
@@ -14586,9 +14586,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "    <div class=\"clearfix\">\n" +
     "      <p class=\"invoer-title\"><span class=\"block-header\">Recent</span>\n" +
-    "        <span class=\"pull-right\">\n" +
-    "          <a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
-    "        </span>\n" +
+    "        <!--<span class=\"pull-right\">-->\n" +
+    "          <!--<a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>-->\n" +
+    "        <!--</span>-->\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
@@ -15092,7 +15092,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <div class=\"add-date\">\n" +
     "    <a href=\"#\" class=\"add-date-link\" ng-click=\"addTimestamp()\">\n" +
     "      <p id=\"add-date-plus\">+</p>\n" +
-    "      <p id=\"add-date-label\">Dag toevoegen</p>\n" +
+    "      <p id=\"add-date-label\">Nog een dag toevoegen</p>\n" +
+    "      <p id=\"add-date-tip\" class=\"muted col-sm-12\"><em>Tip: Gaat dit evenement meerdere malen per dag door? Voeg dan dezelfde dag met een ander beginuur toe.</em></p>\n" +
     "    </a>\n" +
     "  </div>\n" +
     "</div>"
