@@ -2546,7 +2546,7 @@ input + .alert {
   display: block;
   margin: 0 auto;
   text-align: center;
-  padding-top: 60px;
+  padding-top: 30px;
   font-size: 7em;
   text-decoration: none !important;
 }
@@ -2559,6 +2559,10 @@ input + .alert {
   margin: 0 auto;
   text-align: center;
   text-decoration: underline;
+}
+.offer-form #add-date-tip {
+  padding-top: 30px;
+  color: #999;
 }
 .offer-form .add-date-link,
 .offer-form .add-date-link:focus *,
@@ -3126,4 +3130,17 @@ img.offer-image-thumbnail {
 }
 .editable-wrap .editable-buttons button + button {
   margin-left: 10px;
+}
+.loading-search-result {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.query-search-result .table {
+  margin-bottom: 0px;
+}
+[udb-form-group] .help-block {
+  display: none;
+}
+[udb-form-group].has-error .help-block {
+  display: block;
 }

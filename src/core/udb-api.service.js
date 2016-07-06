@@ -269,11 +269,7 @@ function UdbApi(
       offerLocation + '/permission',
       defaultApiConfig
     ).then(function (response) {
-      if (response.data.hasPermission) {
-        return $q.resolve();
-      } else {
-        $q.reject();
-      }
+      return response.data.hasPermission ? $q.resolve() : $q.reject();
     });
   };
 
@@ -735,7 +731,7 @@ function UdbApi(
     }
 
     return $http
-      .post(appConfig.baseUrl + 'label', labelData, defaultApiConfig)
+      .post(appConfig.baseUrl + 'labels/', labelData, defaultApiConfig)
       .then(returnUnwrappedData, returnApiProblem);
   };
 
@@ -746,7 +742,7 @@ function UdbApi(
    */
   this.updateLabel = function (labelId, command) {
     return $http.patch(
-      appConfig.baseUrl + 'label/' + labelId,
+      appConfig.baseUrl + 'labels/' + labelId,
       {'command': command},
       defaultApiConfig
     ).then(returnUnwrappedData, returnApiProblem);
@@ -758,7 +754,7 @@ function UdbApi(
    */
   this.deleteLabel = function (labelId) {
     return $http
-      .delete(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .delete(appConfig.baseUrl + 'labels/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData, returnApiProblem);
   };
 
@@ -768,7 +764,7 @@ function UdbApi(
    */
   this.getLabelById = function (labelId) {
     return $http
-      .get(appConfig.baseUrl + 'label/' + labelId, defaultApiConfig)
+      .get(appConfig.baseUrl + 'labels/' + labelId, defaultApiConfig)
       .then(returnUnwrappedData);
   };
 
@@ -789,7 +785,7 @@ function UdbApi(
     };
 
     return $http
-      .get(appConfig.baseUrl + 'labels', requestConfig)
+      .get(appConfig.baseUrl + 'labels/', requestConfig)
       .then(returnUnwrappedData);
   };
 

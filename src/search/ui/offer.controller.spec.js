@@ -27,7 +27,9 @@ describe('Controller: Offer', function() {
           "@id": "http://culudb-silex.dev:8080/place/4D6DD711-CB4F-168D-C8B1DB1D1F8335B4",
           "@context": "/api/1.0/place.jsonld",
           "description": "De werking van het Cultuurcentrum Knokke-Heist is zeer gevarieerd: podiumkunsten, beeldende kunsten, sociaal-cultureel werk met volwassenen, jeugdwerking en jongerencultuur, artistiek-kunstzinnige opleidingen, openluchtanimatie,... Elke bezoeker vindt hier zijn gading!",
-          "name": "Cultuurcentrum Scharpoord - Knokke-Heist",
+          "name": {
+            "nl": "Cultuurcentrum Scharpoord - Knokke-Heist",
+          },
           "address": {
             "addressCountry": "BE",
             "addressLocality": "Knokke-Heist",
@@ -213,6 +215,7 @@ describe('Controller: Offer', function() {
       deferredVariation.reject();
       $scope.$digest();
       expect($scope.event.description).toEqual('Een korte beschrijving voor dit evenement');
+      expect($scope.event.location.name).toEqual('Cultuurcentrum Scharpoord - Knokke-Heist');
     });
 
     it('displays a custom description when a personal variation of an event is available', function () {
@@ -221,6 +224,7 @@ describe('Controller: Offer', function() {
       deferredVariation.resolve(variation);
       $scope.$digest();
       expect($scope.event.description).toEqual('Een variatie van de originele beschrijving');
+      expect($scope.event.location.name).toEqual('Cultuurcentrum Scharpoord - Knokke-Heist');
     });
 
     it('reverts back to the original event description when deleting the personal description', function() {
@@ -235,6 +239,7 @@ describe('Controller: Offer', function() {
       deferredDeletion.resolve();
       $scope.$digest();
       expect($scope.event.description).toEqual('Een korte beschrijving voor dit evenement');
+      expect($scope.event.location.name).toEqual('Cultuurcentrum Scharpoord - Knokke-Heist');
     });
   });
 });

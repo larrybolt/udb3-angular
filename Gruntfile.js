@@ -289,6 +289,7 @@ module.exports = function (grunt) {
           'src/saved-searches/udb.saved-searches.module.js',
           'src/export/udb.export.module.js',
           'src/media/udb.media.module.js',
+          'src/management/labels/udb.labels.module.js',
           'src/management/udb.management.module.js',
           'src/search/parsers/udb-query-parser.service.js'
         ],
@@ -457,6 +458,20 @@ module.exports = function (grunt) {
     'ngtemplates',
     'jscs',
     'jshint:all',
+    'concat:modules',
+    'concat:dist',
+    'ngAnnotate',
+    'cssmin',
+    'uglify'
+  ]);
+
+  grunt.registerTask('lite-build', [
+    'clean:dist',
+    'ngconstant:dist',
+    'peg',
+    'less',
+    'autoprefixer',
+    'ngtemplates',
     'concat:modules',
     'concat:dist',
     'ngAnnotate',

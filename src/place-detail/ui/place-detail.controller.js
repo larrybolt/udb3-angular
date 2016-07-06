@@ -22,7 +22,9 @@ function PlaceDetail(
   offerEditor,
   eventCrud,
   $uibModal,
-  $q
+  $q,
+  $window,
+  offerLabeller
 ) {
   var activeTabId = 'data';
   var controller = this;
@@ -41,6 +43,8 @@ function PlaceDetail(
 
   $scope.placeIdIsInvalid = false;
   $scope.hasEditPermissions = false;
+  $scope.labelAdded = labelAdded;
+  $scope.labelRemoved = labelRemoved;
   $scope.placeHistory = [];
   $scope.tabs = [
     {
@@ -165,5 +169,30 @@ function PlaceDetail(
       .then(function(events) {
         displayModal(item, events);
       });
+  }
+
+  /**
+   * @param {Label} newLabel
+   */
+  function labelAdded(newLabel) {
+    var similarLabel = _.find(cachedPlace.labels, function (label) {
+      return newLabel.name.toUpperCase() === label.toUpperCase();
+    });
+
+    if (similarLabel) {
+      $window.alert('Het label "' + newLabel.name + '" is reeds toegevoegd als "' + similarLabel + '".');
+    } else {
+      offerLabeller.label(cachedPlace, newLabel.name);
+    }
+
+    $scope.place.labels = angular.copy(cachedPlace.labels);
+  }
+
+  /**
+   * @param {Label} label
+   */
+  function labelRemoved(label) {
+    offerLabeller.unlabel(cachedPlace, label.name);
+    $scope.place.labels = angular.copy(cachedPlace.labels);
   }
 }
