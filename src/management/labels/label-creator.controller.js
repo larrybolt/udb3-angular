@@ -1,18 +1,17 @@
 'use strict';
 
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelCreatorController
+ * @description
+ * # LabelCreatorController
+ */
 angular
   .module('udb.management.labels')
-  .component('udbLabelCreator', {
-    templateUrl: 'templates/label-creator.html',
-    controller: LabelCreatorComponent,
-    controllerAs: 'creator',
-    bindings: {
-      $router: '<'
-    }
-  });
+  .controller('LabelCreatorController', LabelCreatorController);
 
 /** @ngInject */
-function LabelCreatorComponent(LabelManager, $uibModal) {
+function LabelCreatorController(LabelManager, $uibModal) {
   var creator = this;
   creator.creating = false;
   creator.create = create;

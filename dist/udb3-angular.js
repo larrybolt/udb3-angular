@@ -213,7 +213,7 @@ angular
     'udb.management.labels'
   ])
   .component('udbManagement', {
-    template: '<ng-outlet></ng-outlet>',
+    template: '<div ui-view></div>',
     $routeConfig: [
       {
         path: '/labels/overview',
@@ -10683,20 +10683,19 @@ function FormGroupDirective() {
   };
 }
 
-// Source: src/management/labels/label-creator.component.js
+// Source: src/management/labels/label-creator.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelCreatorController
+ * @description
+ * # LabelCreatorController
+ */
 angular
   .module('udb.management.labels')
-  .component('udbLabelCreator', {
-    templateUrl: 'templates/label-creator.html',
-    controller: LabelCreatorComponent,
-    controllerAs: 'creator',
-    bindings: {
-      $router: '<'
-    }
-  });
+  .controller('LabelCreatorController', LabelCreatorController);
 
 /** @ngInject */
-function LabelCreatorComponent(LabelManager, $uibModal) {
+function LabelCreatorController(LabelManager, $uibModal) {
   var creator = this;
   creator.creating = false;
   creator.create = create;
@@ -10738,23 +10737,24 @@ function LabelCreatorComponent(LabelManager, $uibModal) {
     );
   }
 }
-LabelCreatorComponent.$inject = ["LabelManager", "$uibModal"];
+LabelCreatorController.$inject = ["LabelManager", "$uibModal"];
 
-// Source: src/management/labels/label-editor.component.js
+// Source: src/management/labels/label-editor.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelEditorController
+ * @description
+ * # LabelEditorController
+ */
 angular
   .module('udb.management.labels')
-  .component('udbLabelEditor', {
-    templateUrl: 'templates/label-editor.html',
-    controller: LabelEditorComponent,
-    controllerAs: 'editor'
-  });
+  .controller('LabelEditorController', LabelEditorController);
 
 /** @ngInject */
-function LabelEditorComponent(LabelManager, $uibModal) {
+function LabelEditorController(LabelManager, $uibModal, $stateParams) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
-  editor.$routerOnActivate = loadLabelFromParams;
   editor.renaming = false;
   editor.rename = rename;
 
@@ -10791,8 +10791,8 @@ function LabelEditorComponent(LabelManager, $uibModal) {
     );
   }
 
-  function loadLabelFromParams(next) {
-    var id = next.params.id;
+  function loadLabelFromParams() {
+    var id = $stateParams.id;
     loadLabel(id);
   }
 
@@ -10827,8 +10827,10 @@ function LabelEditorComponent(LabelManager, $uibModal) {
     var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
     jobPromise.catch(showProblem);
   }
+
+  loadLabelFromParams();
 }
-LabelEditorComponent.$inject = ["LabelManager", "$uibModal"];
+LabelEditorController.$inject = ["LabelManager", "$uibModal", "$stateParams"];
 
 // Source: src/management/labels/label-manager.service.js
 /**
@@ -10972,21 +10974,6 @@ function LabelManager(udbApi, jobLogger, BaseJob, $q) {
   }
 }
 LabelManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
-
-// Source: src/management/labels/labels-list.component.js
-/**
- * @ngdoc function
- * @name udbApp.component:LabelsComponent
- * @description
- * # Labels Component
- */
-angular
-  .module('udb.management.labels')
-  .component('labelsComponent', {
-    controller: 'LabelsListController',
-    controllerAs: 'llc',
-    templateUrl: 'templates/labels-list.html'
-  });
 
 // Source: src/management/labels/labels-list.controller.js
 /**
@@ -17049,7 +17036,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/labels-list.html',
     "<div class=\"page-header\">\n" +
-    "    <h1>Labels <small><a ng-link=\"['LabelCreator']\">toevoegen</a></small></h1>\n" +
+    "    <h1>Labels <small><a ui-sref=\"split.manageLabelsCreate\">toevoegen</a></small></h1>\n" +
     "</div>\n" +
     "\n" +
     "<div class=\"row\">\n" +
@@ -17090,7 +17077,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                        <td ng-bind=\"::(label.visibility === 'invisible' ? 'Verborgen' : '')\"></td>\n" +
     "                        <td ng-bind=\"::(label.privacy === 'private' ? 'Voorbehouden' : '')\"></td>\n" +
     "                        <td>\n" +
-    "                            <a ng-link=\"['LabelEditor', {id: label.id}]\">Bewerken</a>\n" +
+    "                            <a ui-sref=\"split.manageLabelsEdit({id: label.id})\">Bewerken</a>\n" +
     "                        </td>\n" +
     "                    </tr>\n" +
     "                    </tbody>\n" +
