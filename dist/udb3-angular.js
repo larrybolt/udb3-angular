@@ -14480,7 +14480,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <br/>\n" +
     "  <small>\n" +
     "    <span class=\"dashboard-item-type\" ng-bind=\"::event.type.label\"></span>\n" +
-    "    <span ng-if=\"event.calendarType\">\n" +
+    "    <span ng-if=\"event.calendarType && event.calendarType !== 'permanent'\">\n" +
     "      <span> - </span>\n" +
     "      <udb-calendar-summary offer=\"event\" show-opening-hours=\"true\"></udb-calendar-summary>\n" +
     "    </span>\n" +
