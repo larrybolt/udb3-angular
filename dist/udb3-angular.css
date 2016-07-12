@@ -3042,6 +3042,10 @@ body {
   line-height: 18px;
   text-transform: uppercase;
 }
+#gemeente-kiezer,
+#locatie-kiezer {
+  min-height: 100px;
+}
 .muted td {
   background-color: #EDEDED;
   color: #777777;
