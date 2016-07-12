@@ -17933,7 +17933,6 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
 
   $templateCache.put('templates/search.html',
-    "<udb-search-bar></udb-search-bar>\n" +
     "<div class=\"row rv-result-viewer\">\n" +
     "  <div class=\"col-sm-12 rv-search-results\" ng-class=\"{loading: resultViewer.loading}\">\n" +
     "\n" +
