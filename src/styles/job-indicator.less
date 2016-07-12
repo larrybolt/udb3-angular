@@ -1,0 +1,54 @@
+#indicator {
+  float: right;
+  margin-top: -18px;
+}
+
+#indicator .warning {
+  display: none;
+}
+#indicator.warning .warning {
+  display: block;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-name: bounce;
+  -webkit-animation-name: bounce;
+  -webkit-animation-duration: 1s;
+  -webkit-animation-iteration-count: infinite;
+  transform-origin: center bottom 0;
+}
+#indicator .busy {
+  display: none;
+}
+#indicator.busy .busy {
+  display: block;
+}
+.busy-spinner {
+  stroke: #3e88ab; /* info text */
+}
+#indicator .complete {
+  display: none;
+}
+#indicator.complete .complete {
+  display: block;
+  animation-duration: 0.75s;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+  animation-name: bounceIn;
+  -webkit-animation-name: bounceIn;
+}
+#complete-background,
+#warning-background,
+#busy-background {
+  fill: #FFFFFF;
+}
+#complete-circle {
+  fill: #48874a; /* Succes text */
+}
+#warning-circle
+{
+  fill: #d9534f;
+}
+.complete-check {
+  fill: #DCF2D7; /* Succces background */
+}

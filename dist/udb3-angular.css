@@ -2010,10 +2010,14 @@ input + .alert {
 #logo #deur {
   fill: #eee;
 }
-#logo .warning {
+#indicator {
+  float: right;
+  margin-top: -18px;
+}
+#indicator .warning {
   display: none;
 }
-#logo.warning .warning {
+#indicator.warning .warning {
   display: block;
   animation-duration: 1s;
   animation-iteration-count: infinite;
@@ -2024,20 +2028,20 @@ input + .alert {
   -webkit-animation-iteration-count: infinite;
   transform-origin: center bottom 0;
 }
-#logo .busy {
+#indicator .busy {
   display: none;
 }
-#logo.busy .busy {
+#indicator.busy .busy {
   display: block;
 }
 .busy-spinner {
   stroke: #3e88ab;
   /* info text */
 }
-#logo .complete {
+#indicator .complete {
   display: none;
 }
-#logo.complete .complete {
+#indicator.complete .complete {
   display: block;
   animation-duration: 0.75s;
   animation-iteration-count: 1;
