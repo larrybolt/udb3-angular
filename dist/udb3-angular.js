@@ -14613,12 +14613,16 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/job-logo.directive.html',
     "<div id=\"indicator\" class=\"{{jl.getState()}}\">\n" +
-    "  <svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"30\"\n" +
+    "  <svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"40\"\n" +
     "       height=\"50\">\n" +
+    "    <g class=\"bell\" transform=\"matrix(-0.01442308,0,0,-0.01339286,25.381434,42.571382)\">\n" +
+    "      <path\n" +
+    "         d=\"m 912,-160 q 0,16 -16,16 -59,0 -101.5,42.5 Q 752,-59 752,0 752,16 736,16 720,16 720,0 720,-73 771.5,-124.5 823,-176 896,-176 q 16,0 16,16 z m 816,288 q 0,-52 -38,-90 -38,-38 -90,-38 h -448 q 0,-106 -75,-181 -75,-75 -181,-75 -106,0 -181,75 -75,75 -75,181 H 192 q -52,0 -90,38 -38,38 -38,90 50,42 91,88 41,46 85,119.5 44,73.5 74.5,158.5 30.5,85 50,206 19.5,121 19.5,260 0,152 117,282.5 117,130.5 307,158.5 -8,19 -8,39 0,40 28,68 28,28 68,28 40,0 68,-28 28,-28 28,-68 0,-20 -8,-39 190,-28 307,-158.5 117,-130.5 117,-282.5 0,-139 19.5,-260 19.5,-121 50,-206 30.5,-85 74.5,-158.5 44,-73.5 85,-119.5 41,-46 91,-88 z\" />\n" +
+    "    </g>\n" +
     "    <g class=\"warning\">\n" +
-    "      <circle cx=\"15\" cy=\"40\" r=\"10\" id=\"warning-background\"></circle>\n" +
-    "      <circle fill=\"#ED1C24\" cx=\"15\" cy=\"40\" r=\"8\" id=\"warning-circle\"></circle>\n" +
-    "      <g transform=\"translate(-55,-1.666667)\">\n" +
+    "      <circle cx=\"20\" cy=\"40\" r=\"10\" id=\"warning-background\"></circle>\n" +
+    "      <circle fill=\"#ED1C24\" cx=\"20\" cy=\"40\" r=\"8\" id=\"warning-circle\"></circle>\n" +
+    "      <g transform=\"translate(-50,-1.666667)\">\n" +
     "        <path fill=\"#FFFFFF\"\n" +
     "              d=\"M68.798,45.538c0-0.383,0.103-0.672,0.308-0.868s0.504-0.294,0.896-0.294c0.378,0,0.671,0.1,0.878,0.301 c0.208,0.201,0.312,0.488,0.312,0.861c0,0.36-0.104,0.644-0.314,0.851S70.375,46.7,70.001,46.7c-0.383,0-0.679-0.102-0.889-0.304 S68.798,45.907,68.798,45.538z M70.842,43.2h-1.668l-0.349-6.679h2.365L70.842,43.2z\"\n" +
     "              id=\"warning-remark\"></path>\n" +
@@ -14626,8 +14630,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </g>\n" +
     "\n" +
     "    <g class=\"busy\" fill-rule=\"evenodd\" fill=\"none\">\n" +
-    "      <circle cx=\"15\" cy=\"40\" r=\"10\" id=\"busy-background\"></circle>\n" +
-    "      <g stroke-width=\"2\" transform=\"translate(9 34)\" class=\"busy-spinner\">\n" +
+    "      <circle cx=\"20\" cy=\"40\" r=\"10\" id=\"busy-background\"></circle>\n" +
+    "      <g stroke-width=\"2\" transform=\"translate(14 34)\" class=\"busy-spinner\">\n" +
     "        <path d=\"M12 6c0-6-6-6-6-6\" transform=\"rotate(308.674 6 6)\">\n" +
     "          <animateTransform repeatCount=\"indefinite\" dur=\"1s\" to=\"360 6 6\" from=\"0 6 6\" type=\"rotate\"\n" +
     "                            attributeName=\"transform\"></animateTransform>\n" +
@@ -14636,9 +14640,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "    </g>\n" +
     "\n" +
     "    <g class=\"complete\" fill-rule=\"evenodd\" fill=\"none\">\n" +
-    "      <circle cx=\"15\" cy=\"40\" r=\"10\" id=\"complete-background\"></circle>\n" +
-    "      <circle cx=\"15\" cy=\"40\" r=\"8\" id=\"complete-circle\"></circle>\n" +
-    "      <g stroke-width=\"2\" transform=\"translate(-11 14)\" class=\"complete-check\">\n" +
+    "      <circle cx=\"20\" cy=\"40\" r=\"10\" id=\"complete-background\"></circle>\n" +
+    "      <circle cx=\"20\" cy=\"40\" r=\"8\" id=\"complete-circle\"></circle>\n" +
+    "      <g stroke-width=\"2\" transform=\"translate(-6 14)\" class=\"complete-check\">\n" +
     "        <path d=\"M31.162,24.359l-4.612,4.611l-0.864,0.867c-0.115,0.114-0.274,0.178-0.434,0.178s-0.318-0.063-0.433-0.178\n" +
     "        l-0.866-0.867l-2.307-2.307c-0.115-0.114-0.179-0.272-0.179-0.432c0-0.16,0.063-0.318,0.179-0.433l0.866-0.867\n" +
     "        c0.115-0.115,0.273-0.179,0.434-0.179c0.159,0,0.317,0.063,0.433,0.179l1.873,1.88l4.178-4.186\n" +

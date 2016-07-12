@@ -2028,6 +2028,9 @@ input + .alert {
   -webkit-animation-iteration-count: infinite;
   transform-origin: center bottom 0;
 }
+#indicator .bell {
+  color: white;
+}
 #indicator .busy {
   display: none;
 }
