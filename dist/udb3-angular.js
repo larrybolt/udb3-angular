@@ -193,6 +193,16 @@ angular
 
 /**
  * @ngdoc module
+ * @name udb.management.roles
+ * @description
+ * # Roles Management Module
+ */
+angular
+  .module('udb.management.roles', [
+    'rx'
+  ]);
+/**
+ * @ngdoc module
  * @name udb.management.labels
  * @description
  * # Label Management Module
@@ -210,34 +220,9 @@ angular
 angular
   .module('udb.management', [
     'udb.core',
-    'udb.management.labels'
-  ])
-  .component('udbManagement', {
-    template: '<div ui-view></div>',
-    $routeConfig: [
-      {
-        path: '/labels/overview',
-        name: 'LabelsList',
-        component: 'labelsComponent'
-      },
-      {
-        path: '/labels/create',
-        name: 'LabelCreator',
-        component: 'udbLabelCreator'
-      },
-      {
-        path: '/labels/:id',
-        name: 'LabelEditor',
-        component: 'udbLabelEditor'
-      }
-    ],
-    $canActivate: isAuthorized
-  });
-
-function isAuthorized(authorizationService) {
-  return authorizationService.isLoggedIn();
-}
-isAuthorized.$inject = ['authorizationService'];
+    'udb.management.labels',
+    'udb.management.roles'
+  ]);
 angular.module('peg', []).factory('LuceneQueryParser', function () {
  return (function() {
   /*
@@ -3351,6 +3336,37 @@ function UdbApi(
 
     return $http
       .get(appConfig.baseUrl + 'labels/', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {uuid} roleId
+   * @return {Promise.<Role>}
+   */
+  this.getRoleById = function (roleId) {
+    return $http
+      .get(appConfig.baseUrl + 'roles/' + roleId, defaultApiConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string} query
+   *  Matches case-insensitive and any part of a label.
+   * @param {Number} [limit]
+   *  The limit of results per page.
+   * @param {Number} [start]
+   * @return {Promise.<PagedCollection>}
+   */
+  this.findRoles = function (query, limit, start) {
+    var requestConfig = _.cloneDeep(defaultApiConfig);
+    requestConfig.params = {
+      query: query,
+      limit: limit ? limit : 30,
+      start: start ? start : 0
+    };
+
+    return $http
+      .get(appConfig.baseUrl + 'roles/', requestConfig)
       .then(returnUnwrappedData);
   };
 
@@ -11068,6 +11084,114 @@ function UniqueLabelDirective(LabelManager, $q) {
 }
 UniqueLabelDirective.$inject = ["LabelManager", "$q"];
 
+// Source: src/management/roles/role-manager.service.js
+/**
+ * @typedef {Object} Role
+ * @property {string}   id
+ * @property {string}   name
+ * @property {boolean}  isVisible
+ * @property {boolean}  isPrivate
+ */
+
+/**
+ * @ngdoc service
+ * @name udb.management.roles
+ * @description
+ * # Role Manager
+ * This service allows you to lookup roles and perform actions on them.
+ */
+angular
+  .module('udb.management.roles')
+  .service('RoleManager', RoleManager);
+
+/* @ngInject */
+function RoleManager(udbApi, jobLogger, BaseJob, $q) {
+  var service = this;
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return udbApi.findRoles(query, limit, start);
+  };
+
+  /**
+   * @param {string|uuid} roleIdentifier
+   *  The name or uuid of a role.
+   * @return {Promise.<Role>}
+   */
+  service.get = function(roleIdentifier) {
+    return udbApi.getRoleById(roleIdentifier);
+  };
+}
+RoleManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
+
+// Source: src/management/roles/roles-list.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:RolesListController
+ * @description
+ * # RolesListController
+ */
+angular
+  .module('udb.management.roles')
+  .controller('RolesListController', RolesListController);
+
+/* @ngInject */
+function RolesListController(SearchResultGenerator, rx, $scope, RoleManager) {
+  var rlc = this;
+  var itemsPerPage = 10;
+  var minQueryLength = 3;
+  var query$ = rx.createObservableFunction(rlc, 'queryChanged');
+  var filteredQuery$ = query$.filter(ignoreShortQueries);
+  var page$ = rx.createObservableFunction(rlc, 'pageChanged');
+  var searchResultGenerator = new SearchResultGenerator(RoleManager, filteredQuery$, page$, itemsPerPage);
+  var searchResult$ = searchResultGenerator.getSearchResult$();
+
+  /**
+   * @param {string} query
+   * @return {boolean}
+   */
+  function ignoreShortQueries(query) {
+    return query.length >= minQueryLength;
+  }
+
+  /**
+   * @param {PagedCollection} searchResult
+   */
+  function showSearchResult(searchResult) {
+    rlc.searchResult = searchResult;
+    rlc.loading = false;
+  }
+
+  rlc.loading = false;
+  rlc.query = '';
+  rlc.page = 0;
+  rlc.minQueryLength = minQueryLength;
+
+  query$
+    .safeApply($scope, function (query) {
+      rlc.query = query;
+    })
+    .subscribe();
+
+  searchResult$
+    .safeApply($scope, showSearchResult)
+    .subscribe();
+
+  filteredQuery$
+    .merge(page$)
+    .safeApply($scope, function () {
+      rlc.loading = true;
+    })
+    .subscribe();
+}
+RolesListController.$inject = ["SearchResultGenerator", "rx", "$scope", "RoleManager"];
+
 // Source: src/management/search-result-generator.factory.js
 /**
  * @ngdoc factory
@@ -17048,6 +17172,73 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                        items-per-page=\"llc.searchResult.itemsPerPage\"\n" +
     "                        max-size=\"10\"\n" +
     "                        ng-change=\"llc.pageChanged(llc.page)\">\n" +
+    "                </uib-pagination>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "</div>\n"
+  );
+
+
+  $templateCache.put('templates/roles-list.html',
+    "<div class=\"page-header\">\n" +
+    "    <h1>Rollen <small><a ui-sref=\"split.manageRolesCreate\">toevoegen</a></small></h1>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"row\">\n" +
+    "    <div class=\"col-md-11\">\n" +
+    "        <udb-query-search-bar search-label=\"Zoeken op rolnaam\"\n" +
+    "                              on-change=\"rlc.queryChanged(query)\"\n" +
+    "        ></udb-query-search-bar>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-1\">\n" +
+    "        <i ng-show=\"rlc.loading\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "    </div>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"row\" ng-cloak>\n" +
+    "    <div class=\"col-md-12\">\n" +
+    "        <p ng-show=\"rlc.query.length < rlc.minQueryLength\">\n" +
+    "            Schrijf een zoekopdracht in het veld hierboven om rollen te tonen.\n" +
+    "        </p>\n" +
+    "        <p ng-show=\"rlc.query.length >= rlc.minQueryLength && rlc.searchResult.totalItems === 0\">\n" +
+    "            Geen rollen gevonden.\n" +
+    "        </p>\n" +
+    "        <div class=\"query-search-result\"\n" +
+    "             ng-class=\"{'loading-search-result': rlc.loading}\"\n" +
+    "             ng-show=\"rlc.searchResult.totalItems > 0 && rlc.query.length >= rlc.minQueryLength\">\n" +
+    "            <div class=\"table-responsive\" >\n" +
+    "                <table class=\"table table-hover table-striped\">\n" +
+    "                    <thead>\n" +
+    "                    <tr>\n" +
+    "                        <th>Naam</th>\n" +
+    "                        <th>Opties</th>\n" +
+    "                    </tr>\n" +
+    "                    </thead>\n" +
+    "                    <tbody>\n" +
+    "                    <tr ng-repeat=\"label in rlc.searchResult.member\">\n" +
+    "                        <td ng-bind=\"::role.name\"></td>\n" +
+    "                        <td>\n" +
+    "                            <div class=\"btn-group\">\n" +
+    "                                <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" +
+    "                                    Bewerken <span class=\"caret\"></span></button>\n" +
+    "                                <ul class=\"dropdown-menu\">\n" +
+    "                                    <li><a href=\"#\">Bewerken</a></li>\n" +
+    "                                    <li><a href=\"#\">Verwijderen</a></li>\n" +
+    "                                </ul>\n" +
+    "                            </div>\n" +
+    "                            </td>\n" +
+    "                    </tr>\n" +
+    "                    </tbody>\n" +
+    "                </table>\n" +
+    "            </div>\n" +
+    "            <div class=\"panel-footer\">\n" +
+    "                <uib-pagination\n" +
+    "                        total-items=\"rlc.searchResult.totalItems\"\n" +
+    "                        ng-model=\"rlc.page\"\n" +
+    "                        items-per-page=\"rlc.searchResult.itemsPerPage\"\n" +
+    "                        max-size=\"10\"\n" +
+    "                        ng-change=\"rlc.pageChanged(rlc.page)\">\n" +
     "                </uib-pagination>\n" +
     "            </div>\n" +
     "        </div>\n" +
