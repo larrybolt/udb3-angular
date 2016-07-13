@@ -1,0 +1,45 @@
+'use strict';
+
+/**
+ * @typedef {Object} Role
+ * @property {string}   id
+ * @property {string}   name
+ * @property {boolean}  isVisible
+ * @property {boolean}  isPrivate
+ */
+
+/**
+ * @ngdoc service
+ * @name udb.management.roles
+ * @description
+ * # Role Manager
+ * This service allows you to lookup roles and perform actions on them.
+ */
+angular
+  .module('udb.management.roles')
+  .service('RoleManager', RoleManager);
+
+/* @ngInject */
+function RoleManager(udbApi, jobLogger, BaseJob, $q) {
+  var service = this;
+
+  /**
+   * @param {string} query
+   * @param {int} limit
+   * @param {int} start
+   *
+   * @return {Promise.<PagedCollection>}
+   */
+  service.find = function(query, limit, start) {
+    return udbApi.findRoles(query, limit, start);
+  };
+
+  /**
+   * @param {string|uuid} roleIdentifier
+   *  The name or uuid of a role.
+   * @return {Promise.<Role>}
+   */
+  service.get = function(roleIdentifier) {
+    return udbApi.getRoleById(roleIdentifier);
+  };
+}
