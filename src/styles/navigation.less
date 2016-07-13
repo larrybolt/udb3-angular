@@ -15,7 +15,7 @@
   animation: rotating 1s linear infinite;
   opacity: 1;
 }
-  
+
 .navbar-brand {
   padding: 15px;
 }
@@ -53,20 +53,20 @@
 }
 
 .udb-header-search {
-  color: white;
-  background: desaturate(@brand-primary, 20%);
+  color: #222;
+  //background: desaturate(@brand-primary, 20%);
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;
   padding: 7px 45px 7px 7px;
   position: relative;
   margin: 0;
   input {
-    background: desaturate(@brand-primary, 20%);
+    //background: desaturate(@brand-primary, 20%);
     box-shadow: none !important;
     border: none;
     outline: none;
     width: 100%;
-    color: white;
+    color: #222;
   }
   input.form-control {
     padding-left: 7px;
@@ -87,7 +87,7 @@
     width: 100%;
   }
   @media(min-width: @screen-md-min) {
-    max-width: 45%;
+    max-width: 85%;
     display: inline-block;
     border-left: none;
     border-right: none;
@@ -103,6 +103,10 @@
 .udb-header-search .form-group {
   position: relative;
   display: block;
+
+  input {
+    max-width: none;
+  }
 }
 
 .udb-header-search .saved-search-icon,
@@ -115,8 +119,10 @@
 }
 
 .udb-search-button {
-  background-color: lighten(@brand-primary, 20%);
-  color: darken(@brand-primary, 20%);
+  //background-color: lighten(@brand-primary, 20%);
+  //color: darken(@brand-primary, 20%);
+  background-color: transparent;
+  color: #222;
   border: none;
   padding: 0;
   margin: 0;
@@ -136,7 +142,8 @@
 }
 
 .udb-header-search .saved-search-icon {
-  color: lighten(@brand-primary, 20%);
+  //color: lighten(@brand-primary, 20%);
+  color: #222;
 }
 
 .open.saved-search-icon {
@@ -146,12 +153,12 @@
 .udb-header-search .warning-icon {
   left: auto;
   right: 36px;
-  color: yellow;
+  color: darken(yellow, 5%);
   display: block;
-  background-color: desaturate(@brand-primary, 20%);
+  background-color: transparent;
 }
 
-body {
+/*body {
   padding-top: 155px;
   @media(min-width: @screen-sm-min) {
     padding-top: 175px;
@@ -159,4 +166,4 @@ body {
   @media(min-width: @screen-md-min) {
     padding-top: @navbar-height;
   }
-}
+}*/

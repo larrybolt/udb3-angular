@@ -1,19 +1,20 @@
 'use strict';
 
+/**
+ * @ngdoc function
+ * @name udbApp.controller:LabelEditorController
+ * @description
+ * # LabelEditorController
+ */
 angular
   .module('udb.management.labels')
-  .component('udbLabelEditor', {
-    templateUrl: 'templates/label-editor.html',
-    controller: LabelEditorComponent,
-    controllerAs: 'editor'
-  });
+  .controller('LabelEditorController', LabelEditorController);
 
 /** @ngInject */
-function LabelEditorComponent(LabelManager, $uibModal) {
+function LabelEditorController(LabelManager, $uibModal, $stateParams) {
   var editor = this;
   editor.updateVisibility = updateVisibility;
   editor.updatePrivacy = updatePrivacy;
-  editor.$routerOnActivate = loadLabelFromParams;
   editor.renaming = false;
   editor.rename = rename;
 
@@ -50,8 +51,8 @@ function LabelEditorComponent(LabelManager, $uibModal) {
     );
   }
 
-  function loadLabelFromParams(next) {
-    var id = next.params.id;
+  function loadLabelFromParams() {
+    var id = $stateParams.id;
     loadLabel(id);
   }
 
@@ -86,4 +87,6 @@ function LabelEditorComponent(LabelManager, $uibModal) {
     var jobPromise = isPrivate ? LabelManager.makePrivate(editor.label) : LabelManager.makePublic(editor.label);
     jobPromise.catch(showProblem);
   }
+
+  loadLabelFromParams();
 }

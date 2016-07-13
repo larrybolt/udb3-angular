@@ -18,6 +18,9 @@ textarea.resize-vertical {
   opacity: 0.2;
   pointer-events: none;
 }
+.dashboard-item .dropdown {
+  min-width: 120px;
+}
 /*!
  *  Font Awesome 4.2.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -1801,8 +1804,7 @@ input + .alert {
   }
 }
 .udb-header-search {
-  color: white;
-  background: #4b79a0;
+  color: #222;
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;
   padding: 7px 45px 7px 7px;
@@ -1810,12 +1812,11 @@ input + .alert {
   margin: 0;
 }
 .udb-header-search input {
-  background: #4b79a0;
   box-shadow: none !important;
   border: none;
   outline: none;
   width: 100%;
-  color: white;
+  color: #222;
 }
 .udb-header-search input.form-control {
   padding-left: 7px;
@@ -1839,7 +1840,7 @@ input + .alert {
 }
 @media (min-width: 992px) {
   .udb-header-search {
-    max-width: 45%;
+    max-width: 85%;
     display: inline-block;
     border-left: none;
     border-right: none;
@@ -1855,6 +1856,9 @@ input + .alert {
   position: relative;
   display: block;
 }
+.udb-header-search .form-group input {
+  max-width: none;
+}
 .udb-header-search .saved-search-icon,
 .udb-search-button,
 .udb-header-search .warning-icon {
@@ -1864,8 +1868,8 @@ input + .alert {
   font-size: 24px;
 }
 .udb-search-button {
-  background-color: #78acd9;
-  color: #1d4568;
+  background-color: transparent;
+  color: #222;
   border: none;
   padding: 0;
   margin: 0;
@@ -1882,7 +1886,7 @@ input + .alert {
   cursor: pointer;
 }
 .udb-header-search .saved-search-icon {
-  color: #78acd9;
+  color: #222;
 }
 .open.saved-search-icon {
   color: white;
@@ -1890,23 +1894,19 @@ input + .alert {
 .udb-header-search .warning-icon {
   left: auto;
   right: 36px;
-  color: yellow;
+  color: #e5e600;
   display: block;
-  background-color: #4b79a0;
+  background-color: transparent;
 }
-body {
+/*body {
   padding-top: 155px;
-}
-@media (min-width: 768px) {
-  body {
+  @media(min-width: @screen-sm-min) {
     padding-top: 175px;
   }
-}
-@media (min-width: 992px) {
-  body {
-    padding-top: 50px;
+  @media(min-width: @screen-md-min) {
+    padding-top: @navbar-height;
   }
-}
+}*/
 .export-format-field label {
   cursor: pointer;
 }
@@ -1940,7 +1940,7 @@ body {
   width: 320px;
   left: -320px;
   position: fixed;
-  top: 50px;
+  top: 0px;
   bottom: 0;
   transition: left 0.3s ease;
   overflow-x: hidden;
@@ -1994,7 +1994,7 @@ body {
 }
 .udb-job-log-overlay {
   position: fixed;
-  top: 50px;
+  top: 0px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -2006,14 +2006,23 @@ body {
 .udb-job-log-overlay.shown {
   display: block;
 }
+@media (max-width: 767px) {
+  .udb-job-log {
+    width: 275px;
+    left: -275;
+  }
+}
 #logo .letter,
 #logo #deur {
-  fill: #9d9d9d;
+  fill: #eee;
 }
-#logo .warning {
+#indicator {
+  margin-top: -25px;
+}
+#indicator .warning {
   display: none;
 }
-#logo.warning .warning {
+#indicator.warning .warning {
   display: block;
   animation-duration: 1s;
   animation-iteration-count: infinite;
@@ -2024,20 +2033,23 @@ body {
   -webkit-animation-iteration-count: infinite;
   transform-origin: center bottom 0;
 }
-#logo .busy {
+#indicator .bell {
+  fill: #EEEEEE;
+}
+#indicator .busy {
   display: none;
 }
-#logo.busy .busy {
+#indicator.busy .busy {
   display: block;
 }
 .busy-spinner {
   stroke: #3e88ab;
   /* info text */
 }
-#logo .complete {
+#indicator .complete {
   display: none;
 }
-#logo.complete .complete {
+#indicator.complete .complete {
   display: block;
   animation-duration: 0.75s;
   animation-iteration-count: 1;
@@ -2062,6 +2074,7 @@ body {
   /* Succces background */
 }
 .rv-result-viewer {
+  clear: both;
   position: relative;
   margin: 30px 0;
   min-height: 300px;

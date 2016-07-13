@@ -12,7 +12,7 @@ angular
     'udb.management.labels'
   ])
   .component('udbManagement', {
-    template: '<ng-outlet></ng-outlet>',
+    template: '<div ui-view></div>',
     $routeConfig: [
       {
         path: '/labels/overview',
