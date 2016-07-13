@@ -14710,6 +14710,13 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/job-log.component.html',
     "<div class=\"udb-job-log\" ng-class=\"{'shown': logger.isVisible()}\">\n" +
+    " <div class=\"udb-job-log-header\">\n" +
+    "     <div class=\"row\">\n" +
+    "         <div class=\"col-sm-12\">\n" +
+    "            <button type=\"button\" class=\"close\" ng-click=\"logger.hideJobLog()\"><span aria-hidden=\"true\">&times;</span></button>\n" +
+    "         </div>\n" +
+    "     </div>\n" +
+    " </div>\n" +
     "  <div class=\"row\">\n" +
     "    <div class=\"col-sm-12\">\n" +
     "      <div class=\"udb-job-block udb-job-block-ready\">\n" +

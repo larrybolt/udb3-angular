@@ -2006,13 +2006,18 @@ input + .alert {
 .udb-job-log-overlay.shown {
   display: block;
 }
+@media (max-width: 767px) {
+  .udb-job-log {
+    width: 275px;
+    left: -275;
+  }
+}
 #logo .letter,
 #logo #deur {
   fill: #eee;
 }
 #indicator {
-  float: right;
-  margin-top: -18px;
+  margin-top: -25px;
 }
 #indicator .warning {
   display: none;
@@ -2029,7 +2034,7 @@ input + .alert {
   transform-origin: center bottom 0;
 }
 #indicator .bell {
-  color: white;
+  fill: #EEEEEE;
 }
 #indicator .busy {
   display: none;
