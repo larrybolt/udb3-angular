@@ -16065,7 +16065,6 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <a class=\"btn btn-link plaats-adres-wijzigen\" ng-click=\"changeStreetAddress()\">Wijzigen</a>\n" +
     "        </span>\n" +
     "      </div>\n" +
-    "\n" +
     "    </div>\n" +
     "\n" +
     "  </form>\n" +
