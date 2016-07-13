@@ -1,4 +1,11 @@
 <div class="udb-job-log" ng-class="{'shown': logger.isVisible()}">
+ <div class="udb-job-log-header">
+     <div class="row">
+         <div class="col-sm-12">
+            <button type="button" class="close" ng-click="logger.hideJobLog()"><span aria-hidden="true">&times;</span></button>
+         </div>
+     </div>
+ </div>
   <div class="row">
     <div class="col-sm-12">
       <div class="udb-job-block udb-job-block-ready">
