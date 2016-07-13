@@ -46,6 +46,7 @@ function OfferController(
           cachedOffer.updateTranslationState();
 
           $scope.event = jsonLDLangFilter(cachedOffer, defaultLanguage);
+          $scope.offerType = $scope.event.url.split('/').shift();
           controller.fetching = false;
 
           watchLabels();

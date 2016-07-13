@@ -13890,6 +13890,7 @@ function OfferController(
           cachedOffer.updateTranslationState();
 
           $scope.event = jsonLDLangFilter(cachedOffer, defaultLanguage);
+          $scope.offerType = $scope.event.url.split('/').shift();
           controller.fetching = false;
 
           watchLabels();
@@ -14467,7 +14468,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <br/>\n" +
     "  <small>\n" +
     "    <span class=\"dashboard-item-type\" ng-bind=\"::event.type.label\"></span>\n" +
-    "    <span ng-if=\"event.calendarType\">\n" +
+    "    <span ng-if=\"event.calendarType && (offerType === 'event' || (event.calendarType !== 'permanent' && offerType === 'place'))\">\n" +
     "      <span> - </span>\n" +
     "      <udb-calendar-summary offer=\"event\" show-opening-hours=\"true\"></udb-calendar-summary>\n" +
     "    </span>\n" +
