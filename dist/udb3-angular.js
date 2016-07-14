@@ -17182,17 +17182,20 @@ $templateCache.put('templates/calendar-summary.directive.html',
 
   $templateCache.put('templates/roles-list.html',
     "<div class=\"page-header\">\n" +
-    "    <h1>Rollen <small><a ui-sref=\"split.manageRolesCreate\">toevoegen</a></small></h1>\n" +
+    "    <h1>Rollen</h1>\n" +
     "</div>\n" +
     "\n" +
     "<div class=\"row\">\n" +
-    "    <div class=\"col-md-11\">\n" +
+    "    <div class=\"col-md-9\">\n" +
     "        <udb-query-search-bar search-label=\"Zoeken op rolnaam\"\n" +
     "                              on-change=\"rlc.queryChanged(query)\"\n" +
     "        ></udb-query-search-bar>\n" +
     "    </div>\n" +
     "    <div class=\"col-md-1\">\n" +
     "        <i ng-show=\"rlc.loading\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-2\">\n" +
+    "        <a class=\"btn btn-primary\" ui-sref=\"split.manageRolesCreate\"><i class=\"fa fa-plus-circle\"></i> Rol toevoegen</a>\n" +
     "    </div>\n" +
     "</div>\n" +
     "\n" +

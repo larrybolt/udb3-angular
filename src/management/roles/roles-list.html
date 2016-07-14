@@ -1,15 +1,18 @@
 <div class="page-header">
-    <h1>Rollen <small><a ui-sref="split.manageRolesCreate">toevoegen</a></small></h1>
+    <h1>Rollen</h1>
 </div>
 
 <div class="row">
-    <div class="col-md-11">
+    <div class="col-md-9">
         <udb-query-search-bar search-label="Zoeken op rolnaam"
                               on-change="rlc.queryChanged(query)"
         ></udb-query-search-bar>
     </div>
     <div class="col-md-1">
         <i ng-show="rlc.loading" class="fa fa-circle-o-notch fa-spin"></i>
+    </div>
+    <div class="col-md-2">
+        <a class="btn btn-primary" ui-sref="split.manageRolesCreate"><i class="fa fa-plus-circle"></i> Rol toevoegen</a>
     </div>
 </div>
 
