@@ -2574,6 +2574,12 @@ UnexpectedErrorModalController.$inject = ["$scope", "$uibModalInstance", "errorM
  */
 
 /**
+ * @typedef {Object} Permission
+ * @property {string} @key
+ * @property {string} @name
+ */
+
+/**
  * @typedef {Object} ApiProblem
  * @property {URL} type
  * @property {string} title
@@ -3367,6 +3373,31 @@ function UdbApi(
 
     return $http
       .get(appConfig.baseUrl + 'roles/', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string}  name
+   * @return {Promise.<Object|ApiProblem>}
+   */
+  this.createRole = function (name) {
+    var roleData = {
+      name: name
+    };
+
+    return $http
+      .post(appConfig.baseUrl + 'roles/', roleData, defaultApiConfig)
+      .then(returnUnwrappedData, returnApiProblem);
+  };
+
+  /**
+   * @return {Promise.Array<Permission>}
+   */
+  this.getPermissions = function () {
+    var requestConfig = defaultApiConfig;
+
+    return $http
+      .get(appConfig.baseUrl + 'permissions/', requestConfig)
       .then(returnUnwrappedData);
   };
 
@@ -11084,6 +11115,107 @@ function UniqueLabelDirective(LabelManager, $q) {
 }
 UniqueLabelDirective.$inject = ["LabelManager", "$q"];
 
+// Source: src/management/roles/permission-manager.service.js
+/**
+ * @typedef {Object} Permission
+ * @property {string} key
+ * @property {string} name
+ */
+
+/**
+ * @ngdoc service
+ * @name udb.management.permissions
+ * @description
+ * # Permission Manager
+ * This service allows you to lookup permissions and perform actions on them.
+ */
+angular
+  .module('udb.management.roles')
+  .service('PermissionManager', PermissionManager);
+
+/* @ngInject */
+function PermissionManager(udbApi, jobLogger, BaseJob, $q) {
+  var service = this;
+
+  /**
+   * @param {string} permissionIdentifier
+   *  The key for the permission
+   * @return {Promise.Array<Permission>}
+   */
+  service.getAll = function() {
+    return udbApi.getPermissions();
+  };
+}
+PermissionManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
+
+// Source: src/management/roles/role-creator.controller.js
+/**
+ * @ngdoc function
+ * @name udbApp.controller:RoleCreatorController
+ * @description
+ * # RoleCreatorController
+ */
+angular
+  .module('udb.management.roles')
+  .controller('RoleCreatorController', RoleCreatorController);
+
+/** @ngInject */
+function RoleCreatorController(RoleManager, PermissionManager, $uibModal) {
+  var creator = this;
+  creator.creating = false;
+  creator.create = create;
+  creator.loadedPermissions = false;
+  creator.role = {
+    name: '',
+    isPrivate: false,
+    isVisible: true
+  };
+
+  function loadPermissions () {
+    PermissionManager
+      .getAll().then(function(permissions){
+        creator.permissions = permissions;
+      }, showProblem)
+      .finally(function() {
+        creator.loadedPermissions = true;
+      });
+  }
+  loadPermissions();
+
+  function create() {
+    function goToOverview(jobInfo) {
+      creator.$router.navigate(['RolesList']);
+    }
+
+    creator.creating = true;
+    RoleManager
+      .create(creator.role.name, creator.role.editPermission)
+      .then(goToOverview, showProblem)
+      .finally(function () {
+        creator.creating = false;
+      });
+  }
+
+  /**
+   * @param {ApiProblem} problem
+   */
+  function showProblem(problem) {
+    var modalInstance = $uibModal.open(
+      {
+        templateUrl: 'templates/unexpected-error-modal.html',
+        controller: 'UnexpectedErrorModalController',
+        size: 'sm',
+        resolve: {
+          errorMessage: function() {
+            return problem.title + ' ' + problem.detail;
+          }
+        }
+      }
+    );
+  }
+}
+RoleCreatorController.$inject = ["RoleManager", "PermissionManager", "$uibModal"];
+
 // Source: src/management/roles/role-manager.service.js
 /**
  * @typedef {Object} Role
@@ -11126,6 +11258,15 @@ function RoleManager(udbApi, jobLogger, BaseJob, $q) {
    */
   service.get = function(roleIdentifier) {
     return udbApi.getRoleById(roleIdentifier);
+  };
+
+  /**
+   * @param {string} name
+   *  The name of the new role.
+   * @return {Promise.<Role>}
+   */
+  service.create = function(name) {
+    return udbApi.createRole(name);
   };
 }
 RoleManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
@@ -17177,6 +17318,98 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "        </div>\n" +
     "    </div>\n" +
     "</div>\n"
+  );
+
+
+  $templateCache.put('templates/role-creator.html',
+    "<div class=\"page-header\">\n" +
+    "    <h1>Roles</h1>\n" +
+    "</div>\n" +
+    "<h2>Role Toevoegen</h2>\n" +
+    "\n" +
+    "<form name=\"creator.form\" class=\"css-form\" novalidate>\n" +
+    "    <div class=\"row\">\n" +
+    "        <div class=\"col-md-6\">\n" +
+    "            <div class=\"form-group\" udb-form-group>\n" +
+    "                <label class=\"control-label\" for=\"label-name-field\">Naam</label>\n" +
+    "                <input id=\"label-name-field\"\n" +
+    "                       class=\"form-control\"\n" +
+    "                       name=\"name\"\n" +
+    "                       type=\"text\"\n" +
+    "                       udb-unique-label\n" +
+    "                       ng-minlength=\"3\"\n" +
+    "                       ng-required=\"true\"\n" +
+    "                       ng-maxlength=\"255\"\n" +
+    "                       ng-model=\"creator.role.name\"\n" +
+    "                       ng-model-options=\"{debounce: 300}\"\n" +
+    "                       ng-disabled=\"creator.creating\">\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.uniqueRole\">Er bestaat al een role met deze naam.</p>\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.required\">Een role naam is verplicht.</p>\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.minlength\">Een role moet uit minstens 3 tekens bestaan.</p>\n" +
+    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.maxlength\">Een role mag maximum 255 tekens bevatten.</p>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "    <div class=\"row\">\n" +
+    "        <div class=\"col-md-12\">\n" +
+    "            <div class=\"form-group\" udb-form-group>\n" +
+    "                <label class=\"control-label\" for=\"label-name-field\">Bewerkrecht</label>\n" +
+    "                <input id=\"label-name-field\"\n" +
+    "                       class=\"form-control\"\n" +
+    "                       name=\"editPermission\"\n" +
+    "                       type=\"text\"\n" +
+    "                       ng-maxlength=\"255\"\n" +
+    "                       ng-model=\"creator.role.editPermission\"\n" +
+    "                       ng-model-options=\"{debounce: 300}\"\n" +
+    "                       ng-disabled=\"creator.creating\">\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "    <div class=\"row\">\n" +
+    "      <div class=\"col-md-12\">\n" +
+    "        <uib-tabset>\n" +
+    "          <uib-tab heading=\"Permissies\">\n" +
+    "            <div class=\"row\">\n" +
+    "              <div class=\"col-md-11\">\n" +
+    "                <udb-query-search-bar search-label=\"Zoeken op labelnaam\"\n" +
+    "                  on-change=\"llc.queryChanged(query)\"\n" +
+    "                ></udb-query-search-bar>\n" +
+    "              </div>\n" +
+    "              <div class=\"col-md-1\">\n" +
+    "                <i ng-show=\"llc.loading\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "              </div>\n" +
+    "            </div>\n" +
+    "            <div class=\"row\">\n" +
+    "              <div class=\"col-md-12\">\n" +
+    "                <table class=\"table\">\n" +
+    "                  <tr ng-repeat=\"i in [1,2,3,4,5]\">\n" +
+    "                    <td><input type=\"checkbox\"></td>\n" +
+    "                    <td>Aanbod invoeren</td>\n" +
+    "                  </tr>\n" +
+    "                </table>\n" +
+    "              </div>\n" +
+    "            </div>\n" +
+    "          </uib-tab>\n" +
+    "          <uib-tab heading=\"Leden\">\n" +
+    "            Leden\n" +
+    "          </uib-tab>\n" +
+    "          <uib-tab heading=\"Labels\">\n" +
+    "            Labels\n" +
+    "          </uib-tab>\n" +
+    "        </uib-tabset>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "    <div class=\"row\">\n" +
+    "      <div class=\"col-md-12\">\n" +
+    "        <button ng-disabled=\"!creator.form.$valid || creator.creating\"\n" +
+    "          type=\"button\"\n" +
+    "          class=\"btn btn-primary\"\n" +
+    "          ng-click=\"creator.create()\">\n" +
+    "          Aanmaken <i class=\"fa fa-circle-o-notch fa-spin\" ng-show=\"creator.creating\"></i>\n" +
+    "        </button>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "</form>\n"
   );
 
 

@@ -24,6 +24,12 @@
  */
 
 /**
+ * @typedef {Object} Permission
+ * @property {string} @key
+ * @property {string} @name
+ */
+
+/**
  * @typedef {Object} ApiProblem
  * @property {URL} type
  * @property {string} title
@@ -817,6 +823,31 @@ function UdbApi(
 
     return $http
       .get(appConfig.baseUrl + 'roles/', requestConfig)
+      .then(returnUnwrappedData);
+  };
+
+  /**
+   * @param {string}  name
+   * @return {Promise.<Object|ApiProblem>}
+   */
+  this.createRole = function (name) {
+    var roleData = {
+      name: name
+    };
+
+    return $http
+      .post(appConfig.baseUrl + 'roles/', roleData, defaultApiConfig)
+      .then(returnUnwrappedData, returnApiProblem);
+  };
+
+  /**
+   * @return {Promise.Array<Permission>}
+   */
+  this.getPermissions = function () {
+    var requestConfig = defaultApiConfig;
+
+    return $http
+      .get(appConfig.baseUrl + 'permissions/', requestConfig)
       .then(returnUnwrappedData);
   };
 

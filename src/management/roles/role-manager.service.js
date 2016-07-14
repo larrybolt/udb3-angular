@@ -42,4 +42,13 @@ function RoleManager(udbApi, jobLogger, BaseJob, $q) {
   service.get = function(roleIdentifier) {
     return udbApi.getRoleById(roleIdentifier);
   };
+
+  /**
+   * @param {string} name
+   *  The name of the new role.
+   * @return {Promise.<Role>}
+   */
+  service.create = function(name) {
+    return udbApi.createRole(name);
+  };
 }
