@@ -4478,7 +4478,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     .controller('DashboardController', DashboardController);
 
   /* @ngInject */
-  function DashboardController($scope, $uibModal, udbApi, eventCrud, offerLocator, SearchResultViewer) {
+  function DashboardController($scope, $uibModal, udbApi, eventCrud, offerLocator, SearchResultViewer, appConfig) {
 
     var dash = this;
 
@@ -4486,6 +4486,13 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     dash.openDeleteConfirmModal = openDeleteConfirmModal;
     dash.updateItemViewer = updateItemViewer;
     dash.username = '';
+
+    if (typeof(appConfig.toggleAddOffer) !== 'undefined') {
+      dash.toggleAddOffer = appConfig.toggleAddOffer;
+    }
+    else {
+      dash.toggleAddOffer = true;
+    }
 
     udbApi
       .getMe()
@@ -4580,7 +4587,7 @@ PlaceDeleteConfirmModalController.$inject = ["$scope", "$uibModalInstance", "eve
     }
 
   }
-  DashboardController.$inject = ["$scope", "$uibModal", "udbApi", "eventCrud", "offerLocator", "SearchResultViewer"];
+  DashboardController.$inject = ["$scope", "$uibModal", "udbApi", "eventCrud", "offerLocator", "SearchResultViewer", "appConfig"];
 
 })();
 
@@ -14565,7 +14572,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <div class=\"panel panel-default no-new no-data\" ng-hide=\"dash.pagedItemViewer.events.length\">\n" +
     "    <div class=\"panel-body text-center\">\n" +
     "      <p class=\"text-center\">Je hebt nog geen items toegevoegd.\n" +
-    "        <!--<br/><a href=\"event\">Een activiteit of monument toevoegen?</a>-->\n" +
+    "        <span ng-if=\"dash.toggleAddOffer\"><br/><a href=\"event\">Een activiteit of monument toevoegen?</a></span>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "  </div>\n" +
@@ -14574,9 +14581,9 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "\n" +
     "    <div class=\"clearfix\">\n" +
     "      <p class=\"invoer-title\"><span class=\"block-header\">Recent</span>\n" +
-    "        <!--<span class=\"pull-right\">-->\n" +
-    "          <!--<a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>-->\n" +
-    "        <!--</span>-->\n" +
+    "        <span class=\"pull-right\" ng-if=\"dash.toggleAddOffer\">\n" +
+    "          <a class=\"btn btn-primary\" href=\"event\"><i class=\"fa fa-plus-circle\"></i> Toevoegen</a>\n" +
+    "        </span>\n" +
     "      </p>\n" +
     "    </div>\n" +
     "\n" +
