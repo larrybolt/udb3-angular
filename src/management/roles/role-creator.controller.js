@@ -11,7 +11,7 @@ angular
   .controller('RoleCreatorController', RoleCreatorController);
 
 /** @ngInject */
-function RoleCreatorController(RoleManager, PermissionManager, $uibModal) {
+function RoleCreatorController(RoleManager, PermissionManager, $uibModal, $state, $q) {
   var creator = this;
   creator.creating = false;
   creator.create = create;
@@ -34,18 +34,32 @@ function RoleCreatorController(RoleManager, PermissionManager, $uibModal) {
   loadPermissions();
 
   function create() {
-    function goToOverview(jobInfo) {
-      creator.$router.navigate(['RolesList']);
+    function goToOverview() {
+      $state.go('split.manageRoles');
     }
+
+    function sendPermissions (createdRole) {
+      var roleId = createdRole.roleId;
+      console.log('going to send permissions', creator.role.permissions);
+      var promisses = [];
+      Object.keys(creator.role.permissions).forEach(function(permissionKey){
+        promisses.push(RoleManager.addPermissionToRole(permissionKey, roleId));
+      });
+      $q.all(promisses).then(function(){
+        goToOverview();
+      }).catch(showProblem);
+    }
+
 
     creator.creating = true;
     RoleManager
       .create(creator.role.name, creator.role.editPermission)
-      .then(goToOverview, showProblem)
+      .then(sendPermissions, showProblem)
       .finally(function () {
         creator.creating = false;
       });
   }
+
 
   /**
    * @param {ApiProblem} problem

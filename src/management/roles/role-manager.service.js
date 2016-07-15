@@ -51,4 +51,15 @@ function RoleManager(udbApi, jobLogger, BaseJob, $q) {
   service.create = function(name) {
     return udbApi.createRole(name);
   };
+
+  /**
+   * @param {string} permissionKey
+   *  The key for the permission
+   * @param {string} roleId
+   *  roleId for the role
+   * @return {Promise}
+   */
+  service.addPermissionToRole = function(permissionKey, roleId) {
+    return udbApi.addPermissionToRole(permissionKey, roleId);
+  };
 }

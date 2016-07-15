@@ -3378,16 +3378,22 @@ function UdbApi(
 
   /**
    * @param {string}  name
-   * @return {Promise.<Object|ApiProblem>}
+   * @return {Promise.<Object|ApiProblem>} Object containing created roleId
    */
   this.createRole = function (name) {
     var roleData = {
       name: name
     };
 
+    var deferred = $q.defer();
+    deferred.resolve({'roleId': 'argjaslfghaljdshgfas58464'});
+    return deferred.promise;
+
+    /*
     return $http
       .post(appConfig.baseUrl + 'roles/', roleData, defaultApiConfig)
       .then(returnUnwrappedData, returnApiProblem);
+     */
   };
 
   /**
@@ -3396,9 +3402,46 @@ function UdbApi(
   this.getPermissions = function () {
     var requestConfig = defaultApiConfig;
 
+    var deferred = $q.defer();
+    setTimeout(function(){
+    deferred.resolve([
+      {'key': 'aanbodinvoeren', 'name': 'Aanbod invoeren'},
+      {'key': 'aanbodbewerken', 'name': 'Aanbod bewerken'},
+      {'key': 'aanbodmoderen', 'name': 'Aanbod moderen'},
+      {'key': 'aanbodverwijderen', 'name': 'Aanbod verwijderen'},
+      {'key': 'organizatiesbeheren', 'name': 'Organisaties beheren'},
+      {'key': 'gebruikersbeheren', 'name': 'Gebruikers beheren'},
+      {'key': 'labelsbeheren', 'name': 'Labels beheren'}
+    ]);
+    }, 1000);
+
+    return deferred.promise;
+    /*
     return $http
       .get(appConfig.baseUrl + 'permissions/', requestConfig)
       .then(returnUnwrappedData);
+     */
+  };
+
+  /**
+   * @param {string} permissionKey
+   *  The key for the permission
+   * @param {string} roleId
+   *  roleId for the role
+   * @return {Promise}
+   */
+  this.addPermissionToRole = function (permissionKey, roleId) {
+    var requestConfig = defaultApiConfig;
+
+    var deferred = $q.defer();
+    setTimeout(deferred.resolve, 1000);
+
+    return deferred.promise;
+    /*
+    return $http
+     .put(appConfig.baseUrl + 'roles/' + roleId + '/permissions/' + permissionKey, requestConfig)
+     .then(returnUnwrappedData);
+     */
   };
 
   /**
@@ -11160,7 +11203,7 @@ angular
   .controller('RoleCreatorController', RoleCreatorController);
 
 /** @ngInject */
-function RoleCreatorController(RoleManager, PermissionManager, $uibModal) {
+function RoleCreatorController(RoleManager, PermissionManager, $uibModal, $state, $q) {
   var creator = this;
   creator.creating = false;
   creator.create = create;
@@ -11183,18 +11226,32 @@ function RoleCreatorController(RoleManager, PermissionManager, $uibModal) {
   loadPermissions();
 
   function create() {
-    function goToOverview(jobInfo) {
-      creator.$router.navigate(['RolesList']);
+    function goToOverview() {
+      $state.go('split.manageRoles');
     }
+
+    function sendPermissions (createdRole) {
+      var roleId = createdRole.roleId;
+      console.log('going to send permissions', creator.role.permissions);
+      var promisses = [];
+      Object.keys(creator.role.permissions).forEach(function(permissionKey){
+        promisses.push(RoleManager.addPermissionToRole(permissionKey, roleId));
+      });
+      $q.all(promisses).then(function(){
+        goToOverview();
+      }).catch(showProblem);
+    }
+
 
     creator.creating = true;
     RoleManager
       .create(creator.role.name, creator.role.editPermission)
-      .then(goToOverview, showProblem)
+      .then(sendPermissions, showProblem)
       .finally(function () {
         creator.creating = false;
       });
   }
+
 
   /**
    * @param {ApiProblem} problem
@@ -11214,7 +11271,7 @@ function RoleCreatorController(RoleManager, PermissionManager, $uibModal) {
     );
   }
 }
-RoleCreatorController.$inject = ["RoleManager", "PermissionManager", "$uibModal"];
+RoleCreatorController.$inject = ["RoleManager", "PermissionManager", "$uibModal", "$state", "$q"];
 
 // Source: src/management/roles/role-manager.service.js
 /**
@@ -11267,6 +11324,17 @@ function RoleManager(udbApi, jobLogger, BaseJob, $q) {
    */
   service.create = function(name) {
     return udbApi.createRole(name);
+  };
+
+  /**
+   * @param {string} permissionKey
+   *  The key for the permission
+   * @param {string} roleId
+   *  roleId for the role
+   * @return {Promise}
+   */
+  service.addPermissionToRole = function(permissionKey, roleId) {
+    return udbApi.addPermissionToRole(permissionKey, roleId);
   };
 }
 RoleManager.$inject = ["udbApi", "jobLogger", "BaseJob", "$q"];
@@ -11332,6 +11400,37 @@ function RolesListController(SearchResultGenerator, rx, $scope, RoleManager) {
     .subscribe();
 }
 RolesListController.$inject = ["SearchResultGenerator", "rx", "$scope", "RoleManager"];
+
+// Source: src/management/roles/unique-role.directive.js
+angular
+  .module('udb.management.roles')
+  .directive('udbUniqueRole', UniqueRoleDirective);
+
+/** @ngInject */
+function UniqueRoleDirective(RoleManager, $q) {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, element, attrs, controller) {
+      function isUnique(roleName) {
+        if (controller.$isEmpty(roleName)) {
+          return $q.when();
+        }
+
+        var deferredUniqueCheck = $q.defer();
+
+        RoleManager
+          .get(roleName)
+          .then(deferredUniqueCheck.reject, deferredUniqueCheck.resolve);
+
+        return deferredUniqueCheck.promise;
+      }
+
+      controller.$asyncValidators.uniqueRole = isUnique;
+    }
+  };
+}
+UniqueRoleDirective.$inject = ["RoleManager", "$q"];
 
 // Source: src/management/search-result-generator.factory.js
 /**
@@ -17336,14 +17435,12 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                       class=\"form-control\"\n" +
     "                       name=\"name\"\n" +
     "                       type=\"text\"\n" +
-    "                       udb-unique-label\n" +
     "                       ng-minlength=\"3\"\n" +
     "                       ng-required=\"true\"\n" +
     "                       ng-maxlength=\"255\"\n" +
     "                       ng-model=\"creator.role.name\"\n" +
     "                       ng-model-options=\"{debounce: 300}\"\n" +
     "                       ng-disabled=\"creator.creating\">\n" +
-    "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.uniqueRole\">Er bestaat al een role met deze naam.</p>\n" +
     "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.required\">Een role naam is verplicht.</p>\n" +
     "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.minlength\">Een role moet uit minstens 3 tekens bestaan.</p>\n" +
     "                <p class=\"help-block\" ng-if=\"creator.form.name.$error.maxlength\">Een role mag maximum 255 tekens bevatten.</p>\n" +
@@ -17371,22 +17468,25 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "          <uib-tab heading=\"Permissies\">\n" +
     "            <div class=\"row\">\n" +
     "              <div class=\"col-md-11\">\n" +
-    "                <udb-query-search-bar search-label=\"Zoeken op labelnaam\"\n" +
+    "                <!--\n" +
+    "                <udb-query-search-bar search-label=\"Zoeken op naam\" ng-model=\"permissionSearch\"\n" +
     "                  on-change=\"llc.queryChanged(query)\"\n" +
     "                ></udb-query-search-bar>\n" +
+    "                -->\n" +
+    "                <input placeholder=\"Zoeken op naam\" ng-model=\"permissionSearch\">\n" +
     "              </div>\n" +
     "              <div class=\"col-md-1\">\n" +
-    "                <i ng-show=\"llc.loading\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
+    "                <i ng-show=\"!creator.loadedPermissions\" class=\"fa fa-circle-o-notch fa-spin\"></i>\n" +
     "              </div>\n" +
     "            </div>\n" +
     "            <div class=\"row\">\n" +
     "              <div class=\"col-md-12\">\n" +
-    "                <table class=\"table\">\n" +
-    "                  <tr ng-repeat=\"i in [1,2,3,4,5]\">\n" +
-    "                    <td><input type=\"checkbox\"></td>\n" +
-    "                    <td>Aanbod invoeren</td>\n" +
-    "                  </tr>\n" +
-    "                </table>\n" +
+    "            <div class=\"checkbox\" ng-repeat=\"role in creator.permissions | filter: permissionSearch\">\n" +
+    "                <label>\n" +
+    "                    <input type=\"checkbox\"\n" +
+    "                      ng-model=\"creator.role.permissions[role.key]\"> <strong ng-bind=\"::role.name\"></strong>\n" +
+    "                </label>\n" +
+    "            </div>\n" +
     "              </div>\n" +
     "            </div>\n" +
     "          </uib-tab>\n" +

@@ -12,14 +12,12 @@
                        class="form-control"
                        name="name"
                        type="text"
-                       udb-unique-label
                        ng-minlength="3"
                        ng-required="true"
                        ng-maxlength="255"
                        ng-model="creator.role.name"
                        ng-model-options="{debounce: 300}"
                        ng-disabled="creator.creating">
-                <p class="help-block" ng-if="creator.form.name.$error.uniqueRole">Er bestaat al een role met deze naam.</p>
                 <p class="help-block" ng-if="creator.form.name.$error.required">Een role naam is verplicht.</p>
                 <p class="help-block" ng-if="creator.form.name.$error.minlength">Een role moet uit minstens 3 tekens bestaan.</p>
                 <p class="help-block" ng-if="creator.form.name.$error.maxlength">Een role mag maximum 255 tekens bevatten.</p>
@@ -47,22 +45,25 @@
           <uib-tab heading="Permissies">
             <div class="row">
               <div class="col-md-11">
-                <udb-query-search-bar search-label="Zoeken op labelnaam"
+                <!--
+                <udb-query-search-bar search-label="Zoeken op naam" ng-model="permissionSearch"
                   on-change="llc.queryChanged(query)"
                 ></udb-query-search-bar>
+                -->
+                <input placeholder="Zoeken op naam" ng-model="permissionSearch">
               </div>
               <div class="col-md-1">
-                <i ng-show="llc.loading" class="fa fa-circle-o-notch fa-spin"></i>
+                <i ng-show="!creator.loadedPermissions" class="fa fa-circle-o-notch fa-spin"></i>
               </div>
             </div>
             <div class="row">
               <div class="col-md-12">
-                <table class="table">
-                  <tr ng-repeat="i in [1,2,3,4,5]">
-                    <td><input type="checkbox"></td>
-                    <td>Aanbod invoeren</td>
-                  </tr>
-                </table>
+            <div class="checkbox" ng-repeat="role in creator.permissions | filter: permissionSearch">
+                <label>
+                    <input type="checkbox"
+                      ng-model="creator.role.permissions[role.key]"> <strong ng-bind="::role.name"></strong>
+                </label>
+            </div>
               </div>
             </div>
           </uib-tab>
