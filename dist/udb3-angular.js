@@ -88,7 +88,8 @@ angular
     'udb.config',
     'udb.entry',
     'udb.search',
-    'ngFileUpload'
+    'ngFileUpload',
+    'focus-if'
   ]);
 
 /**
@@ -8753,7 +8754,6 @@ function EventFormStep2Controller($scope, $rootScope, EventFormData, appConfig) 
       timestamp.showEndHour = false;
       controller.eventTimingChanged();
     }
-
   };
 
   /**
@@ -15012,7 +15012,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                uib-typeahead=\"time for time in ::times | filter:$viewValue | limitTo:8\"\n" +
     "                typeahead-on-select=\"EventFormStep2.eventTimingChanged()\"\n" +
     "                typeahead-editable=\"false\"\n" +
-    "                placeholder=\"Bv. 08:00\">\n" +
+    "                placeholder=\"Bv. 08:00\"\n" +
+    "                focus-if=\"timestamp.showStartHour\">\n" +
     "          </div>\n" +
     "        </div>\n" +
     "        <div class=\"col-xs-6 einduur\" ng-show=\"timestamp.showStartHour\">\n" +
@@ -15032,7 +15033,8 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "                uib-typeahead=\"time for time in ::times | filter:$viewValue | limitTo:8\"\n" +
     "                typeahead-on-select=\"EventFormStep2.eventTimingChanged()\"\n" +
     "                typeahead-editable=\"false\"\n" +
-    "                placeholder=\"Bv. 23:00\">\n" +
+    "                placeholder=\"Bv. 23:00\"\n" +
+    "                focus-if=\"timestamp.showEndHour\">\n" +
     "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
@@ -15045,8 +15047,7 @@ $templateCache.put('templates/calendar-summary.directive.html',
     "  <div class=\"add-date\">\n" +
     "    <a href=\"#\" class=\"add-date-link\" ng-click=\"addTimestamp()\">\n" +
     "      <p id=\"add-date-plus\">+</p>\n" +
-    "      <p id=\"add-date-label\">Nog een dag toevoegen</p>\n" +
-    "      <p id=\"add-date-tip\" class=\"muted col-sm-12\"><em>Tip: Gaat dit evenement meerdere malen per dag door? Voeg dan dezelfde dag met een ander beginuur toe.</em></p>\n" +
+    "      <p id=\"add-date-label\">Dag toevoegen</p>\n" +
     "    </a>\n" +
     "  </div>\n" +
     "</div>"
